@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<usereventscript scriptid="customscript_sust_ue_ir_settlement">
+  <name>SUST - Item Receipt to Settlement</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_ItemReceipt_CreateSettlement.js]</scriptfile>
+  <description>Auto-creates settlement record from Item Receipt for the Sustana Recovery subsidiary (subsidiary ID configurable via script parameter — v2)</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptcustomfields>
+    <scriptcustomfield scriptid="custscript_sust_subsidiary_id">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <defaultselection></defaultselection>
+      <defaultvalue></defaultvalue>
+      <description>Internal ID of the Sustana Recovery subsidiary in this NetSuite account. Set this on the deployment to enable the auto-settlement automation.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Required. Set to the Sustana Recovery subsidiary's internal ID (e.g., 7 in the demo account). If unset, the script logs an error and skips processing.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Sustana Recovery Subsidiary ID</label>
+      <searchlevel>2</searchlevel>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>
+  </scriptcustomfields>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_ir_settlement">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <auddepartment></auddepartment>
+      <audslctrole></audslctrole>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>ITEMRECEIPT</recordtype>
+      <runasrole></runasrole>
+      <status>RELEASED</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_config">
+  <allowattachments>F</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Sustana demo configuration. One active record holds all account-specific IDs (subsidiaries, GL accounts, fee item, default location) so no script hardcodes an internal ID. Script parameters, where present, override these values.</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>T</includename>
+  <recordname>Sustana Config</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>T</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sustcfg_active">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>T</defaultchecked>
+      <description>Only the first active record is used.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>Only the first active config record is read by scripts.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Active</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sustcfg_us_sub">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>US operating subsidiary</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>US operating subsidiary (e.g. Sustana Recovery US).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>US Subsidiary</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-117</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sustcfg_ca_sub">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Canada operating subsidiary</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Canada operating subsidiary (e.g. Sustana Recovery Canada).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Canada Subsidiary</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-117</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sustcfg_invadj_account">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>GL account for processing inventory adjustments</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>GL account absorbing the processing Inventory Adjustment imbalance (yield loss / residual).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Inventory Adjustment Account</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-112</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sustcfg_settle_exp_acct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Expense account for settlement vendor bill lines</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Expense account used on the provisional/final settlement vendor bill when no fee item is configured.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Settlement Expense Account</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-112</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sustcfg_settle_fee_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Service item for settlement vendor bill lines</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Service/other-charge item used on settlement vendor bills. Overrides the expense account when set.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Settlement Fee Item</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sustcfg_default_location">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Default yard location</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Default yard location for receiving/processing when the transaction does not specify one.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Default Location</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-103</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

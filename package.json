@@ -1,0 +1,37 @@
+{
+  "name": "sustana-sdf",
+  "version": "1.0.0",
+  "description": "Sustana Recovery NetSuite SDF Project (demo accelerator)",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "moduleNameMapper": {
+      "^N/(.*)$": "<rootDir>/tests/mocks/N/$1"
+    },
+    "testMatch": [
+      "**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/FileCabinet/SuiteScripts/**/*.js"
+    ],
+    "verbose": true
+  },
+  "keywords": [
+    "netsuite",
+    "sdf",
+    "suitescript"
+  ],
+  "author": "Myers-Holum",
+  "license": "UNLICENSED"
+}

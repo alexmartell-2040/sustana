@@ -1,0 +1,16 @@
+<manifest projecttype="ACCOUNTCUSTOMIZATION">
+  <projectname>Sustana_Deploy</projectname>
+  <frameworkversion>1.0</frameworkversion>
+  <dependencies>
+    <features>
+      <feature required="true">SERVERSIDESCRIPTING</feature>
+      <feature required="true">CUSTOMRECORDS</feature>
+      <feature required="true">CRM</feature>
+      <feature required="true">ACCOUNTING</feature>
+      <feature required="true">LOCATIONS</feature>
+      <feature required="true">NUMBEREDINVENTORY</feature>
+      <feature required="true">INVENTORY</feature>
+      <feature required="true">SUBSIDIARIES</feature>
+    </features>
+  </dependencies>
+</manifest>

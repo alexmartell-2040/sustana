@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_penalty_calc_type">
+  <description>Method for calculating penalties (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Penalty Calculation Type</name>
+  <customvalues>
+    <customvalue scriptid="val_flat_fee">
+      <abbreviation>F</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Flat Fee</value>
+    </customvalue>
+    <customvalue scriptid="val_per_percentage">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Per Percentage Point</value>
+    </customvalue>
+    <customvalue scriptid="val_pct_reduction">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Percentage Reduction</value>
+    </customvalue>
+  </customvalues>
+</customlist>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suitelet scriptid="customscript_sust_sl_alloc_preview">
+  <name>SUST - Allocation Preview</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SL_AllocationPreview.js]</scriptfile>
+  <description>v2: Multi-receiver settlement allocation preview Suitelet. Read-only reference table for proportional back-allocation across receivers feeding one WIP. SETTLE-013.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_sl_alloc_preview">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <auddepartment></auddepartment>
+      <audslctrole></audslctrole>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <runasrole></runasrole>
+      <status>RELEASED</status>
+      <title>Multi-Receiver Allocation Preview</title>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>

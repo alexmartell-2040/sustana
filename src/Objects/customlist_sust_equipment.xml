@@ -1,0 +1,29 @@
+<customlist scriptid="customlist_sust_equipment">
+  <description>Equipment used in Sustana Recovery yard processing</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Processing Equipment</name>
+  <customvalues>
+    <customvalue scriptid="val_sorting_line">
+      <abbreviation>SL</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Sorting Line</value>
+    </customvalue>
+    <customvalue scriptid="val_baler">
+      <abbreviation>BA</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Baler</value>
+    </customvalue>
+    <customvalue scriptid="val_shredder">
+      <abbreviation>SH</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Shredder</value>
+    </customvalue>
+    <customvalue scriptid="val_equipment_other">
+      <abbreviation>EO</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Other Equipment</value>
+    </customvalue>
+  </customvalues>
+</customlist>

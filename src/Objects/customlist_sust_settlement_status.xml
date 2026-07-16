@@ -1,0 +1,34 @@
+<customlist scriptid="customlist_sust_settlement_status">
+  <description>Status of settlement for Sustana Recovery</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Settlement Status (2)</name>
+  <customvalues>
+    <customvalue scriptid="val_completed">
+      <abbreviation>C</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Completed</value>
+    </customvalue>
+    <customvalue scriptid="val_draft">
+      <abbreviation>D</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Draft</value>
+    </customvalue>
+    <customvalue scriptid="val_final_settled">
+      <abbreviation>F</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Final Settled</value>
+    </customvalue>
+    <customvalue scriptid="val_provisional_paid">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Provisional Paid</value>
+    </customvalue>
+    <customvalue scriptid="val_voided">
+      <abbreviation>V</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Voided</value>
+    </customvalue>
+  </customvalues>
+</customlist>

@@ -1,0 +1,19 @@
+<suitelet scriptid="customscript_sust_sl_settleschedule">
+  <name>SUST - Settlement Schedule Entry</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SL_SettlementScheduleEntry.js]</scriptfile>
+  <description>Custom UI for creating and managing vendor-specific settlement pricing schedules with penalty definitions</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_sl_settleschedule">
+      <status>RELEASED</status>
+      <title>SUST - Settlement Schedule Entry</title>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <allroles>T</allroles>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>

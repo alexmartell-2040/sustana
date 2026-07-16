@@ -1,0 +1,34 @@
+<customlist scriptid="customlist_sust_material_category">
+  <description>Category of recovered material (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Material Category</name>
+  <customvalues>
+    <customvalue scriptid="val_recovered_paper">
+      <abbreviation>RP</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Recovered Paper</value>
+    </customvalue>
+    <customvalue scriptid="val_finished_fiber">
+      <abbreviation>FF</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Finished Fiber</value>
+    </customvalue>
+    <customvalue scriptid="val_mixed">
+      <abbreviation>MX</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Mixed/Compound</value>
+    </customvalue>
+    <customvalue scriptid="val_residual">
+      <abbreviation>RS</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Residual</value>
+    </customvalue>
+    <customvalue scriptid="val_other">
+      <abbreviation>O</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Other</value>
+    </customvalue>
+  </customvalues>
+</customlist>

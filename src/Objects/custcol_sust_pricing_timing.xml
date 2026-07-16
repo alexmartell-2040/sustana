@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_pricing_timing">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <colexpense>F</colexpense>
+  <colexpreport>F</colexpreport>
+  <colgrouponinvoices>F</colgrouponinvoices>
+  <coljournal>F</coljournal>
+  <colkititem>F</colkititem>
+  <colopportunity>F</colopportunity>
+  <colpurchase>T</colpurchase>
+  <colreturnform>F</colreturnform>
+  <colsale>F</colsale>
+  <colstore>F</colstore>
+  <colstorehidden>F</colstorehidden>
+  <colstorewithgroups>F</colstorewithgroups>
+  <coltime>F</coltime>
+  <coltransferorder>F</coltransferorder>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>v2.3 line-level: pricing-timing pattern for this scrap line (Known at PO / Determined on Arrival / Determined After Processing). Each line is its own deal. Drives whether settlement auto-creates at receipt or waits for the on-demand button.</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>SELECT</fieldtype>
+  <help>Per-line pricing pattern. Known at PO / Determined on Arrival = price known by receipt, settlement auto-creates. Determined After Processing = recovery-priced, settlement is created on demand once outputs are known. If left blank, the header Pricing Timing (custbody_sust_pricing_timing) is used as the fallback.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Pricing Timing</label>
+  <linktext></linktext>
+  <maxlength></maxlength>
+  <maxvalue></maxvalue>
+  <minvalue></minvalue>
+  <searchcomparefield></searchcomparefield>
+  <searchdefault></searchdefault>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_pricing_timing]</selectrecordtype>
+  <sourcefilterby></sourcefilterby>
+  <sourcefrom></sourcefrom>
+  <sourcelist></sourcelist>
+  <storevalue>T</storevalue>
+</transactioncolumncustomfield>

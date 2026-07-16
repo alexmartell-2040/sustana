@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_premium">
+  <accesslevel>2</accesslevel>
+  <applyformatting>T</applyformatting>
+  <colexpense>F</colexpense>
+  <colexpreport>F</colexpreport>
+  <colgrouponinvoices>F</colgrouponinvoices>
+  <coljournal>F</coljournal>
+  <colkititem>F</colkititem>
+  <colopportunity>F</colopportunity>
+  <colpurchase>T</colpurchase>
+  <colreturnform>F</colreturnform>
+  <colsale>F</colsale>
+  <colstore>F</colstore>
+  <colstorehidden>F</colstorehidden>
+  <colstorewithgroups>F</colstorewithgroups>
+  <coltime>F</coltime>
+  <coltransferorder>F</coltransferorder>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>Premium per pound over the published index reference negotiated with the vendor.</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>CURRENCY</fieldtype>
+  <help>Per-pound amount above the index base that the vendor charges. Tracked separately for landed-cost reporting and supplier comparison.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Premium ($/lb)</label>
+  <linktext></linktext>
+  <maxlength></maxlength>
+  <maxvalue></maxvalue>
+  <minvalue></minvalue>
+  <searchcomparefield></searchcomparefield>
+  <searchdefault></searchdefault>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype></selectrecordtype>
+  <sourcefilterby></sourcefilterby>
+  <sourcefrom></sourcefrom>
+  <sourcelist></sourcelist>
+  <storevalue>T</storevalue>
+</transactioncolumncustomfield>

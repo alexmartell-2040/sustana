@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_lot_relationship">
+  <allowattachments>F</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Lot Relationship - Tracks parent-child relationships between lots for material lineage across Sustana Recovery processing operations</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  
+  <recordname>Lot Relationship</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>F</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_parent_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Input lot that was consumed</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Input lot that was consumed</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Parent Lot</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_child_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Output lot that was created</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Output lot that was created</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Child Lot</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_relationship_type">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Blend/Transform/Recycle/Regrade/Separation</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Blend/Transform/Recycle/Regrade/Separation</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Relationship Type</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_relationship_type]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_ref">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Link to processing record for TT</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Link to processing record for TT</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Processing Record</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_processing_record]</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_qty_consumed">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>How much of parent was used</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>How much of parent was used</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Quantity Consumed (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_contribution_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>% of child lot from this parent</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>% of child lot from this parent</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Contribution %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

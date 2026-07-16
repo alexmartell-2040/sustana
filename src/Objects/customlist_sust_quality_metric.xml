@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_quality_metric">
+  <description>Quality metrics measured on recovered fiber lots; drives settlement quality deductions.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Quality Metric</name>
+  <customvalues>
+    <customvalue scriptid="val_moisture">
+      <abbreviation>M</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Moisture %</value>
+    </customvalue>
+    <customvalue scriptid="val_contamination">
+      <abbreviation>C</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Contamination %</value>
+    </customvalue>
+    <customvalue scriptid="val_other_quality">
+      <abbreviation>O</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Other</value>
+    </customvalue>
+  </customvalues>
+</customlist>

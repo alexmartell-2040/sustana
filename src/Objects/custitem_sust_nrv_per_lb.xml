@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<itemcustomfield scriptid="custitem_sust_nrv_per_lb">
+  <accesslevel>2</accesslevel>
+  <appliestoexpense>F</appliestoexpense>
+  <appliestogroup>F</appliestogroup>
+  <appliestoinventory>T</appliestoinventory>
+  <appliestoitemassembly>T</appliestoitemassembly>
+  <appliestokit>F</appliestokit>
+  <appliestononinventory>T</appliestononinventory>
+  <appliestoothercharge>T</appliestoothercharge>
+  <appliestopricelist>F</appliestopricelist>
+  <appliestoservice>F</appliestoservice>
+  <appliestospecificitems>F</appliestospecificitems>
+  <appliestosubplan>F</appliestosubplan>
+  <applyformatting>T</applyformatting>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>v2.1: Manual Net Realizable Value override per pound. Used by SUST_Lib_CostAllocation as the FIRST source in the NRV hierarchical fallback chain. Leave blank to fall through to market-derived / last-sale-based NRV.</description>
+  <displaytype>NORMAL</displaytype>
+  <encryptatrest>F</encryptatrest>
+  <fieldtype>CURRENCY</fieldtype>
+  <globalsearch>F</globalsearch>
+  <help>Manual NRV per pound. Used by the cost allocation engine and LCNRV testing. NRV fallback chain: (1) this field, (2) market price x content x recovery, (3) last sale price, (4) zero. Leave blank to use derived NRV.</help>
+  <includechilditems>F</includechilditems>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <isparent>F</isparent>
+  <itemmatrix>F</itemmatrix>
+  <itemsubtype>BOTH</itemsubtype>
+  <label>NRV per Pound (Manual Override)</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype></selectrecordtype>
+  <showhierarchy>F</showhierarchy>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</itemcustomfield>

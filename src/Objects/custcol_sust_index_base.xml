@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_index_base">
+  <accesslevel>2</accesslevel>
+  <applyformatting>T</applyformatting>
+  <colexpense>F</colexpense>
+  <colexpreport>F</colexpreport>
+  <colgrouponinvoices>F</colgrouponinvoices>
+  <coljournal>F</coljournal>
+  <colkititem>F</colkititem>
+  <colopportunity>F</colopportunity>
+  <colpurchase>T</colpurchase>
+  <colreturnform>F</colreturnform>
+  <colsale>F</colsale>
+  <colstore>F</colstore>
+  <colstorehidden>F</colstorehidden>
+  <colstorewithgroups>F</colstorewithgroups>
+  <coltime>F</coltime>
+  <coltransferorder>F</coltransferorder>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>Published index base component of the landed cost ($/lb). When populated, the landed-cost rollup sets line rate = Index Base + Premium + Freight + Financing/Insurance.</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>CURRENCY</fieldtype>
+  <help>Index base price per pound (e.g. the RISI reference converted to $/lb). Leave blank/zero to skip the landed-cost rollup on this line.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Index Base ($/lb)</label>
+  <linktext></linktext>
+  <maxlength></maxlength>
+  <maxvalue></maxvalue>
+  <minvalue></minvalue>
+  <searchcomparefield></searchcomparefield>
+  <searchdefault></searchdefault>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype></selectrecordtype>
+  <sourcefilterby></sourcefilterby>
+  <sourcefrom></sourcefrom>
+  <sourcelist></sourcelist>
+  <storevalue>T</storevalue>
+</transactioncolumncustomfield>

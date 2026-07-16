@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_consol_ship_status">
+  <description>Consolidated shipment status (Sustana)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Consolidated Shipment Status</name>
+  <customvalues>
+    <customvalue scriptid="val_open">
+      <abbreviation>O</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Open</value>
+    </customvalue>
+    <customvalue scriptid="val_shipped">
+      <abbreviation>S</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Shipped</value>
+    </customvalue>
+    <customvalue scriptid="val_cancelled">
+      <abbreviation>C</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Cancelled</value>
+    </customvalue>
+  </customvalues>
+</customlist>

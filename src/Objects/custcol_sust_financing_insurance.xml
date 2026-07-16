@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_financing_insurance">
+  <accesslevel>2</accesslevel>
+  <applyformatting>T</applyformatting>
+  <colexpense>F</colexpense>
+  <colexpreport>F</colexpreport>
+  <colgrouponinvoices>F</colgrouponinvoices>
+  <coljournal>F</coljournal>
+  <colkititem>F</colkititem>
+  <colopportunity>F</colopportunity>
+  <colpurchase>T</colpurchase>
+  <colreturnform>F</colreturnform>
+  <colsale>F</colsale>
+  <colstore>F</colstore>
+  <colstorehidden>F</colstorehidden>
+  <colstorewithgroups>F</colstorewithgroups>
+  <coltime>F</coltime>
+  <coltransferorder>F</coltransferorder>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>Per-pound financing and insurance allocation.</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>CURRENCY</fieldtype>
+  <help>Financing carrying cost plus insurance allocated per pound for landed-cost capitalization. Combine into one field unless a separate breakout is required.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Financing + Insurance ($/lb)</label>
+  <linktext></linktext>
+  <maxlength></maxlength>
+  <maxvalue></maxvalue>
+  <minvalue></minvalue>
+  <searchcomparefield></searchcomparefield>
+  <searchdefault></searchdefault>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype></selectrecordtype>
+  <sourcefilterby></sourcefilterby>
+  <sourcefrom></sourcefrom>
+  <sourcelist></sourcelist>
+  <storevalue>T</storevalue>
+</transactioncolumncustomfield>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suitelet scriptid="customscript_sust_sl_lcnrv_dash">
+  <name>SUST - LCNRV Dashboard</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SL_LCNRVDashboard.js]</scriptfile>
+  <description>v2.1: Controller dashboard for LCNRV reviews. Lists pending reviews with per-row actions (Mark No Action, Post Adjustment).</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_sl_lcnrv_dash">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <status>RELEASED</status>
+      <title>LCNRV Dashboard</title>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>

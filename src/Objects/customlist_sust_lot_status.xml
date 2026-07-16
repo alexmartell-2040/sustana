@@ -1,0 +1,39 @@
+<customlist scriptid="customlist_sust_lot_status">
+  <description>Yard-flow status of an inventory lot: Received &#8594; Yard &#8594; Processing Queue &#8594; Staged &#8594; Shipped (+ Depleted when fully consumed).</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Lot Status</name>
+  <customvalues>
+    <customvalue scriptid="val_received">
+      <abbreviation>R</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Received</value>
+    </customvalue>
+    <customvalue scriptid="val_yard">
+      <abbreviation>Y</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Yard</value>
+    </customvalue>
+    <customvalue scriptid="val_proc_queue">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Processing Queue</value>
+    </customvalue>
+    <customvalue scriptid="val_staged">
+      <abbreviation>S</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Staged</value>
+    </customvalue>
+    <customvalue scriptid="val_shipped">
+      <abbreviation>SH</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Shipped</value>
+    </customvalue>
+    <customvalue scriptid="val_depleted">
+      <abbreviation>D</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Depleted</value>
+    </customvalue>
+  </customvalues>
+</customlist>

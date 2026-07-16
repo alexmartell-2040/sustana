@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_settlement_record">
+  <allowattachments>T</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Sustana Recovery Settlement Record - Main settlement calculation record</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>T</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Settlement Record</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>T</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_vendor">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Supplier of scrap</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Supplier of scrap</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Vendor/Customer</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-3</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Date of settlement calculation</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>Date of settlement calculation</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Settlement Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_status">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Draft / Calculated / Approved / Paid / Voided</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Draft / Calculated / Approved / Paid / Voided</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Status</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_settlement_status]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_method">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Per Lb Received / Per Lb Recovered / Schedule / Brokered</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Per Lb Received / Per Lb Recovered / Schedule / Brokered</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Method</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_settlement_method]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_schedule">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Applied pricing schedule</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Applied pricing schedule</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Pricing Schedule</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_settlement_schedule]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_gross_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Weight as received</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Weight as received</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Gross Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_net_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Recovered weight</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Recovered weight</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Net Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_recovery_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Yield percentage recovered</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Yield percentage recovered</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Yield %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_market_price">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Market price on settlement date</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Market price on settlement date</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Market Price</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_market_source">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>RISI SOP / RISI White Ledger / Manual Entry</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>RISI SOP / RISI White Ledger / Manual Entry</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Market Price Source</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_market_price_source]</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_treatment">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Total treatment charges</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Total treatment charges</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Treatment Charge</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_penalties">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Total impurity penalties</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Total impurity penalties</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Total Penalties</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_gross_value">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Value before deductions</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Value before deductions</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Gross Value</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_net_value">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Final amount to pay</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Final amount to pay</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Net Settlement Value</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_provisional">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Amount already paid provisionally</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Amount already paid provisionally</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Provisional Paid</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_balance_due">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Net Value - Provisional</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Net Value - Provisional</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Balance Due</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_bill">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Final payment bill</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Final payment bill</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Related Bill</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_prov_bill">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Vendor bill for provisional payment</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Vendor bill for provisional payment</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Provisional Bill</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_approved_by">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Person who approved settlement</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Person who approved settlement</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Approved By</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-4</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_approved_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Date settlement was approved</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>Date settlement was approved</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Approval Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_notes">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Additional notes or comments</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXTAREA</fieldtype>
+      <help>Additional notes or comments</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Settlement Notes</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_item_receipt">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Source Item Receipt that generated this settlement</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Link to the Item Receipt transaction that auto-generated this settlement</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Item Receipt</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Source lot from Item Receipt</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Inventory lot linked to this settlement (from Item Receipt)</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Settlement Lot</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settle_po">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>v2.3 line-level: source Purchase Order for this settlement. Supports settle-before-receipt (settlement created from a PO line before any Item Receipt exists).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Source PO for this settlement. Populated when the settlement is created from a PO line. The Item Receipt field is populated later once the line is received.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Purchase Order</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settle_source_line">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>v2.3 line-level: line unique key of the source PO/IR line this settlement is scoped to. One settlement per scrap line.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>System-managed. Stores the line unique key on the source PO/Item Receipt so the settlement is bound to a single scrap line, not the whole transaction. Pairs with the line's Settlement column field.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Source Line Key</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_processing">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Processing record that consumed this settlement material</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Link to the Processing record that processed this settlement material</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Processing Record</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_processing_record]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_mode">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>How this settlement is being executed: Auto (schedule-driven, locked), Custom (manual override), or Calculator (handshake, no IR/WIP required).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Settlement Mode drives field-lock behavior and required preconditions. Auto = pricing schedule applied automatically; Custom = analyst override; Calculator = freeform pre-WIP handshake estimate (no IR required).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Settlement Mode</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_settlement_mode]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settlement_price_fixed">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>T</defaultchecked>
+      <description>Indicates the market price for this settlement has been locked. Settlement cannot transition to Final Settled while False.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>Some settlements wait for the customer/vendor to fix the price on a future date (per Costing Review). Uncheck to put a settlement in "price not yet fixed" hold state. Default = checked (price is fixed).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Price Fixed</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settle_show_deduct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>T</defaultchecked>
+      <description>Include the Deductions section (treatment + penalties) on the settlement form PDF? Default checked.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>Per discovery: some vendors get a simplified form without deductions. Uncheck to hide the deductions table from the printed PDF.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Show Deductions on Form</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settle_show_treat">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>T</defaultchecked>
+      <description>Include the Treatment Charge line on the settlement form PDF?</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>Sub-toggle within the Deductions section — controls just the treatment charge line.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Show Treatment Charge on Form</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settle_show_pen">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>T</defaultchecked>
+      <description>Include the per-element Penalty lines on the settlement form PDF?</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>Sub-toggle within the Deductions section — controls just the per-element penalty lines.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Show Penalties on Form</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_packaging_type">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>SELECT</fieldtype>
+  <help>Bale / Roll / Gaylord / Pallet / etc.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>  <label>Packaging Type</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_packaging_type]</selectrecordtype>  <sourcefrom/>
+  <sourcelist/>
+  <storevalue>T</storevalue></transactioncolumncustomfield>

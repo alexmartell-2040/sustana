@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_scale_ticket">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodyinventoryadjustment>F</bodyinventoryadjustment>
+  <bodyitemfulfillment>F</bodyitemfulfillment>
+  <bodyitemreceipt>T</bodyitemreceipt>
+  <bodypurchase>F</bodypurchase>
+  <bodysale>F</bodysale>
+  <defaultchecked>F</defaultchecked>
+  <description>Scale ticket that generated this Item Receipt (weigh-in/weigh-out record from the scale kiosk).</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>SELECT</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Link to the scale ticket (TRK-#) that created this receipt. Provides the audit chain scale ticket &#8594; receiving &#8594; inventory &#8594; payable.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Scale Ticket</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customrecord_sust_scale_ticket]</selectrecordtype>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</transactionbodycustomfield>

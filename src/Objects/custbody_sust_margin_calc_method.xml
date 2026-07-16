@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_margin_calc_method">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodypurchase>T</bodypurchase>
+  <bodysale>T</bodysale>
+  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>SELECT</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Direct Sale / Refiner Sale / Broker Sale</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Margin Calculation Method</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_margin_calc_method]</selectrecordtype>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue></transactionbodycustomfield>

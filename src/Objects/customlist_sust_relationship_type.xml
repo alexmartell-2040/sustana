@@ -1,0 +1,34 @@
+<customlist scriptid="customlist_sust_relationship_type">
+  <description>Type of lot genealogy relationship (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Relationship Type</name>
+  <customvalues>
+    <customvalue scriptid="val_blend">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Blending</value>
+    </customvalue>
+    <customvalue scriptid="val_transform">
+      <abbreviation>G</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Grade Transformation</value>
+    </customvalue>
+    <customvalue scriptid="val_recycle">
+      <abbreviation>R</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Recycling</value>
+    </customvalue>
+    <customvalue scriptid="val_regrade">
+      <abbreviation>RG</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Regrade</value>
+    </customvalue>
+    <customvalue scriptid="val_separation">
+      <abbreviation>S</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Separation</value>
+    </customvalue>
+  </customvalues>
+</customlist>

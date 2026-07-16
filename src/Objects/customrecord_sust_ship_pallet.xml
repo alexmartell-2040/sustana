@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_ship_pallet">
+  <allowattachments>F</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Individual pallet weight detail for shipping (Sustana)</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>T</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Shipment Pallet</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>F</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_fulfillment">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Parent item fulfillment</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Parent item fulfillment</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Item Fulfillment</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_pallet_num">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Pallet sequence number</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Pallet sequence number</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Pallet #</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Product on this pallet</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Product on this pallet</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Item</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_net_weight">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Net weight in pounds</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Net weight in pounds</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Net Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_gross_weight">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Gross weight in pounds</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Gross weight in pounds</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Gross Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_tare_weight">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Tare weight in pounds</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Tare weight in pounds</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Tare Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_pallet_type">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Standard, Oversized, or Custom</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Standard, Oversized, or Custom</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Pallet Type</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_pallet_type]</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sp_notes">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Optional notes</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>Optional notes</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Notes</label>
+      <searchlevel>1</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

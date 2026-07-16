@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_so_reason_code">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodyinventoryadjustment>F</bodyinventoryadjustment>
+  <bodyitemfulfillment>F</bodyitemfulfillment>
+  <bodyitemreceipt>F</bodyitemreceipt>
+  <bodypurchase>F</bodypurchase>
+  <bodysale>T</bodysale>
+  <defaultchecked>F</defaultchecked>
+  <description>Reason code for a sales order change, delay, or cancellation. Retained for reporting by reason/status.</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>SELECT</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Set when an order is delayed or cancelled (or flagged as a new opportunity). Reported via saved search by reason and status.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Reason Code</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_so_reason_code]</selectrecordtype>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</transactionbodycustomfield>

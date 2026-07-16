@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_consol_ship">
+  <allowattachments>T</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Consolidated shipment for multi-order BOL (Sustana)</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>T</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Consolidated Shipment</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>T</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>F</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_cs_ship_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Date of shipment</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>Date of shipment</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Ship Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_cs_carrier">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Carrier name</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>Carrier name</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Carrier</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_cs_bol_number">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Bill of lading number</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>Bill of lading number</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>BOL Number</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_cs_total_weight">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Calculated sum of all pallet weights</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Calculated sum of all pallet weights</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Total Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_cs_total_pallets">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Calculated count of pallets</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Calculated count of pallets</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Total Pallets</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_cs_notes">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Optional notes</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXTAREA</fieldtype>
+      <help>Optional notes</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Notes</label>
+      <searchlevel>1</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_cs_status">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Open, Shipped, or Cancelled</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Open, Shipped, or Cancelled</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Status</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_consol_ship_status]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

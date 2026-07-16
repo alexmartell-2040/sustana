@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<usereventscript scriptid="customscript_sust_ue_proc_derived">
+  <name>SUST - Processing Derived Fields</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_Processing_DerivedFields.js]</scriptfile>
+  <description>v2: Computes derived processing fields (true_net, mass_balance, allocated_cost) and propagates true-net variance back to receiver lot notes. PROC-004/005/007.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_proc_derived">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <auddepartment></auddepartment>
+      <audslctrole></audslctrole>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>[scriptid=customrecord_sust_processing_record]</recordtype>
+      <runasrole></runasrole>
+      <status>RELEASED</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

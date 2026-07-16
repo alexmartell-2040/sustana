@@ -1,0 +1,37 @@
+<usereventscript scriptid="customscript_sust_ue_processing_invadj">
+  <name>SUST - Processing Create Inv Adj</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_Processing_CreateInvAdj.js]</scriptfile>
+  <description>v2: Creates Inventory Adjustment when Processing Record completes. Applies weight-proportional cost allocation across output streams from total_input_cost. Configurable Sustana Recovery subsidiary.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptcustomfields>
+    <scriptcustomfield scriptid="custscript_sust_sub_id_proc_ia">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <defaultselection></defaultselection>
+      <defaultvalue></defaultvalue>
+      <description>Internal ID of the Sustana Recovery subsidiary. Inventory Adjustment is created in this subsidiary.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Required. Set to the Sustana Recovery subsidiary's internal ID.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Sustana Recovery Subsidiary ID</label>
+      <searchlevel>2</searchlevel>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>
+  </scriptcustomfields>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_processing_invadj">
+      <status>RELEASED</status>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <allroles>T</allroles>
+      <recordtype>[scriptid=customrecord_sust_processing_record]</recordtype>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

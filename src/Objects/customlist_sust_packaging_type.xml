@@ -1,0 +1,39 @@
+<customlist scriptid="customlist_sust_packaging_type">
+  <description>Type of packaging for shipments (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Packaging Type</name>
+  <customvalues>
+    <customvalue scriptid="val_bale">
+      <abbreviation>BA</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Bale</value>
+    </customvalue>
+    <customvalue scriptid="val_roll">
+      <abbreviation>RO</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Roll</value>
+    </customvalue>
+    <customvalue scriptid="val_gaylord">
+      <abbreviation>GA</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Gaylord</value>
+    </customvalue>
+    <customvalue scriptid="val_pallet">
+      <abbreviation>PA</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Pallet</value>
+    </customvalue>
+    <customvalue scriptid="val_loose">
+      <abbreviation>LO</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Loose</value>
+    </customvalue>
+    <customvalue scriptid="val_other">
+      <abbreviation>O</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Other</value>
+    </customvalue>
+  </customvalues>
+</customlist>

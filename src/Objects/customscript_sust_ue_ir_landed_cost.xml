@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<usereventscript scriptid="customscript_sust_ue_ir_landed_cost">
+  <name>SUST - IR Landed Cost Rollup</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_ItemReceipt_LandedCost.js]</scriptfile>
+  <description>On Sustana Recovery Item Receipt, when Index Base custcol is populated, computes landed cost = Index Base + Premium + Freight + Financing and sets the IR line rate accordingly.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptcustomfields>
+    <scriptcustomfield scriptid="custscript_sust_sub_id_landed">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <defaultselection></defaultselection>
+      <defaultvalue></defaultvalue>
+      <description>Internal ID of the Sustana Recovery subsidiary. Landed-cost rollup only fires for IRs in this subsidiary.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Required. Set to the Sustana Recovery subsidiary's internal ID.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Sustana Recovery Subsidiary ID</label>
+      <searchlevel>2</searchlevel>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>
+  </scriptcustomfields>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_ir_landed_cost">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <auddepartment></auddepartment>
+      <audslctrole></audslctrole>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>ITEMRECEIPT</recordtype>
+      <runasrole></runasrole>
+      <status>RELEASED</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

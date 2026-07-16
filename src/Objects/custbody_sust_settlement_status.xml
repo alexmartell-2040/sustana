@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_settlement_status">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodypurchase>T</bodypurchase>
+  <bodysale>T</bodysale>
+  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>SELECT</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Draft / Provisional Paid / Final Settled / Completed</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Settlement Status</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_settlement_status]</selectrecordtype>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue></transactionbodycustomfield>

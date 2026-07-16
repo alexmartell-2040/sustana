@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_priority">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodyinventoryadjustment>T</bodyinventoryadjustment>
+  <bodyitemfulfillment>T</bodyitemfulfillment>
+  <bodyitemreceipt>T</bodyitemreceipt>
+  <bodypurchase>T</bodypurchase>
+  <bodysale>T</bodysale>
+  <bodyworkorder>T</bodyworkorder>
+  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <fieldtype>INTEGER</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Production priority for the day (lower = higher priority)</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Production Priority</label>
+  <searchlevel>2</searchlevel>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</transactionbodycustomfield>

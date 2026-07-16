@@ -1,0 +1,29 @@
+<customlist scriptid="customlist_sust_scale_ticket_status">
+  <description>Lifecycle of a scale ticket: Open (weigh-in) -&gt; Weighed Out -&gt; Received (Item Receipt created) / Voided. Display texts matched by SUST_SL_ScaleTicket.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Scale Ticket Status</name>
+  <customvalues>
+    <customvalue scriptid="val_st_open">
+      <abbreviation>O</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Open</value>
+    </customvalue>
+    <customvalue scriptid="val_st_weighed_out">
+      <abbreviation>W</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Weighed Out</value>
+    </customvalue>
+    <customvalue scriptid="val_st_received">
+      <abbreviation>R</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Received</value>
+    </customvalue>
+    <customvalue scriptid="val_st_voided">
+      <abbreviation>V</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Voided</value>
+    </customvalue>
+  </customvalues>
+</customlist>

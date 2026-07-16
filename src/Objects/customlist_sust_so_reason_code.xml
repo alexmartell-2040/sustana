@@ -1,0 +1,44 @@
+<customlist scriptid="customlist_sust_so_reason_code">
+  <description>Reason codes for sales order changes, delays, and cancellations (Sustana Recovery). Reported via saved search by reason/status.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>SO Reason Code</name>
+  <customvalues>
+    <customvalue scriptid="val_delay_weather">
+      <abbreviation>DW</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Delayed - Weather</value>
+    </customvalue>
+    <customvalue scriptid="val_delay_customer">
+      <abbreviation>DC</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Delayed - Customer Request</value>
+    </customvalue>
+    <customvalue scriptid="val_delay_transport">
+      <abbreviation>DT</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Delayed - Transportation</value>
+    </customvalue>
+    <customvalue scriptid="val_cancel_credit">
+      <abbreviation>CC</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Cancelled - Credit Hold</value>
+    </customvalue>
+    <customvalue scriptid="val_cancel_price">
+      <abbreviation>CP</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Cancelled - Price Disagreement</value>
+    </customvalue>
+    <customvalue scriptid="val_cancel_supply">
+      <abbreviation>CS</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Cancelled - Supply Shortage</value>
+    </customvalue>
+    <customvalue scriptid="val_new_opportunity">
+      <abbreviation>NO</abbreviation>
+      <isinactive>F</isinactive>
+      <value>New Opportunity</value>
+    </customvalue>
+  </customvalues>
+</customlist>

@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_scale_ticket">
+  <allowattachments>T</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Scale ticket (weigh-in / weigh-out) captured at the yard kiosk (SUST_SL_ScaleTicket). Creating a ticket against an open PO transforms it into the Item Receipt with the weights populated — the audit chain is ticket, receiving, inventory, payable.</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>T</includename>
+  <recordname>Scale Ticket</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>T</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_st_ticket_number">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Scale ticket number (e.g. TRK-001). Unique — duplicate submissions are blocked.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>Ticket number from the scale (e.g. TRK-001). Must be unique; a duplicate is flagged with a link to the existing ticket.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Ticket Number</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_truck">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Truck / trailer identifier</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>Truck or trailer identifier from the gate.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Truck #</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_vendor">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Supplier delivering the material</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Supplier delivering the material.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Supplier</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-3</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_po">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Open purchase order this delivery receives against</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Open purchase order this delivery receives against. The ticket transforms this PO into the Item Receipt.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Purchase Order</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_gross_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Gross (loaded) weight in lbs</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Gross (loaded truck) weight in lbs from the inbound weigh.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Gross Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_tare_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Tare (empty truck) weight in lbs</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Tare (empty truck) weight in lbs from the outbound weigh.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Tare Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_net_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Net material weight in lbs (gross - tare)</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Net material weight in lbs (gross - tare). Computed by the kiosk; drives the Item Receipt quantity.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Net Weight (lbs)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_weigh_in">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Inbound weigh timestamp</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATETIMETZ</fieldtype>
+      <help>Inbound (gross) weigh timestamp. Supports inventory cutoff by scale timestamp.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Weigh-In Time</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_weigh_out">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Outbound weigh timestamp</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATETIMETZ</fieldtype>
+      <help>Outbound (tare) weigh timestamp.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Weigh-Out Time</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_location">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Receiving yard location</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Yard location receiving the material.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Location</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-103</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_item_receipt">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Item Receipt created from this ticket</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Item Receipt created from this ticket (set by the kiosk after PO transform).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Item Receipt</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_status">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Ticket lifecycle status</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Open / Weighed Out / Received / Voided.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Status</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_scale_ticket_status]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_st_notes">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Gate / weighmaster notes</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXTAREA</fieldtype>
+      <help>Gate or weighmaster notes (condition of load, seal numbers, etc.).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Notes</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

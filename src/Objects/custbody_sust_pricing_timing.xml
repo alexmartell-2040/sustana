@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_pricing_timing">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodyinventoryadjustment>F</bodyinventoryadjustment>
+  <bodyitemfulfillment>F</bodyitemfulfillment>
+  <bodyitemreceipt>T</bodyitemreceipt>
+  <bodypurchase>T</bodypurchase>
+  <bodysale>F</bodysale>
+  <defaultchecked>F</defaultchecked>
+  <description>When pricing is determined relative to material receipt for this Sustana Recovery PO.</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>SELECT</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Drives PO + IR + Settlement behavior. Known at PO = price committed at PO entry (vendor specifies composition). Determined on Arrival = price set at IR after inspection. Determined After Processing = vendor brings unknown-yield material; PO uses generic placeholder item at $0; final price determined post-WIP via Settlement Calculator mode.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>PO Pricing Timing</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_pricing_timing]</selectrecordtype>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</transactionbodycustomfield>

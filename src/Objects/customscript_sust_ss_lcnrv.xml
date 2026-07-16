@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scheduledscript scriptid="customscript_sust_ss_lcnrv">
+  <name>SUST - LCNRV Monthly Test</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SS_LCNRVTest.js]</scriptfile>
+  <description>v2.1: Monthly LCNRV testing per ASC 330-10-35-1B. Pulls on-hand lots, computes NRV via the cost allocation engine, creates customrecord_sust_lcnrv_review entries where carrying cost greater than NRV.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <scriptcustomfields>
+    <scriptcustomfield scriptid="custscript_sust_lcnrv_subsidiary">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <checkspelling>F</checkspelling>
+      <defaultchecked>F</defaultchecked>
+      <defaultvalue>7</defaultvalue>
+      <description>Sustana Recovery subsidiary internal ID (default 7).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Subsidiary scope for LCNRV testing.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Sustana Recovery Subsidiary ID</label>
+      <minvalue>1</minvalue>
+      <searchlevel>2</searchlevel>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>
+    <scriptcustomfield scriptid="custscript_sust_lcnrv_min_variance_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <checkspelling>F</checkspelling>
+      <defaultchecked>F</defaultchecked>
+      <defaultvalue>1.0</defaultvalue>
+      <description>Minimum variance percentage to flag (materiality threshold).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Lots with variance below this percentage are skipped to avoid noise. Default 1.0.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Min Variance %</label>
+      <searchlevel>2</searchlevel>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>
+    <scriptcustomfield scriptid="custscript_sust_lcnrv_email_recipient">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <checkspelling>F</checkspelling>
+      <defaultchecked>F</defaultchecked>
+      <description>Employee to email a summary when reviews are created (optional).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>If set, an HTML summary email is sent with the flagged lots.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Email Recipient</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-4</selectrecordtype>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>
+  </scriptcustomfields>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ss_lcnrv">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <status>TESTING</status>
+      <title>LCNRV Monthly Test</title>
+    </scriptdeployment>
+  </scriptdeployments>
+</scheduledscript>

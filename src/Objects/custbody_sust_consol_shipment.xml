@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_consol_shipment">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodyitemfulfillment>T</bodyitemfulfillment>
+  <bodysale>T</bodysale>
+  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <fieldtype>SELECT</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Link to consolidated shipment for multi-order BOL</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Consolidated Shipment</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customrecord_sust_consol_ship]</selectrecordtype>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</transactionbodycustomfield>

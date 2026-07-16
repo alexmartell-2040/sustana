@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_penalty_detail">
+  <allowattachments>F</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Settlement Penalty Detail - Child record of Settlement Record for penalty line items</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>F</enablesystemnotes>
+  <iconbuiltin>T</iconbuiltin>
+  <includename>F</includename>
+  <recordname>Settlement Penalty Detail</recordname>
+  <showcreationdate>F</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>F</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>F</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_penalty_settlement">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Parent settlement</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Parent settlement</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Settlement Record</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_settlement_record]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_penalty_detail_element">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Quality metric the deduction applies to (Moisture % / Contamination % / Other).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Quality metric the deduction applies to (Moisture % / Contamination % / Other).</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Quality Metric</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_quality_metric]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_penalty_detail_actual">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Actual percentage in material</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Actual percentage in material</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Actual %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_penalty_detail_threshold">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Maximum allowable percentage</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Maximum allowable percentage</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Threshold %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_penalty_detail_excess">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Amount over threshold</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Amount over threshold</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Excess %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_penalty_detail_rate">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Rate applied</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Rate applied</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Penalty Rate</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_penalty_detail_amount">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Total penalty for this element</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Total penalty for this element</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Penalty Amount</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

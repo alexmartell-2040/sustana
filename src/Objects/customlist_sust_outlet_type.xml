@@ -1,0 +1,29 @@
+<customlist scriptid="customlist_sust_outlet_type">
+  <description>Type of sales outlet (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Outlet Type</name>
+  <customvalues>
+    <customvalue scriptid="val_broker">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Broker/Trading</value>
+    </customvalue>
+    <customvalue scriptid="val_direct_customer">
+      <abbreviation>D</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Direct Mill Customer</value>
+    </customvalue>
+    <customvalue scriptid="val_export">
+      <abbreviation>E</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Export</value>
+    </customvalue>
+    <customvalue scriptid="val_intercompany">
+      <abbreviation>I</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Intercompany</value>
+    </customvalue>
+  </customvalues>
+</customlist>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_scrap_gross_weight">
+  <accesslevel>2</accesslevel>
+  <applyformatting>T</applyformatting>  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>FLOAT</fieldtype>
+  <help>Weight as received (including impurities)</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>  <label>Gross Weight (lbs)</label>
+  <searchlevel>2</searchlevel>  <sourcefrom/>
+  <sourcelist/>
+  <storevalue>T</storevalue></transactioncolumncustomfield>

@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_settlement_mode">
+  <description>How a settlement is executed (Sustana Recovery) - drives field-lock behavior and required preconditions</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Settlement Mode</name>
+  <customvalues>
+    <customvalue scriptid="val_auto">
+      <abbreviation>A</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Auto</value>
+    </customvalue>
+    <customvalue scriptid="val_custom">
+      <abbreviation>C</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Custom</value>
+    </customvalue>
+    <customvalue scriptid="val_calculator">
+      <abbreviation>K</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Calculator</value>
+    </customvalue>
+  </customvalues>
+</customlist>

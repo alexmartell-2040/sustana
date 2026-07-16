@@ -1,0 +1,157 @@
+<customrecordtype scriptid="customrecord_sust_processing_output_line">
+  <allowattachments>F</allowattachments>
+  <allowinlinedeleting>T</allowinlinedeleting>
+  <allowinlineediting>T</allowinlineediting>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Child record of Processing Record for tracking output materials</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenametranslation>F</enablenametranslation>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Processing Output Line</recordname>
+  <showid>T</showid>
+  <shownotes>F</shownotes>
+  <showrecordtype>F</showrecordtype>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_output_processing">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <isparent>T</isparent>
+      <label>Processing Record</label>      <onparentdelete>NO_ACTION</onparentdelete>      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_processing_record]</selectrecordtype>      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_output_line_number">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>INTEGER</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Line Number</label>      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_output_type">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Output Type</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_output_type]</selectrecordtype>      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_output_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Item</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_output_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>Output Lot</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>      <fldcurselrectype>-266</fldcurselrectype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_output_weight">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>FLOAT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Output Weight (lbs)</label>      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_output_percentage">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>PERCENT</fieldtype>      <help>Percentage of input weight</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>Output Percentage</label>      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_output_disposition">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>Disposition</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_output_disposition]</selectrecordtype>      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pol_stream">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Output stream grouping: A=recovered fiber, B=residual/byproduct, C=other.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Coarser grouping above output_type. Stream A = sellable recovered fiber; B = residual/byproduct material; C = other/waste.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Stream</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_output_type]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pol_weight_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Percentage of total output weight this line represents.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Auto-calculated: line weight ÷ total output weight × 100. Drives weight-proportional cost allocation.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>% of Output Weight</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pol_allocated_cost">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Allocated inventory cost ($) for this output line (input cost × this line's weight fraction).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Auto-calculated allocated $. For Post-Processing pricing mode, starts at $0 and is updated when settlement completes (cost flows back from settlement value).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Allocated Cost ($)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pol_cost_per_lb">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Derived $/lb on this output line: allocated_cost ÷ output_weight.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Auto-calculated $/lb that gets written to the output lot as inventory cost basis.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Cost / lb ($)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

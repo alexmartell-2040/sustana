@@ -1,0 +1,44 @@
+<customlist scriptid="customlist_sust_processing_status">
+  <description>Status of scrap processing (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Processing Status</name>
+  <customvalues>
+    <customvalue scriptid="val_awaiting_cost">
+      <abbreviation>AC</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Awaiting Cost</value>
+    </customvalue>
+    <customvalue scriptid="val_brokered">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Brokered (Not Processed)</value>
+    </customvalue>
+    <customvalue scriptid="val_completed">
+      <abbreviation>C</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Completed</value>
+    </customvalue>
+    <customvalue scriptid="val_in_process">
+      <abbreviation>I</abbreviation>
+      <isinactive>F</isinactive>
+      <value>In Process</value>
+    </customvalue>
+    <customvalue scriptid="val_not_processed">
+      <abbreviation>N</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Not Processed</value>
+    </customvalue>
+    <customvalue scriptid="val_partial">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Partially Processed</value>
+    </customvalue>
+    <customvalue scriptid="val_scheduled">
+      <abbreviation>S</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Scheduled for Processing</value>
+    </customvalue>
+  </customvalues>
+</customlist>

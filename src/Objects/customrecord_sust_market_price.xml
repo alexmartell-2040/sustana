@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_market_price">
+  <allowattachments>F</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Published index price storage (RISI-style recovered-fiber indices), entered manually or by the demo seeder in $/ton and stored in $/lb.</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Market Price</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>F</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Date of the market price</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>Date of the market price</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Price Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_source">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Index source (e.g. RISI SOP)</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Index source (e.g. RISI SOP)</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Market Source</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_market_price_source]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_price_per_lb">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Final converted price in $/lb</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Final converted price in $/lb</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Price Per Lb</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_raw_rate">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Raw API rate value for audit trail</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Raw API rate value for audit trail</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Raw API Rate</label>
+      <minvalue>.00000001</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_raw_unit">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Unit of raw price (e.g. $/metric ton, $/troy oz)</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>Unit of raw price (e.g. $/metric ton, $/troy oz)</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Raw Unit</label>
+      <searchlevel>1</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_fetched_at">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>ISO timestamp of when the price was fetched from the API</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>ISO timestamp of when the price was fetched from the API</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Fetched At</label>
+      <searchlevel>1</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

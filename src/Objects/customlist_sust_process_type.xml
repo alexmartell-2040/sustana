@@ -1,0 +1,34 @@
+<customlist scriptid="customlist_sust_process_type">
+  <description>Type of processing operation (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Process Type</name>
+  <customvalues>
+    <customvalue scriptid="val_sorting">
+      <abbreviation>SO</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Sorting</value>
+    </customvalue>
+    <customvalue scriptid="val_baling">
+      <abbreviation>BA</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Baling</value>
+    </customvalue>
+    <customvalue scriptid="val_blending">
+      <abbreviation>BL</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Blending</value>
+    </customvalue>
+    <customvalue scriptid="val_separation">
+      <abbreviation>SE</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Separation</value>
+    </customvalue>
+    <customvalue scriptid="val_brokered">
+      <abbreviation>BR</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Brokered (No Processing)</value>
+    </customvalue>
+  </customvalues>
+</customlist>

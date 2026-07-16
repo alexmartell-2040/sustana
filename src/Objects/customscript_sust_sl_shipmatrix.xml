@@ -1,0 +1,18 @@
+<suitelet scriptid="customscript_sust_sl_shipmatrix">
+  <name>SUST - Shipping Matrix</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SL_ShippingMatrix.js]</scriptfile>
+  <description>Shipping Matrix Suitelet — consolidated shipment management, multi-pallet weight capture, BOL generation</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_sl_shipmatrix">
+      <status>RELEASED</status>
+      <title>SUST - Shipping Matrix</title>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <allroles>T</allroles>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>

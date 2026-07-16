@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_margin_calc_method">
+  <description>Method for calculating margin (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Margin Calculation Method</name>
+  <customvalues>
+    <customvalue scriptid="val_broker_sale">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Broker Sale</value>
+    </customvalue>
+    <customvalue scriptid="val_direct_sale">
+      <abbreviation>D</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Direct Sale</value>
+    </customvalue>
+    <customvalue scriptid="val_refiner_sale">
+      <abbreviation>R</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Refiner Sale</value>
+    </customvalue>
+  </customvalues>
+</customlist>

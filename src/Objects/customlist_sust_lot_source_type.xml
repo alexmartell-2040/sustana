@@ -1,0 +1,29 @@
+<customlist scriptid="customlist_sust_lot_source_type">
+  <description>Source type for lot creation (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Lot Source Type</name>
+  <customvalues>
+    <customvalue scriptid="val_purchased">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Purchased</value>
+    </customvalue>
+    <customvalue scriptid="val_processed">
+      <abbreviation>PR</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Processed</value>
+    </customvalue>
+    <customvalue scriptid="val_blended">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Blended</value>
+    </customvalue>
+    <customvalue scriptid="val_recycled">
+      <abbreviation>R</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Recycled</value>
+    </customvalue>
+  </customvalues>
+</customlist>

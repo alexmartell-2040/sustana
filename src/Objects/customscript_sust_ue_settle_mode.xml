@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<usereventscript scriptid="customscript_sust_ue_settle_mode">
+  <name>SUST - Settlement Mode Lock</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_SettlementModeLock.js]</scriptfile>
+  <description>v2: Auto-defaults settlement mode; locks calc fields based on mode (Auto locked, Custom/Calculator editable). Renders mode-aware banner. SETTLE-001.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_settle_mode">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <auddepartment></auddepartment>
+      <audslctrole></audslctrole>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>[scriptid=customrecord_sust_settlement_record]</recordtype>
+      <runasrole></runasrole>
+      <status>RELEASED</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

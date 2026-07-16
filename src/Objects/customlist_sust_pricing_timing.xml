@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_pricing_timing">
+  <description>When pricing is determined relative to material receipt (Sustana Recovery PO)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>PO Pricing Timing</name>
+  <customvalues>
+    <customvalue scriptid="val_known_at_po">
+      <abbreviation>K</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Known at PO</value>
+    </customvalue>
+    <customvalue scriptid="val_on_arrival">
+      <abbreviation>A</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Determined on Arrival</value>
+    </customvalue>
+    <customvalue scriptid="val_post_processing">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Determined After Processing</value>
+    </customvalue>
+  </customvalues>
+</customlist>

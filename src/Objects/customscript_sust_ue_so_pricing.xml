@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<usereventscript scriptid="customscript_sust_ue_so_pricing">
+  <name>SUST - SO Index Pricing</name>
+  <notifyowner>T</notifyowner>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_SO_IndexPricing.js]</scriptfile>
+  <description>Prices Sales Order lines from active Sale-direction settlement schedules: rate = index price (effective-dated to the order date) x market % + adjustment. Line description carries the formula.</description>
+  <isinactive>F</isinactive>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_so_pricing">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>SALESORDER</recordtype>
+      <status>RELEASED</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

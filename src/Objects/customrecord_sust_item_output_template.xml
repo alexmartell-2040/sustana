@@ -1,0 +1,128 @@
+<customrecordtype scriptid="customrecord_sust_item_output_template">
+  <allowattachments>F</allowattachments>
+  <allowinlinedeleting>T</allowinlinedeleting>
+  <allowinlineediting>T</allowinlineediting>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Defines default output items for processing input items</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenametranslation>F</enablenametranslation>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Item Output Template</recordname>
+  <showid>T</showid>
+  <shownotes>F</shownotes>
+  <showrecordtype>F</showrecordtype>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_template_input_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Input item to be processed</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Input Item</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_template_sequence">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Display order of output lines</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Sequence</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_template_output_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Expected output item from processing</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Output Item</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_template_output_type">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Type of output material</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Output Type</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_output_type]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_template_default_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Default expected percentage of input weight</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Default Percentage</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_template_disposition">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Default disposition for this output</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Default Disposition</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_output_disposition]</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_template_active">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>T</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>Whether this template is active</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Active</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

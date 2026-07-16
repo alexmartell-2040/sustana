@@ -1,0 +1,29 @@
+<customlist scriptid="customlist_sust_proc_source_type">
+  <description>Source/mode of a Sustana Recovery processing run (Receiver / Mount / Brokered / Repackage)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Processing Source Type</name>
+  <customvalues>
+    <customvalue scriptid="val_src_receiver">
+      <abbreviation>R</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Receiver — Raw Recovered Paper</value>
+    </customvalue>
+    <customvalue scriptid="val_src_mount">
+      <abbreviation>M</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Mount — Blended Finished Fiber</value>
+    </customvalue>
+    <customvalue scriptid="val_src_brokered">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Brokered — Pass-Through, No WIP</value>
+    </customvalue>
+    <customvalue scriptid="val_src_repackage">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Repackage — Same Lot, New Item</value>
+    </customvalue>
+  </customvalues>
+</customlist>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<usereventscript scriptid="customscript_sust_ue_ir_vendor_lot">
+  <name>SUST - IR Vendor Lot Bridge</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_ItemReceipt_BridgeVendorLot.js]</scriptfile>
+  <description>v2: Reads custcol_sust_vendor_lot_number from each IR line and writes it to the corresponding lot record's custitemnumber_sust_vendor_lot_number field. Implements dual lot identification (CROSS-001).</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptcustomfields>
+    <scriptcustomfield scriptid="custscript_sust_sub_id_bridge">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <defaultselection></defaultselection>
+      <defaultvalue></defaultvalue>
+      <description>Internal ID of the Sustana Recovery subsidiary. Should match custscript_sust_subsidiary_id on the settlement-creation script.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Required. Set to the Sustana Recovery subsidiary's internal ID. The vendor-lot bridge only fires for IRs in this subsidiary.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Sustana Recovery Subsidiary ID</label>
+      <searchlevel>2</searchlevel>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>
+  </scriptcustomfields>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_ir_vendor_lot">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <auddepartment></auddepartment>
+      <audslctrole></audslctrole>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>ITEMRECEIPT</recordtype>
+      <runasrole></runasrole>
+      <status>RELEASED</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

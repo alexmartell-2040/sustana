@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_proc_input_line">
+  <allowattachments>F</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Sustana Recovery Processing Input Line — child record under customrecord_sust_processing_record for multi-receiver consumption (multi-lot batching). Each line represents one receiver lot contributing to the WIP.</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>F</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Processing Input Line</recordname>
+  <showcreationdate>F</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>F</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>F</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_processing">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Parent processing record this input line belongs to.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Parent processing/WIP record.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <isparent>T</isparent>
+      <label>Processing Record</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_processing_record]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_line_number">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Sequential line number on the processing record.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Sequential line number.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Line #</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Input item (receiver lot's item or mount's finished item).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Item being consumed on this input line.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Input Item</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Inventory lot consumed.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Specific receiver lot or finished-goods lot being consumed.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Input Lot</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_item_receipt">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Source Item Receipt for this input lot (for multi-receiver settlement allocation).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>The original IR that generated this receiver lot — used to back-allocate recovered material to the right receiver for settlement (multi-receiver case).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Source Item Receipt</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_qty_consumed">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Pounds of this input lot consumed by the WIP.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Weight in pounds consumed from this input lot.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Qty Consumed (lbs)</label>
+      <minvalue>.00000001</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_weight_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Percentage of total input weight this line represents. Used for multi-receiver settlement back-allocation.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Auto-calculated: this line's qty ÷ sum of all input line qty × 100.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>% of Input Weight</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_pil_input_cost">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Inventory cost of this input lot at the time of WIP consumption.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Snapshot of the input lot's $/lb at consumption time. Sum across all input lines = total input $ for cost allocation.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Input Cost ($)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

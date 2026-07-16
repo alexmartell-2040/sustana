@@ -1,0 +1,34 @@
+<customlist scriptid="customlist_sust_market_price_source">
+  <description>Published index used for recovered-fiber pricing (RISI). Display texts must match SUST_Lib_MarketPrice.INDEX_MAP.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Market Price Source</name>
+  <customvalues>
+    <customvalue scriptid="val_custom">
+      <abbreviation>C</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Custom/Manual Entry</value>
+    </customvalue>
+    <customvalue scriptid="val_risi_sop">
+      <abbreviation>RS</abbreviation>
+      <isinactive>F</isinactive>
+      <value>RISI SOP</value>
+    </customvalue>
+    <customvalue scriptid="val_risi_white_ledger">
+      <abbreviation>RW</abbreviation>
+      <isinactive>F</isinactive>
+      <value>RISI White Ledger</value>
+    </customvalue>
+    <customvalue scriptid="val_risi_mixed_paper">
+      <abbreviation>RM</abbreviation>
+      <isinactive>F</isinactive>
+      <value>RISI Mixed Paper</value>
+    </customvalue>
+    <customvalue scriptid="val_risi_mop">
+      <abbreviation>RO</abbreviation>
+      <isinactive>F</isinactive>
+      <value>RISI Mixed Office Paper</value>
+    </customvalue>
+  </customvalues>
+</customlist>

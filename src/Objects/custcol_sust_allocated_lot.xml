@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_allocated_lot">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>SELECT</fieldtype>
+  <help>Specific lot allocated to this line</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Allocated Lot</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>-266</selectrecordtype>  <sourcefrom/>
+  <sourcelist/>
+  <storevalue>T</storevalue></transactioncolumncustomfield>

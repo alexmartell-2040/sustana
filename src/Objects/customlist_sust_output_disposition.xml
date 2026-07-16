@@ -1,0 +1,29 @@
+<customlist scriptid="customlist_sust_output_disposition">
+  <description>Disposition of processing output (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Output Disposition</name>
+  <customvalues>
+    <customvalue scriptid="val_to_inventory">
+      <abbreviation>TI</abbreviation>
+      <isinactive>F</isinactive>
+      <value>To Inventory</value>
+    </customvalue>
+    <customvalue scriptid="val_to_blend">
+      <abbreviation>TB</abbreviation>
+      <isinactive>F</isinactive>
+      <value>To Blend</value>
+    </customvalue>
+    <customvalue scriptid="val_sold_direct">
+      <abbreviation>SD</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Sold Direct</value>
+    </customvalue>
+    <customvalue scriptid="val_waste">
+      <abbreviation>W</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Waste</value>
+    </customvalue>
+  </customvalues>
+</customlist>

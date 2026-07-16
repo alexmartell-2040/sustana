@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_settlement_schedule">
+  <allowattachments>T</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Sustana Recovery Settlement Schedule - Pricing schedules for vendor/item combinations</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <recordname>Settlement Schedule</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>T</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_vendor">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Vendor this schedule applies to</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Vendor this schedule applies to</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Vendor</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-3</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Recovered-material item (grade) this schedule applies to</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Recovered-material item (grade) this schedule applies to</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Item</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sched_direction">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Purchase (supplier settlement pricing, default) or Sale (customer index pricing on Sales Orders)</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Purchase = supplier settlement pricing (default). Sale = customer index pricing — SUST_UE_SO_IndexPricing prices matching Sales Order lines from this schedule.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Direction</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_sched_direction]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sched_customer">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Customer this Sale-direction schedule applies to</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Customer this Sale-direction schedule applies to. Leave blank on Purchase-direction schedules.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Customer</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-2</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_method">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Received Pricing / Recovered Pricing / Fixed Price / % of Index</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Received Pricing / Recovered Pricing / Fixed Price / % of Index</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Pricing Method</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_settlement_method]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_base_price">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Fixed price per pound (if applicable)</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Fixed price per pound (if applicable)</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Base Price</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_market_ref">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>RISI SOP / RISI White Ledger / RISI Mixed Paper / Custom</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>RISI SOP / RISI White Ledger / RISI Mixed Paper / Custom</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Market Reference</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_market_price_source]</selectrecordtype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_market_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Percentage of market price to pay</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Percentage of market price to pay</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Market Percentage</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_market_adj">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Dollar amount to add/subtract from market</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Dollar amount to add/subtract from market</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Market Adjustment</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_sched_proc_charge">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Per-pound processing charge</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Per-pound processing charge</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Processing Charge</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_min_content">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Minimum fiber content required</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Minimum fiber content required</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Minimum Content %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_active">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Schedule is currently active</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>Schedule is currently active</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Active</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_effective_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Date this schedule becomes active</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>Date this schedule becomes active</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Effective Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_expiration_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Date this schedule expires</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>Date this schedule expires</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Expiration Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

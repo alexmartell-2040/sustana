@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_alloc_mode">
+  <description>Cost allocation mode applied to a processing record. Weight (default) allocates input cost across outputs by weight; Byproduct values residual streams at NRV and plugs the remainder to the primary output; Relative NRV treats outputs as joint products.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Allocation Mode</name>
+  <customvalues>
+    <customvalue scriptid="val_weight">
+      <abbreviation>W</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Weight</value>
+    </customvalue>
+    <customvalue scriptid="val_byproduct_mode">
+      <abbreviation>BP</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Byproduct</value>
+    </customvalue>
+    <customvalue scriptid="val_relative_nrv">
+      <abbreviation>NRV</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Relative NRV</value>
+    </customvalue>
+  </customvalues>
+</customlist>

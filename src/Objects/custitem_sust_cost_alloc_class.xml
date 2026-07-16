@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<itemcustomfield scriptid="custitem_sust_cost_alloc_class">
+  <accesslevel>2</accesslevel>
+  <appliestoexpense>F</appliestoexpense>
+  <appliestogroup>F</appliestogroup>
+  <appliestoinventory>T</appliestoinventory>
+  <appliestoitemassembly>T</appliestoitemassembly>
+  <appliestokit>F</appliestokit>
+  <appliestononinventory>T</appliestononinventory>
+  <appliestoothercharge>T</appliestoothercharge>
+  <appliestopricelist>F</appliestopricelist>
+  <appliestoservice>F</appliestoservice>
+  <appliestospecificitems>F</appliestospecificitems>
+  <appliestosubplan>F</appliestosubplan>
+  <applyformatting>T</applyformatting>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>v2.1: Cost allocation classification (Primary / Joint / Byproduct). Drives the SUST_Lib_CostAllocation engine. Blank treated as Primary (defensive).</description>
+  <displaytype>NORMAL</displaytype>
+  <encryptatrest>F</encryptatrest>
+  <fieldtype>SELECT</fieldtype>
+  <globalsearch>F</globalsearch>
+  <help>Finished fiber grades = Primary. Residual / waste streams = Byproduct. Joint = explicit joint-product treatment (rare). Blank treated as Primary.</help>
+  <includechilditems>F</includechilditems>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <isparent>F</isparent>
+  <itemmatrix>F</itemmatrix>
+  <itemsubtype>BOTH</itemsubtype>
+  <label>Cost Allocation Class</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_cost_alloc_class]</selectrecordtype>
+  <showhierarchy>F</showhierarchy>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</itemcustomfield>

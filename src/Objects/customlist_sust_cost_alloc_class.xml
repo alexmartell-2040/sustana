@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_cost_alloc_class">
+  <description>v2.1: Output classification for joint-product/byproduct cost allocation (Horngren framework, Southern Copper byproduct method). Drives behavior of SUST_Lib_CostAllocation engine.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Cost Allocation Class</name>
+  <customvalues>
+    <customvalue scriptid="val_primary">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Primary</value>
+    </customvalue>
+    <customvalue scriptid="val_joint">
+      <abbreviation>J</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Joint</value>
+    </customvalue>
+    <customvalue scriptid="val_byproduct">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Byproduct</value>
+    </customvalue>
+  </customvalues>
+</customlist>

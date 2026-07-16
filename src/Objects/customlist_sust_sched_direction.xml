@@ -1,0 +1,19 @@
+<customlist scriptid="customlist_sust_sched_direction">
+  <description>Direction of a settlement schedule: Purchase (supplier settlement pricing) or Sale (customer index pricing). Display texts are matched by SUST_UE_SO_IndexPricing.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Schedule Direction</name>
+  <customvalues>
+    <customvalue scriptid="val_dir_purchase">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Purchase</value>
+    </customvalue>
+    <customvalue scriptid="val_dir_sale">
+      <abbreviation>S</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Sale</value>
+    </customvalue>
+  </customvalues>
+</customlist>

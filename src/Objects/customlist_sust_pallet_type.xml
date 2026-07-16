@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_pallet_type">
+  <description>Pallet type for shipping (Sustana)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Pallet Type</name>
+  <customvalues>
+    <customvalue scriptid="val_standard">
+      <abbreviation>S</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Standard</value>
+    </customvalue>
+    <customvalue scriptid="val_oversized">
+      <abbreviation>O</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Oversized</value>
+    </customvalue>
+    <customvalue scriptid="val_custom">
+      <abbreviation>C</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Custom</value>
+    </customvalue>
+  </customvalues>
+</customlist>

@@ -1,0 +1,19 @@
+<suitelet scriptid="customscript_sust_sl_settlecalc">
+  <name>SUST - Settlement Calculation</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SL_SettlementCalculation.js]</scriptfile>
+  <description>Custom UI for calculating settlements based on received scrap material with automatic pricing and penalty calculations</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_sl_settlecalc">
+      <status>RELEASED</status>
+      <title>SUST - Settlement Calculation</title>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <allroles>T</allroles>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>

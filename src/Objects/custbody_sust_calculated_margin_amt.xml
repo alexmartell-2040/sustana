@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_calculated_margin_amt">
+  <accesslevel>2</accesslevel>
+  <applyformatting>T</applyformatting>
+  <bodypurchase>T</bodypurchase>
+  <bodysale>T</bodysale>
+  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>CURRENCY</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>System-calculated margin in dollars</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Calculated Margin Amount</label>
+  <searchlevel>2</searchlevel>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue></transactionbodycustomfield>

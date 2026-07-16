@@ -1,0 +1,24 @@
+<customlist scriptid="customlist_sust_output_type">
+  <description>Stream type of a processing output (Sustana Recovery)</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Output Type</name>
+  <customvalues>
+    <customvalue scriptid="val_fiber">
+      <abbreviation>F</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Fiber</value>
+    </customvalue>
+    <customvalue scriptid="val_residual">
+      <abbreviation>R</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Residual</value>
+    </customvalue>
+    <customvalue scriptid="val_other">
+      <abbreviation>O</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Other</value>
+    </customvalue>
+  </customvalues>
+</customlist>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suitelet scriptid="customscript_sust_sl_scaleticket">
+  <name>SUST - Scale Kiosk</name>
+  <notifyowner>T</notifyowner>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SL_ScaleTicket.js]</scriptfile>
+  <description>The scale kiosk IS the scale system for the demo: enter ticket number, truck, supplier, open PO, and gross/tare weights; on submit it creates the scale ticket and transforms the PO into the Item Receipt (weights + lot = ticket number), firing the receipt automation chain. Duplicate ticket numbers are blocked. Corrections re-sync weights to the receipt.</description>
+  <isinactive>F</isinactive>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_sl_scaleticket">
+      <allemployees>F</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <status>RELEASED</status>
+      <title>SUST - Scale Kiosk</title>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>

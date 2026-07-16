@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suitelet scriptid="customscript_sust_sl_seed_demo">
+  <name>SUST - Seed Sustana Demo</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_SL_SeedSustanaDemo.js]</scriptfile>
+  <description>Idempotent demo-data seeder for the Sustana Recovery demo. Verifies the US/CA subsidiaries, then seeds (per checkbox) the config record, locations, lot-numbered grade items, entities, RISI index prices, settlement schedules, open PO-10001, on-hand yard lots, and an optional planning scenario. Every seeded record carries a SUSTDEMO_ externalid (custom records match by natural key), so re-running updates instead of duplicating.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_sl_seed_demo">
+      <status>RELEASED</status>
+      <title>SUST - Seed Sustana Demo</title>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <allroles>T</allroles>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>

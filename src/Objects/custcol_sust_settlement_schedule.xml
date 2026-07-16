@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_settlement_schedule">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>SELECT</fieldtype>
+  <help>Link to pricing schedule</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>  <label>Settlement Schedule</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customrecord_sust_settlement_schedule]</selectrecordtype>  <sourcefrom/>
+  <sourcelist/>
+  <storevalue>T</storevalue></transactioncolumncustomfield>

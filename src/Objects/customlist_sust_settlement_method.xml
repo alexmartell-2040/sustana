@@ -1,0 +1,34 @@
+<customlist scriptid="customlist_sust_settlement_method">
+  <description>Method for calculating settlement (Sustana Recovery). Display texts must match settlement library constants.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>F</isordered>
+  <name>Settlement Method (2)</name>
+  <customvalues>
+    <customvalue scriptid="val_brokered">
+      <abbreviation>B</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Brokered (Pass-through)</value>
+    </customvalue>
+    <customvalue scriptid="val_per_lb_received">
+      <abbreviation>RP</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Received Pricing</value>
+    </customvalue>
+    <customvalue scriptid="val_per_lb_recovered">
+      <abbreviation>RC</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Recovered Pricing</value>
+    </customvalue>
+    <customvalue scriptid="val_schedule_fixed">
+      <abbreviation>FP</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Fixed Price</value>
+    </customvalue>
+    <customvalue scriptid="val_schedule_market">
+      <abbreviation>IDX</abbreviation>
+      <isinactive>F</isinactive>
+      <value>% of Index</value>
+    </customvalue>
+  </customvalues>
+</customlist>

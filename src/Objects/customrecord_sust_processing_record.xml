@@ -1,0 +1,374 @@
+<customrecordtype scriptid="customrecord_sust_processing_record">
+  <allowattachments>F</allowattachments>
+  <allowinlinedeleting>F</allowinlinedeleting>
+  <allowinlineediting>F</allowinlineediting>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Main record for tracking scrap processing operations</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenametranslation>F</enablenametranslation>
+  <enablenumbering>T</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <numberingprefix>PROC-</numberingprefix>
+  <numberingsuffix/>
+  <numberingmindigits>3</numberingmindigits>
+  <numberinginit>1</numberinginit>
+  <recordname>Processing Record</recordname>
+  <showid>T</showid>
+  <shownotes>T</shownotes>
+  <showrecordtype>F</showrecordtype>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_po">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Purchase Order</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>      <fldcurselrectype>-30</fldcurselrectype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_source_line">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>v2.3 line-level: line unique key of the source PO/IR line this processing record is scoped to. One processing record per scrap line.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>System-managed. Stores the line unique key on the source PO/Item Receipt so the processing record is bound to a single scrap line, not the whole transaction. Pairs with the line's Processing column field.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Source Line Key</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>DATE</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Processing Date</label>      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_input_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Input item to be processed</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Input Item</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_input_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Input lot number to consume</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Input Lot</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>
+      <fldfilter>custrecord_sust_processing_input_item</fldfilter>
+      <fldfiltercomparetype>EQ</fldfiltercomparetype>
+      <fldfiltersel>item</fldfiltersel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_input_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>FLOAT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Input Weight (lbs)</label>      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_type">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Processing Type</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_process_type]</selectrecordtype>      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_status">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>      <label>Processing Status</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_processing_status]</selectrecordtype>      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_operator">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>Operator</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>-4</selectrecordtype>      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_work_order">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Link to Inventory Adjustment created from this processing record</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Inventory Adjustment</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <fldcurselrectype>-30</fldcurselrectype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_location">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Processing location</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Location</label>
+      <maxlength/>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-103</selectrecordtype>
+      <fldcurselrectype>-103</fldcurselrectype>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_start_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>DATE</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>Start Date/Time</label>      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_end_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>DATE</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>End Date/Time</label>      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_notes">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>TEXTAREA</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>Notes</label>      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_settlement">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>      <label>Settlement</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_settlement_record]</selectrecordtype>      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_source_type">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Source/mode of this WIP: Receiver / Mount / Brokered / Repackage</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Drives downstream behavior. Receiver = raw recovered-paper input (default 1:1, exception N:1). Mount = blend of already-finished fiber. Brokered = pass-through, no WIP/IA — sellable direct from receiver. Repackage = same lot, new item form, no grade change.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Source Type</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_proc_source_type]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_equipment">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Equipment used in this WIP.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Sorting Line / Baler / Shredder / Other. Used for process-type reporting; selection does not change WIP behavior.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Equipment</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_equipment]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_gross_input_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Total gross weight of material brought into the WIP (before tare).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Sum of gross weights across all input lines. Captured at WIP start.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Gross Input (lbs)</label>
+      <minvalue>0</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_tare_estimate_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Tare weight estimated at receipt (carried forward from receiver lot's estimate).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Initial tare estimate from receiver lot (packaging-based). Used for reference; superseded by Tare Actual at WIP completion.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Tare Estimate (lbs)</label>
+      <minvalue>0</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_tare_actual_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Actual tare weight measured at WIP completion (real packaging weighed empty).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Measured tare after material is stripped out. Drives the True Net true-up that propagates back to the receiver lot.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Tare Actual (lbs)</label>
+      <minvalue>0</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_true_net_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>True net input weight (gross − actual tare). Source of truth for downstream calcs.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Auto-calculated: Gross Input − Tare Actual. Auto-propagates back to source receiver lot via the true-net bridge UE.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>True Net (lbs)</label>
+      <minvalue>0</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_total_output_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Sum of all output line weights.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Auto-calculated total weight across all output streams (recovered fiber + residual/byproduct + other). Compared against True Net for mass balance validation.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Total Output (lbs)</label>
+      <minvalue>0</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_mass_balance_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Mass balance ratio: Total Output ÷ True Net × 100. ~100% expected; soft warn outside ±2%.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Auto-calculated mass balance. 100% = perfect closure. Less than 98% suggests material loss/shrinkage. Greater than 102% suggests measurement error. Soft warning issued outside ±2%.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Mass Balance %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_total_input_cost">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Total inventory $ consumed by this WIP — sum across all input lines or single-input value.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Total cost basis being allocated to outputs. For Post-Processing pricing mode this stays $0 until settlement completes; cost flows back via auto Inventory Adjustment then.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Total Input Cost ($)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_processing_alloc_mode">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>v2.1: Cost allocation mode applied at processing completion. Byproduct is the GAAP-recommended default; Weight is legacy; Relative NRV treats outputs as joint products.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Drives how input cost is distributed across output lines. Byproduct = primary grade absorbs cost, byproducts valued at NRV. Relative NRV = pro-rata by NRV across all outputs. Weight = uniform $/lb (legacy v2 behavior).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Allocation Mode</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_alloc_mode]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_proc_ia_pending">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>v2.2: Flag indicating IA creation is pending — set when processing reaches Completed with Total Input Cost = 0 (deferred-pricing path). Cleared when settlement flow-back triggers IA creation.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>System-managed flag. Indicates the processing record is in Awaiting Cost state pending settlement determination. The IA will be created automatically when the linked settlement completes and the cost is known.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>IA Pending</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

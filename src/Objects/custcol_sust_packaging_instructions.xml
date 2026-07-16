@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_packaging_instructions">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>TEXTAREA</fieldtype>
+  <help>Special handling for this line</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>  <label>Packaging Instructions</label>
+  <searchlevel>2</searchlevel>  <sourcefrom/>
+  <sourcelist/>
+  <storevalue>T</storevalue></transactioncolumncustomfield>

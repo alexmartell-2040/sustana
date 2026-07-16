@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_lcnrv_review">
+  <allowattachments>T</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>v2.1: LCNRV review entry created by the monthly SUST_SS_LCNRVTest. One row per lot where carrying cost greater than computed NRV. Controller reviews via SUST_SL_LCNRVDashboard and either marks no-action or posts a write-down adjustment.</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>T</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>T</enablesystemnotes>
+  <includename>F</includename>
+  <numberingprefix>LCNRV-</numberingprefix>
+  <recordname>LCNRV Review</recordname>
+  <showcreationdate>T</showcreationdate>
+  <showcreationdateonlist>T</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>T</showlastmodified>
+  <showlastmodifiedonlist>T</showlastmodifiedonlist>
+  <showowner>T</showowner>
+  <showowneronlist>T</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Inventory number (lot) under review.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>The lot whose carrying cost exceeds NRV.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <label>Lot</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_item">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Item the lot belongs to.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Item linked to the lot under review.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Item</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-10</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_qty_on_hand">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Lot quantity on hand at the time of review.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>On-hand quantity at the time of LCNRV test.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Qty On Hand</label>
+      <minvalue>0</minvalue>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_cost_per_lb">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Lot carrying cost per pound at time of review.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Carrying cost per lb.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Carrying Cost / lb</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_cost_total">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Total lot carrying cost (qty x cost/lb).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Total carrying cost for the lot.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Carrying Cost (Total)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_nrv_per_lb">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Computed NRV per pound at the time of review.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>NRV per lb from the hierarchical fallback chain.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>NRV / lb</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_nrv_total">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Total computed NRV (qty x NRV/lb).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Total NRV.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>NRV (Total)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_nrv_source">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Which NRV source the engine used (manual / derived / last sale / zero).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>NRV source from the hierarchical fallback chain.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>NRV Source</label>
+      <maxlength>40</maxlength>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_variance">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Variance: carrying cost minus NRV (always positive when LCNRV write-down required).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>Write-down amount needed to bring lot to NRV.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Variance (Cost - NRV)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_variance_pct">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Variance as percentage of carrying cost.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>PERCENT</fieldtype>
+      <help>Variance percentage. Useful for materiality assessment.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Variance %</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_run_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Date the LCNRV test ran.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>LCNRV test run date.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Run Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_status">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Workflow status of the review.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Pending Review until controller acts.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Status</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customlist_sust_lcnrv_status]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_reviewer">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Employee who reviewed this entry.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Reviewer employee.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Reviewer</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-4</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_notes">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Reviewer notes (e.g., reason for no-action).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXTAREA</fieldtype>
+      <help>Notes documenting the review decision.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Review Notes</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_lcnrv_adjustment">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Inventory Adjustment that posted the write-down (when status = Adjustment Posted).</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Link to the Inventory Adjustment that recorded the LCNRV write-down.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Posted Adjustment</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

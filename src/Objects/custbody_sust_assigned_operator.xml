@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_assigned_operator">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <bodyinventoryadjustment>T</bodyinventoryadjustment>
+  <bodyitemfulfillment>T</bodyitemfulfillment>
+  <bodyitemreceipt>T</bodyitemreceipt>
+  <bodypurchase>T</bodypurchase>
+  <bodysale>T</bodysale>
+  <bodyworkorder>T</bodyworkorder>
+  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <fieldtype>MULTISELECT</fieldtype>
+  <fldtabsection>MAIN</fldtabsection>
+  <help>Operator(s) assigned to this work order</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Assigned Operator(s)</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>-4</selectrecordtype>
+  <showinlist>T</showinlist>
+  <storevalue>T</storevalue>
+</transactionbodycustomfield>

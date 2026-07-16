@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactionbodycustomfield scriptid="custbody_sust_lcnrv_review">
+  <accesslevel>2</accesslevel>
+  <applyformatting>T</applyformatting>
+  <bodyinventoryadjustment>T</bodyinventoryadjustment>
+  <bodypurchase>F</bodypurchase>
+  <bodysale>F</bodysale>
+  <bodyitemfulfillment>F</bodyitemfulfillment>
+  <bodyitemreceipt>F</bodyitemreceipt>
+  <checkspelling>F</checkspelling>
+  <defaultchecked>F</defaultchecked>
+  <description>v2.1: Link from LCNRV write-down Inventory Adjustment back to the originating LCNRV review record.</description>
+  <displaytype>NORMAL</displaytype>
+  <fieldtype>SELECT</fieldtype>
+  <help>The LCNRV review entry this write-down originated from.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>LCNRV Review</label>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customrecord_sust_lcnrv_review]</selectrecordtype>
+  <showinlist>F</showinlist>
+  <storevalue>T</storevalue>
+</transactionbodycustomfield>

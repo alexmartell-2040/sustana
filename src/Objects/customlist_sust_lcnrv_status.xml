@@ -1,0 +1,29 @@
+<customlist scriptid="customlist_sust_lcnrv_status">
+  <description>v2.1: Status of an LCNRV review entry (controller workflow for write-down review).</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>LCNRV Review Status</name>
+  <customvalues>
+    <customvalue scriptid="val_lcnrv_pending">
+      <abbreviation>P</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Pending Review</value>
+    </customvalue>
+    <customvalue scriptid="val_lcnrv_noaction">
+      <abbreviation>NA</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Reviewed - No Action</value>
+    </customvalue>
+    <customvalue scriptid="val_lcnrv_adjpending">
+      <abbreviation>AP</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Reviewed - Adjustment Pending</value>
+    </customvalue>
+    <customvalue scriptid="val_lcnrv_adjposted">
+      <abbreviation>D</abbreviation>
+      <isinactive>F</isinactive>
+      <value>Adjustment Posted</value>
+    </customvalue>
+  </customvalues>
+</customlist>

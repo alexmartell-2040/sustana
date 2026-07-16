@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<usereventscript scriptid="customscript_sust_ue_ff_defaults">
+  <name>SUST - Fulfillment Defaults</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_UE_FulfillmentDefaults.js]</scriptfile>
+  <description>Sets default values on Item Fulfillment and adds Shipping Matrix button</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_ue_ff_defaults">
+      <allroles>T</allroles>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>ITEMFULFILLMENT</recordtype>
+      <status>RELEASED</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>
