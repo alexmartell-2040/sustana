@@ -22,8 +22,8 @@
   <description>Per-pound financing and insurance allocation.</description>
   <displaytype>NORMAL</displaytype>
   <dynamicdefault></dynamicdefault>
-  <fieldtype>CURRENCY</fieldtype>
-  <help>Financing carrying cost plus insurance allocated per pound for landed-cost capitalization. Combine into one field unless a separate breakout is required.</help>
+  <fieldtype>FLOAT</fieldtype>
+  <help>Financing carrying cost plus insurance allocated per pound for landed-cost capitalization. Combine into one field unless a separate breakout is required. FLOAT not CURRENCY -- $/lb values derived from $/ton figures need 3-4 decimal places.</help>
   <isformula>F</isformula>
   <ismandatory>F</ismandatory>
   <label>Financing + Insurance ($/lb)</label>

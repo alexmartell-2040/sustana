@@ -106,10 +106,10 @@
       <accesslevel>2</accesslevel>
       <applyformatting>T</applyformatting>
       <defaultchecked>F</defaultchecked>
-      <description>Fixed price per pound (if applicable)</description>
+      <description>Fixed price per pound (if applicable). FLOAT (not CURRENCY) -- $/lb prices derived from $/ton figures often need 3-4 decimal places; CURRENCY's 2-decimal rounding would silently distort them.</description>
       <displaytype>NORMAL</displaytype>
-      <fieldtype>CURRENCY</fieldtype>
-      <help>Fixed price per pound (if applicable)</help>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Fixed price per pound (if applicable), e.g. 0.15 = $300/ton</help>
       <isformula>F</isformula>
       <ismandatory>F</ismandatory>
       <label>Base Price</label>
@@ -152,10 +152,10 @@
       <accesslevel>2</accesslevel>
       <applyformatting>T</applyformatting>
       <defaultchecked>F</defaultchecked>
-      <description>Dollar amount to add/subtract from market</description>
+      <description>Dollar amount to add/subtract from market, in $/lb. FLOAT (not CURRENCY) because $/lb adjustments derived from round $/ton figures need 3-4 decimal places (e.g. $10/ton = 0.005/lb) -- CURRENCY's 2-decimal rounding silently doubles small adjustments.</description>
       <displaytype>NORMAL</displaytype>
-      <fieldtype>CURRENCY</fieldtype>
-      <help>Dollar amount to add/subtract from market</help>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Dollar amount to add/subtract from market ($/lb, e.g. 0.005 = $10/ton)</help>
       <isformula>F</isformula>
       <ismandatory>F</ismandatory>
       <label>Market Adjustment</label>

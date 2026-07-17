@@ -22,8 +22,8 @@
   <description>Published index base component of the landed cost ($/lb). When populated, the landed-cost rollup sets line rate = Index Base + Premium + Freight + Financing/Insurance.</description>
   <displaytype>NORMAL</displaytype>
   <dynamicdefault></dynamicdefault>
-  <fieldtype>CURRENCY</fieldtype>
-  <help>Index base price per pound (e.g. the RISI reference converted to $/lb). Leave blank/zero to skip the landed-cost rollup on this line.</help>
+  <fieldtype>FLOAT</fieldtype>
+  <help>Index base price per pound (e.g. the RISI reference converted to $/lb). Leave blank/zero to skip the landed-cost rollup on this line. FLOAT not CURRENCY -- $/lb values derived from $/ton figures need 3-4 decimal places.</help>
   <isformula>F</isformula>
   <ismandatory>F</ismandatory>
   <label>Index Base ($/lb)</label>

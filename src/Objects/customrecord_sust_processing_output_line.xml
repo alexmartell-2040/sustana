@@ -144,8 +144,8 @@
       <defaultchecked>F</defaultchecked>
       <description>Derived $/lb on this output line: allocated_cost ÷ output_weight.</description>
       <displaytype>NORMAL</displaytype>
-      <fieldtype>CURRENCY</fieldtype>
-      <help>Auto-calculated $/lb that gets written to the output lot as inventory cost basis.</help>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Auto-calculated $/lb that gets written to the output lot as inventory cost basis. FLOAT not CURRENCY -- a division result needs more than 2 decimal places.</help>
       <isformula>F</isformula>
       <ismandatory>F</ismandatory>
       <label>Cost / lb ($)</label>

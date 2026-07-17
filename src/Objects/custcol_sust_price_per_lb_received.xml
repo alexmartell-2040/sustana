@@ -4,8 +4,8 @@
   <applyformatting>T</applyformatting>  <defaultchecked>F</defaultchecked>
   <displaytype>NORMAL</displaytype>
   <dynamicdefault/>
-  <fieldtype>CURRENCY</fieldtype>
-  <help>Settlement price based on gross weight</help>
+  <fieldtype>FLOAT</fieldtype>
+  <help>Settlement price based on gross weight. FLOAT not CURRENCY -- $/lb rates need 3-4 decimal places.</help>
   <isformula>F</isformula>
   <ismandatory>F</ismandatory>  <label>Price Per Lb Received</label>
   <searchlevel>2</searchlevel>  <sourcefrom/>

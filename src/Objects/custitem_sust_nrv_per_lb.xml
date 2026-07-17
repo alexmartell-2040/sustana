@@ -19,9 +19,9 @@
   <description>v2.1: Manual Net Realizable Value override per pound. Used by SUST_Lib_CostAllocation as the FIRST source in the NRV hierarchical fallback chain. Leave blank to fall through to market-derived / last-sale-based NRV.</description>
   <displaytype>NORMAL</displaytype>
   <encryptatrest>F</encryptatrest>
-  <fieldtype>CURRENCY</fieldtype>
+  <fieldtype>FLOAT</fieldtype>
   <globalsearch>F</globalsearch>
-  <help>Manual NRV per pound. Used by the cost allocation engine and LCNRV testing. NRV fallback chain: (1) this field, (2) market price x content x recovery, (3) last sale price, (4) zero. Leave blank to use derived NRV.</help>
+  <help>Manual NRV per pound. Used by the cost allocation engine and LCNRV testing. NRV fallback chain: (1) this field, (2) market price x content x recovery, (3) last sale price, (4) zero. Leave blank to use derived NRV. FLOAT not CURRENCY -- $/lb values derived from $/ton figures need 3-4 decimal places.</help>
   <includechilditems>F</includechilditems>
   <isformula>F</isformula>
   <ismandatory>F</ismandatory>

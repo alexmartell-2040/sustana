@@ -22,8 +22,8 @@
   <description>Premium per pound over the published index reference negotiated with the vendor.</description>
   <displaytype>NORMAL</displaytype>
   <dynamicdefault></dynamicdefault>
-  <fieldtype>CURRENCY</fieldtype>
-  <help>Per-pound amount above the index base that the vendor charges. Tracked separately for landed-cost reporting and supplier comparison.</help>
+  <fieldtype>FLOAT</fieldtype>
+  <help>Per-pound amount above the index base that the vendor charges. Tracked separately for landed-cost reporting and supplier comparison. FLOAT not CURRENCY -- $/lb values derived from $/ton figures need 3-4 decimal places.</help>
   <isformula>F</isformula>
   <ismandatory>F</ismandatory>
   <label>Premium ($/lb)</label>

@@ -57,10 +57,10 @@
       <accesslevel>2</accesslevel>
       <applyformatting>T</applyformatting>
       <defaultchecked>F</defaultchecked>
-      <description>Final converted price in $/lb</description>
+      <description>Final converted price in $/lb, derived from the $/ton raw rate.</description>
       <displaytype>NORMAL</displaytype>
-      <fieldtype>CURRENCY</fieldtype>
-      <help>Final converted price in $/lb</help>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Final converted $/lb value used directly in settlement/pricing formulas. FLOAT not CURRENCY -- $/lb values derived from $/ton figures need 3-4 decimal places.</help>
       <isformula>F</isformula>
       <ismandatory>T</ismandatory>
       <label>Price Per Lb</label>

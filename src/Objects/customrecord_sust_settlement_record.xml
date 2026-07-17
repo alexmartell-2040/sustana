@@ -152,8 +152,8 @@
       <defaultchecked>F</defaultchecked>
       <description>Market price on settlement date</description>
       <displaytype>NORMAL</displaytype>
-      <fieldtype>CURRENCY</fieldtype>
-      <help>Market price on settlement date</help>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Market price on settlement date ($/lb). FLOAT not CURRENCY -- sourced from the market-price record, which needs 3-4 decimal places.</help>
       <isformula>F</isformula>
       <ismandatory>F</ismandatory>
       <label>Market Price</label>

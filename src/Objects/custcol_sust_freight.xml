@@ -22,8 +22,8 @@
   <description>Per-pound freight cost on this line (0 if delivered free).</description>
   <displaytype>NORMAL</displaytype>
   <dynamicdefault></dynamicdefault>
-  <fieldtype>CURRENCY</fieldtype>
-  <help>Freight expense allocated per pound. Captured at the line level so different lots/items on the same PO can carry different freight rates.</help>
+  <fieldtype>FLOAT</fieldtype>
+  <help>Freight expense allocated per pound. Captured at the line level so different lots/items on the same PO can carry different freight rates. FLOAT not CURRENCY -- $/lb values derived from $/ton figures need 3-4 decimal places.</help>
   <isformula>F</isformula>
   <ismandatory>F</ismandatory>
   <label>Freight ($/lb)</label>

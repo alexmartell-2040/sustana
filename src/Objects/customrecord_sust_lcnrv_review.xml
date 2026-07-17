@@ -77,8 +77,8 @@
       <defaultchecked>F</defaultchecked>
       <description>Lot carrying cost per pound at time of review.</description>
       <displaytype>NORMAL</displaytype>
-      <fieldtype>CURRENCY</fieldtype>
-      <help>Carrying cost per lb.</help>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Carrying cost per lb. FLOAT not CURRENCY -- $/lb values need 3-4 decimal places.</help>
       <isformula>F</isformula>
       <ismandatory>F</ismandatory>
       <label>Carrying Cost / lb</label>
@@ -107,8 +107,8 @@
       <defaultchecked>F</defaultchecked>
       <description>Computed NRV per pound at the time of review.</description>
       <displaytype>NORMAL</displaytype>
-      <fieldtype>CURRENCY</fieldtype>
-      <help>NRV per lb from the hierarchical fallback chain.</help>
+      <fieldtype>FLOAT</fieldtype>
+      <help>NRV per lb from the hierarchical fallback chain. FLOAT not CURRENCY -- $/lb values need 3-4 decimal places.</help>
       <isformula>F</isformula>
       <ismandatory>F</ismandatory>
       <label>NRV / lb</label>

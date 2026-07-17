@@ -304,8 +304,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
         function seedConfig(ctx, out) {
             const section = newSection(out, 'Group 1 - Config record');
             try {
-                ctx.invAdjAcctId = ensureExpenseAccount('Inventory Adjustment - Processing', EXT_PREFIX + 'ACCT_INVADJ', 'Inventory Adjustment', section);
-                ctx.settleExpAcctId = ensureExpenseAccount('Material Settlement Expense', EXT_PREFIX + 'ACCT_SETTLEEXP', 'Material Settlement', section);
+                ctx.invAdjAcctId = ensureExpenseAccount(ctx, 'Inventory Adjustment - Processing', EXT_PREFIX + 'ACCT_INVADJ', 'Inventory Adjustment', section);
+                ctx.settleExpAcctId = ensureExpenseAccount(ctx, 'Material Settlement Expense', EXT_PREFIX + 'ACCT_SETTLEEXP', 'Material Settlement', section);
                 ctx.feeItemId = ensureSettlementFeeItem(ctx, section);
                 const defaultLocId = ensureLocation(ctx, locationSpec('CINCINNATI'), section); // lazy — Group 2 re-reports it as existing
 
@@ -354,7 +354,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
          * Ensure an Expense account. Order: externalid → exact name → create →
          * fall back to any Expense account whose name starts with fallbackPrefix.
          */
-        function ensureExpenseAccount(name, extid, fallbackPrefix, section) {
+        function ensureExpenseAccount(ctx, name, extid, fallbackPrefix, section) {
             try {
                 let id = findByExternalId('account', extid);
                 if (id) {
@@ -376,6 +376,10 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     acct.setValue({ fieldId: 'acctname', value: name });
                     acct.setValue({ fieldId: 'accttype', value: 'Expense' });
                     acct.setValue({ fieldId: 'externalid', value: extid });
+                    // Match the widest subsidiary restriction anything downstream (the
+                    // settlement fee item, IA transactions) will need — an item/transaction's
+                    // subsidiary set must be a subset of its account's.
+                    setSubsidiaryField(acct, [ctx.usSubId, ctx.caSubId]);
                     id = acct.save({ ignoreMandatoryFields: true });
                     addRow(section, 'created', 'Account ' + name + ' (Expense)', 'account', id);
                     return parseInt(id, 10);
@@ -479,7 +483,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 try {
                     const loc = record.create({ type: 'location', isDynamic: false });
                     loc.setValue({ fieldId: 'name', value: spec.name });
-                    setSubsidiaryField(loc, [subId]); // multiselect — set as array
+                    loc.setValue({ fieldId: 'subsidiary', value: subId }); // single-select on Location (unlike Item)
                     loc.setValue({ fieldId: 'externalid', value: spec.extid });
                     id = loc.save({ ignoreMandatoryFields: true });
                 } catch (eCreate) {
@@ -929,7 +933,10 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             try {
                 const existingId = findByExternalId('inventoryadjustment', IA_EXTID);
                 if (existingId) {
-                    addRow(section, 'exists', 'On-hand adjustment already seeded - whole group skipped (inventory adjustments are not safely re-runnable)', 'inventoryadjustment', existingId);
+                    addRow(section, 'exists', 'On-hand adjustment already seeded (inventory adjustments are not safely re-runnable) - re-applying lot quality fields only', 'inventoryadjustment', existingId);
+                    ONHAND_LOTS.forEach(function(lotSpec) {
+                        updateSeededLot(lotSpec, section);
+                    });
                     return;
                 }
                 const cinciId = resolveLocationId(ctx, 'CINCINNATI');
@@ -1005,6 +1012,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 // (submitFields cannot set a list value by display text).
                 const lot = record.load({ type: 'inventorynumber', id: lotId });
                 lot.setText({ fieldId: 'custitemnumber_sust_lot_status', text: 'Yard' });
+                lot.setText({ fieldId: 'custitemnumber_sust_lot_source_type', text: 'Purchased' });
                 lot.setValue({ fieldId: 'custitemnumber_sust_bale_count', value: lotSpec.bales });
                 lot.setValue({ fieldId: 'custitemnumber_sust_moisture_pct', value: lotSpec.moisture });
                 lot.setValue({ fieldId: 'custitemnumber_sust_contamination_pct', value: lotSpec.contamination });
