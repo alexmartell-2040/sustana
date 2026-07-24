@@ -168,6 +168,40 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
         }
 
         /**
+         * True when v is a positive integer internal-id (or an all-digit string).
+         */
+        function isNumericId(v) {
+            return v !== null && v !== undefined && v !== '' && /^\d+$/.test(String(v).trim());
+        }
+
+        /**
+         * Set a SELECT field defensively. NetSuite throws INVALID_NUMBER if a text token
+         * (e.g. a market reference of "Custom") is passed to setValue on a list field.
+         * Prefer setValue when we have a real internal id; otherwise fall back to setText
+         * on the display value. Never let a single unresolvable list value abort the save.
+         * @returns {boolean} whether the field was set
+         */
+        function setSelectField(rec, fieldId, idValue, textValue) {
+            try {
+                if (isNumericId(idValue)) {
+                    rec.setValue({ fieldId: fieldId, value: parseInt(idValue, 10) });
+                    return true;
+                }
+                // idValue wasn't a numeric id — it may itself be the display text.
+                const text = (idValue !== null && idValue !== undefined && String(idValue).trim() !== '')
+                    ? String(idValue) : textValue;
+                if (text !== null && text !== undefined && String(text).trim() !== '') {
+                    rec.setText({ fieldId: fieldId, text: String(text) });
+                    return true;
+                }
+            } catch (e) {
+                log.audit('Select field skipped',
+                    `${fieldId}: could not resolve "${idValue}"/"${textValue}" to a list value — leaving blank (${e.message})`);
+            }
+            return false;
+        }
+
+        /**
          * Create a line-scoped settlement record.
          *
          * @param {Object} params
@@ -199,10 +233,12 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             settlement.setValue({ fieldId: 'custrecord_sust_settlement_date', value: new Date(params.tranDate || Date.now()) });
             settlement.setText({ fieldId: 'custrecord_sust_settlement_status', text: 'Draft' });
 
-            // Method + schedule link
-            if (scheduleInfo && scheduleInfo.methodId) {
-                settlement.setValue({ fieldId: 'custrecord_sust_settlement_method', value: scheduleInfo.methodId });
-                settlement.setValue({ fieldId: 'custrecord_sust_settlement_schedule', value: scheduleInfo.scheduleId });
+            // Method + schedule link (defensive: schedule fields may hold text, not ids)
+            if (scheduleInfo && (scheduleInfo.methodId || scheduleInfo.methodText)) {
+                setSelectField(settlement, 'custrecord_sust_settlement_method', scheduleInfo.methodId, scheduleInfo.methodText);
+                if (isNumericId(scheduleInfo.scheduleId)) {
+                    settlement.setValue({ fieldId: 'custrecord_sust_settlement_schedule', value: parseInt(scheduleInfo.scheduleId, 10) });
+                }
             } else {
                 settlement.setText({ fieldId: 'custrecord_sust_settlement_method', text: 'Received Pricing' });
             }
@@ -242,11 +278,9 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
                         const recoveryFactor = (isRecoveredMode && recoveryPct > 0) ? (recoveryPct / 100) : 1;
                         netSettlementValue = netWeight * effective * recoveryFactor;
                         settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_price', value: storedPrice.pricePerLb });
-                        if (scheduleInfo.marketRefId) {
-                            settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_source', value: scheduleInfo.marketRefId });
-                        }
-                    } else if (scheduleInfo.marketRefId) {
-                        settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_source', value: scheduleInfo.marketRefId });
+                        setSelectField(settlement, 'custrecord_sust_settlement_market_source', scheduleInfo.marketRefId, scheduleInfo.marketRefText);
+                    } else {
+                        setSelectField(settlement, 'custrecord_sust_settlement_market_source', scheduleInfo.marketRefId, scheduleInfo.marketRefText);
                     }
                 } else if (scheduleInfo.pricePerLb > 0) {
                     netSettlementValue = netWeight * scheduleInfo.pricePerLb;
