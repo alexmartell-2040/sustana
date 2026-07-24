@@ -43,6 +43,25 @@ effect is the failure signal, not an on-screen error.
 
 ---
 
+## TC-RCV-MULTI — Multiple receipts against one PO
+
+| | |
+|---|---|
+| **Preconditions** | An open PO with quantity for ≥2 partial receipts (e.g. seed/raise PO qty so 40,000 lbs can be received twice). |
+| **Steps** | 1. Receive the PO partially (e.g. 40,000 lbs, lot `TRK-101`) → save. 2. Confirm a settlement was created. 3. Receive the PO again (remaining qty, lot `TRK-102`) → save. |
+| **Expected** | **Both** receipts produce their own line settlement (Draft). Before the fix, the 2nd+ receipt was silently skipped because the PO already had a settlement. The guard now only defers when the PO carries a *settle-before-receipt* settlement (linked to the PO but to no Item Receipt). |
+| **Regression** | Covered by `itemReceiptSettlementGuard.test.js`. |
+
+## TC-RCVLINE — On-demand line settlement (Manage Line Settlements button)
+
+| | |
+|---|---|
+| **Preconditions** | An Item Receipt (or PO) with a scrap line that has no settlement — e.g. a "Determined After Processing" line the IR deferred, or a 2nd receipt line. A pricing schedule exists for the vendor + item. |
+| **Steps** | 1. From the IR (or PO), click **Create / Manage Line Settlements**. 2. Review the "Existing Settlement" column (already-settled lines show their settlement #, create-only). 3. Check the un-settled line(s) → **Create Selected Settlements**. |
+| **Expected** | Settlement(s) created and you are redirected back to the source transaction. **No `INVALID_NUMBER` error** even when the vendor's schedule has a text-valued Market Reference such as "Custom" — the SELECT writes now fall back to `setText`/skip instead of aborting the save. |
+| **Regression** | Covered by `lineSettlementCreate.test.js`. |
+| **Known UX gap** | The button is *create-only*; you cannot select/re-link an existing settlement from this screen (matches the reported "couldn't select the existing one"). Editing the link is done on the settlement record itself. |
+
 ## TC-KIOSK — 7:30 Scale kiosk (the Suitelet is the scale)
 
 | | |
@@ -213,6 +232,8 @@ gate; use the manual cases above for everything it can't reach.
 | `settlementStatus.test.js` | `SUST_UE_Settlement_StatusChange` + `SUST_SL_SettlementCalculation` server calc | Status-change detection (DELETE/no-change/create no-op); provisional & final bill creation, skip conditions, negative balance, fee-item vs expense-account resolution + param override, **throws when neither configured**; approval fields; never-throw on load/create failure; the full calc (gross = netLbs × $/lb, schedule pct+adj, **all three penalty formulas**, threshold edge = no deduction, penalty-detail create/delete, netValue/balanceDue). |
 | `shippingMatrix.test.js` | `SUST_SL_ShippingMatrix` | List/New/Detail/BOL GET modes; POST create (record + fulfillment linking), mark shipped, cancel; error page. |
 | `soIndexPricing.test.js` | `SUST_UE_SO_IndexPricing` | No-op cases; schedule matching filters (customer/item/active, **skips Purchase-direction**); Fixed Price and `% of Index` rate + formula memo; no index value / manual source leaves line untouched; multi-line selectivity; beforeLoad banner. |
+| `lineSettlementCreate.test.js` | `SUST_Lib_SettlementCreate.createLineSettlement` | **Defensive SELECT writes (INVALID_NUMBER fix):** a text market reference ("Custom") routes through `setText` not `setValue`; numeric ids still use `setValue`; non-numeric schedule id is skipped, not fatal; no-schedule falls back to Received Pricing; net = gross × recovery. |
+| `itemReceiptSettlementGuard.test.js` | `SUST_UE_ItemReceipt_CreateSettlement` | **Multi-receipt guard fix:** a later receipt still creates a settlement when the PO only has receipt-linked settlements; IR auto-create is skipped only for a genuine settle-before-receipt settlement; first receipt on a clean PO creates one. |
 
 **Well-covered logic you can trust from CI:** unit conversions, market-price storage &
 effective-dated lookup, scale-ticket flow, settlement pricing + penalty math, settlement
@@ -229,9 +250,9 @@ the right column). Highest business risk first.
 | **`SUST_UE_Processing_CreateInvAdj`** | Creates the Inventory Adjustment, output lots, genealogy; deferred-cost 'Awaiting Cost' branch. Complex, side-effect-heavy. | TC-PROC, TC-COSTFLOW |
 | **`SUST_UE_Settlement_CostFlowBack`** | Re-runs allocation, re-fires deferred IA, sold-before-settled JE detection. | TC-COSTFLOW |
 | **`SUST_UE_ItemReceipt_LandedCost`** | Sets line rate = Index Base + Premium + Freight + Financing (inventory valuation). | TC-RCV |
-| **`SUST_UE_ItemReceipt_CreateSettlement`** | Auto line-settlement creation, After-Processing deferral, dedupe. | TC-RCV, TC-KIOSK |
+| `SUST_UE_ItemReceipt_CreateSettlement` | ~~Auto line-settlement creation, After-Processing deferral, dedupe.~~ **Now partially covered** (`itemReceiptSettlementGuard.test.js`) for the PO-level guard; line-lot gathering + deferral still manual. | TC-RCV, TC-KIOSK, TC-RCV-MULTI |
+| `SUST_Lib_SettlementCreate` | ~~Shared settlement-creation library.~~ **Now partially covered** (`lineSettlementCreate.test.js`) for SELECT-write safety + weights; schedule lookup + market pricing still manual. | TC-RCV, TC-RCVLINE |
 | **`SUST_UE_ItemReceipt_BridgeVendorLot`** | Vendor-lot bridge + lot status init. | TC-RCV, TC-KIOSK |
-| **`SUST_Lib_SettlementCreate`** | Shared settlement-creation library used by IR UE, line-settlement Suitelet, kiosk. | TC-RCV, TC-RCVLINE |
 | **`SUST_UE_Processing_DerivedFields`** | Yield/mass-balance banner + per-line cost derivation. | TC-PROC |
 | **`SUST_UE_SettlementModeLock`** | Field locking + **SETTLE-012 Price-Fixed blocker** (the one UE that DOES throw). | TC-SETTLE-STATUS |
 | **`SUST_SL_ProcessingEntry`** + CS | tons↔lbs on the form; output-line rebuild; template load. | TC-PROC |

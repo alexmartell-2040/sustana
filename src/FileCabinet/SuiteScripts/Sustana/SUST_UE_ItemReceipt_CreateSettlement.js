@@ -79,11 +79,14 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_SettlementCrea
                 const poId = itemReceipt.getValue({ fieldId: 'createdfrom' }) || null;
                 const headerTiming = itemReceipt.getText({ fieldId: 'custbody_sust_pricing_timing' }) || '';
 
-                // Avoid duplicating settle-before-receipt: if the source PO already has
-                // settlements, the user took control from the PO — skip IR auto-create.
-                if (poId && poHasSettlements(poId)) {
+                // Avoid duplicating settle-before-receipt: skip IR auto-create only when the
+                // source PO carries a PRE-RECEIPT settlement (linked to the PO but to no Item
+                // Receipt) — i.e. the user settled from the PO directly. Settlements created by
+                // an EARLIER receipt against this PO are IR-linked and must NOT suppress
+                // auto-create on a later partial receipt (each receipt settles its own lines).
+                if (poId && poHasPreReceiptSettlements(poId)) {
                     log.audit('Skip IR Auto-Create',
-                        `Source PO ${poId} already has settlement(s) - deferring to existing/on-demand creation to avoid duplicates.`);
+                        `Source PO ${poId} has a settle-before-receipt settlement - deferring to that/on-demand creation to avoid duplicates.`);
                     return;
                 }
 
@@ -170,18 +173,24 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_SettlementCrea
         }
 
         /**
-         * Does the source PO already have any settlement records?
+         * Does the source PO carry a PRE-RECEIPT settlement — one linked to the PO but to
+         * no Item Receipt (the settle-before-receipt path)? Settlements created by an earlier
+         * receipt against this PO are IR-linked and are intentionally excluded, so a later
+         * partial receipt still auto-creates its own line settlements.
          */
-        function poHasSettlements(poId) {
+        function poHasPreReceiptSettlements(poId) {
             try {
                 const s = search.create({
                     type: 'customrecord_sust_settlement_record',
-                    filters: [['custrecord_sust_settle_po', 'anyof', poId]],
+                    filters: [
+                        ['custrecord_sust_settle_po', 'anyof', poId],
+                        'AND', ['custrecord_sust_settlement_item_receipt', 'anyof', '@NONE@']
+                    ],
                     columns: ['internalid']
                 });
                 return s.run().getRange({ start: 0, end: 1 }).length > 0;
             } catch (e) {
-                log.error('poHasSettlements', e.toString());
+                log.error('poHasPreReceiptSettlements', e.toString());
                 return false;
             }
         }
