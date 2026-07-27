@@ -290,6 +290,17 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config'],
 
                 const refNumber = getBillReferenceNumber(settlement, settlementId);
 
+                // Deductions post as a separate VENDOR CREDIT so AP shows the full
+                // story — gross bill netted by a credit — instead of a net-only bill.
+                const penalties = parseFloat(settlement.getValue({ fieldId: 'custrecord_sust_settlement_penalties' }) || 0);
+                const treatment = parseFloat(settlement.getValue({ fieldId: 'custrecord_sust_settlement_treatment' }) || 0);
+                const deductions = penalties + treatment;
+                const grossValue = parseFloat(settlement.getValue({ fieldId: 'custrecord_sust_settlement_gross_value' }) || 0);
+                // Gross-bill mode needs a coherent gross: gross − deductions ≈ net.
+                const grossMode = deductions > 0 && grossValue > 0
+                    && Math.abs((grossValue - deductions) - netValue) < 0.01 && balanceDue > 0;
+                const billAmount = grossMode ? (grossValue - provisionalPaid) : Math.abs(balanceDue);
+
                 const bill = record.create({
                     type: record.Type.VENDOR_BILL,
                     isDynamic: false
@@ -304,29 +315,73 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config'],
 
                 bill.setValue({
                     fieldId: 'memo',
-                    value: 'Final Settlement Payment - Settlement #' + settlementId
+                    value: grossMode
+                        ? 'Final Settlement Payment - Settlement #' + settlementId + ' (gross; deductions on credit ' + refNumber + '-DED)'
+                        : 'Final Settlement Payment - Settlement #' + settlementId
                 });
 
                 // v2 SETTLE-009: write line via helper (item or expense fallback)
-                writeBillLine(bill, Math.abs(balanceDue), 'Material Settlement ' + settlementId + ' — Final Balance');
+                writeBillLine(bill, billAmount, 'Material Settlement ' + settlementId
+                    + (grossMode ? ' — Gross Value' : ' — Final Balance'));
 
                 const billId = bill.save();
 
                 log.audit('Final Bill Created', {
                     billId: billId,
                     settlementId: settlementId,
-                    balanceDue: balanceDue
+                    billAmount: billAmount,
+                    grossMode: grossMode
                 });
 
+                // Vendor credit for the deductions (gross mode only)
+                let creditId = null;
+                if (grossMode) {
+                    try {
+                        const credit = record.create({ type: record.Type.VENDOR_CREDIT, isDynamic: false });
+                        credit.setValue({ fieldId: 'entity', value: parseInt(vendorId, 10) });
+                        credit.setValue({ fieldId: 'tranid', value: refNumber + '-DED' });
+                        if (settlementDate) credit.setValue({ fieldId: 'trandate', value: new Date(settlementDate) });
+                        credit.setValue({
+                            fieldId: 'memo',
+                            value: 'Settlement #' + settlementId + ' quality deductions: penalties $' + penalties.toFixed(2)
+                                + ' + treatment $' + treatment.toFixed(2) + ' (nets bill ' + refNumber + ')'
+                        });
+                        writeBillLine(credit, deductions, 'Material Settlement ' + settlementId + ' — Quality Deductions');
+                        creditId = credit.save();
+                        log.audit('Deduction Credit Created', {
+                            creditId: creditId, settlementId: settlementId, deductions: deductions
+                        });
+                    } catch (eCredit) {
+                        log.error('Deduction Credit Failed',
+                            'Settlement ' + settlementId + ': ' + eCredit.message
+                            + ' — bill posted GROSS ($' + billAmount.toFixed(2) + '); create the credit manually or the vendor is overpaid by $' + deductions.toFixed(2));
+                    }
+                }
+
                 // Link bill to settlement and update balance due
+                const updateValues = {
+                    custrecord_sust_settlement_bill: billId,
+                    custrecord_sust_settlement_balance_due: balanceDue
+                };
                 record.submitFields({
                     type: 'customrecord_sust_settlement_record',
                     id: settlementId,
-                    values: {
-                        custrecord_sust_settlement_bill: billId,
-                        custrecord_sust_settlement_balance_due: balanceDue
-                    }
+                    values: updateValues
                 });
+                if (creditId) {
+                    try {
+                        const notes = settlement.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '';
+                        record.submitFields({
+                            type: 'customrecord_sust_settlement_record', id: settlementId,
+                            values: {
+                                custrecord_sust_settlement_notes: notes
+                                    + '\nAP: gross bill ' + refNumber + ' $' + billAmount.toFixed(2)
+                                    + ' − vendor credit ' + refNumber + '-DED $' + deductions.toFixed(2)
+                                    + ' = net $' + (billAmount - deductions).toFixed(2) + '.'
+                            }
+                        });
+                    } catch (eNote) { log.debug('credit note skipped', eNote.message); }
+                }
 
             } catch (e) {
                 log.error('Error Creating Final Bill', {

@@ -238,5 +238,20 @@
       <showinlist>T</showinlist>
       <storevalue>T</storevalue>
     </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_schedule_lag_months">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Price with the index value from N months before the transaction date (M-1/M-2 lag pricing). 0/blank = current effective price.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>Price with the index value from N months before the transaction date (M-1/M-2 lag pricing). 0/blank = current effective price.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Index Lag (months)</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
   </customrecordcustomfields>
 </customrecordtype>

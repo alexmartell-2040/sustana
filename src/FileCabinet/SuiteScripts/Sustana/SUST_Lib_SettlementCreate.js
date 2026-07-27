@@ -109,7 +109,8 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
                         'custrecord_sust_schedule_market_ref',
                         'custrecord_sust_schedule_market_pct',
                         'custrecord_sust_schedule_market_adj',
-                        'custrecord_sust_sched_proc_charge'
+                        'custrecord_sust_sched_proc_charge',
+                        'custrecord_sust_schedule_lag_months'
                     ]
                 });
                 const results = scheduleSearch.run().getRange({ start: 0, end: 1 });
@@ -124,7 +125,8 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
                         marketRefText: r.getText('custrecord_sust_schedule_market_ref'),
                         marketPct: parseFloat(r.getValue('custrecord_sust_schedule_market_pct') || 100),
                         marketAdj: parseFloat(r.getValue('custrecord_sust_schedule_market_adj') || 0),
-                        treatmentCharge: parseFloat(r.getValue('custrecord_sust_sched_proc_charge') || 0)
+                        treatmentCharge: parseFloat(r.getValue('custrecord_sust_sched_proc_charge') || 0),
+                        lagMonths: parseInt(r.getValue('custrecord_sust_schedule_lag_months'), 10) || 0
                     };
                 }
             } catch (e) {
@@ -203,9 +205,11 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
 
         /**
          * Schedule-driven line value. Pure math shared by create + period-append.
+         * Lag pricing: when the schedule sets Index Lag (months), the index value
+         * from N months before asOfDate prices the line (M-1/M-2 lag).
          * @returns {Object} { netValue, marketPrice: number|null, marketRefId: number|null }
          */
-        function computeScheduleValue(scheduleInfo, netWeight, recoveryPct) {
+        function computeScheduleValue(scheduleInfo, netWeight, recoveryPct, asOfDate) {
             const out = { netValue: 0, marketPrice: null, marketRefId: null };
             if (!scheduleInfo) return out;
 
@@ -215,7 +219,16 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
 
             if (isMarketBased) {
                 if (isNumericId(scheduleInfo.marketRefId)) out.marketRefId = parseInt(scheduleInfo.marketRefId, 10);
-                const storedPrice = marketPriceLib.getLatestPrice(scheduleInfo.marketRefText);
+                let storedPrice;
+                if (scheduleInfo.lagMonths > 0) {
+                    const base = asOfDate ? new Date(asOfDate) : new Date();
+                    base.setMonth(base.getMonth() - scheduleInfo.lagMonths);
+                    storedPrice = marketPriceLib.getPriceForDate(scheduleInfo.marketRefText, base);
+                    log.debug('Lag pricing', scheduleInfo.marketRefText + ' lag ' + scheduleInfo.lagMonths
+                        + 'mo -> effective ' + base.toISOString().substring(0, 10));
+                } else {
+                    storedPrice = marketPriceLib.getLatestPrice(scheduleInfo.marketRefText);
+                }
                 if (storedPrice && storedPrice.pricePerLb > 0) {
                     const pct = scheduleInfo.marketPct || 100;
                     const adj = scheduleInfo.marketAdj || 0;
@@ -307,7 +320,7 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             const grossWeight = parseFloat(params.grossWeight || 0);
             const netWeight = grossWeight * (recoveryPct / 100);
             const scheduleInfo = params.scheduleInfo || findSettlementSchedule(params.vendorId, params.itemId);
-            const calc = computeScheduleValue(scheduleInfo, netWeight, recoveryPct);
+            const calc = computeScheduleValue(scheduleInfo, netWeight, recoveryPct, params.tranDate);
 
             const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settlementId });
 
@@ -493,7 +506,7 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             settlement.setValue({ fieldId: 'custrecord_sust_settlement_recovery_pct', value: recoveryPct });
 
             // Initial net value (schedule-driven; mirrors v2 logic)
-            const calc = computeScheduleValue(scheduleInfo, netWeight, recoveryPct);
+            const calc = computeScheduleValue(scheduleInfo, netWeight, recoveryPct, params.tranDate);
             if (calc.marketPrice !== null) {
                 settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_price', value: calc.marketPrice });
             }

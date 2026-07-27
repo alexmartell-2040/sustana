@@ -159,8 +159,29 @@ describe('SUST_Lib_MarketPrice', () => {
             expect(searchOpts.columns).toContain('custrecord_sust_mp_source');
         });
 
-        test('loads and updates the existing record when the same date + source already exists', () => {
-            // Existing row for the same date whose source TEXT matches
+        test('same date + source with the SAME price updates in place (idempotent re-run)', () => {
+            search._setSearchResults('customrecord_sust_market_price', [
+                priceRow('55', 'RISI SOP', 0.105, '6/1/2026')
+            ]);
+            record._setMockRecord('customrecord_sust_market_price', '55', {
+                custrecord_sust_mp_price_per_lb: 0.105
+            });
+
+            const savedId = marketPriceLib.storeIndexPrice({
+                sourceText: 'RISI SOP',
+                date: '6/1/2026',
+                pricePerTon: 210 // 210/2000 = 0.105 — unchanged
+            });
+
+            expect(record.load).toHaveBeenCalledWith({
+                type: 'customrecord_sust_market_price',
+                id: '55'
+            });
+            expect(record.create).not.toHaveBeenCalled();
+            expect(savedId).toBe('55'); // updated in place, same id
+        });
+
+        test('same date + source with a DIFFERENT price creates a versioned CORRECTION', () => {
             search._setSearchResults('customrecord_sust_market_price', [
                 priceRow('55', 'RISI SOP', 0.09, '6/1/2026')
             ]);
@@ -171,21 +192,20 @@ describe('SUST_Lib_MarketPrice', () => {
             const savedId = marketPriceLib.storeIndexPrice({
                 sourceText: 'RISI SOP',
                 date: '6/1/2026',
-                pricePerTon: 210
+                pricePerTon: 210 // 0.105 ≠ 0.09 — a correction
             });
 
-            expect(record.load).toHaveBeenCalledWith({
-                type: 'customrecord_sust_market_price',
-                id: '55'
-            });
-            expect(record.create).not.toHaveBeenCalled();
-
-            const loaded = record.load.mock.results[0].value;
-            expect(loaded._values.custrecord_sust_mp_price_per_lb).toBe(0.105); // 210/2000
-            expect(loaded._values.custrecord_sust_mp_raw_rate).toBe(210);
-            expect(loaded._values.custrecord_sust_mp_raw_unit).toBe('$/ton');
-            expect(loaded.save).toHaveBeenCalled();
-            expect(savedId).toBe('55'); // updated in place, same id
+            // Original kept; a NEW correction record is created and chained
+            expect(record.create).toHaveBeenCalledWith({ type: 'customrecord_sust_market_price' });
+            expect(savedId).not.toBe('55');
+            const corrected = record._getMockRecord('customrecord_sust_market_price', savedId).values;
+            expect(corrected.custrecord_sust_mp_price_per_lb).toBe(0.105);
+            expect(corrected.custrecord_sust_mp_corrected).toBe(true);
+            expect(corrected.custrecord_sust_mp_correction_note).toContain('0.0900');
+            expect(corrected.custrecord_sust_mp_correction_note).toContain('0.1050');
+            // Original stamped as superseded by the correction
+            const original = record._getMockRecord('customrecord_sust_market_price', '55').values;
+            expect(original.custrecord_sust_mp_superseded_by).toBe(savedId);
         });
 
         test('creates a new record when the same date has a DIFFERENT source', () => {
@@ -283,7 +303,8 @@ describe('SUST_Lib_MarketPrice', () => {
             const searchOpts = search.create.mock.calls[0][0];
             expect(searchOpts.type).toBe('customrecord_sust_market_price');
             expect(searchOpts.filters).toEqual([
-                ['custrecord_sust_mp_date', 'onorbefore', expect.any(String)]
+                ['custrecord_sust_mp_date', 'onorbefore', expect.any(String)], 'AND',
+                ['custrecord_sust_mp_superseded_by', 'anyof', '@NONE@']
             ]);
         });
 
@@ -318,7 +339,9 @@ describe('SUST_Lib_MarketPrice', () => {
             // Two searches ran: the dated one, then the fallback
             expect(search.create).toHaveBeenCalledTimes(2);
             expect(search.create.mock.calls[0][0].filters[0][1]).toBe('onorbefore');
-            expect(search.create.mock.calls[1][0].filters).toEqual([]);
+            // fallback (latest) search filters only exclude superseded corrections
+            expect(search.create.mock.calls[1][0].filters).toEqual(
+                [['custrecord_sust_mp_superseded_by', 'anyof', '@NONE@']]);
             expect(result).toEqual({ pricePerLb: 0.115, date: '7/1/2026' });
         });
 
@@ -330,9 +353,10 @@ describe('SUST_Lib_MarketPrice', () => {
             const result = marketPriceLib.getPriceForDate('RISI SOP', '');
 
             expect(result).toEqual({ pricePerLb: 0.10, date: '6/1/2026' });
-            // Only the unfiltered latest-price search ran
+            // Only the latest-price search ran (superseded corrections excluded)
             expect(search.create).toHaveBeenCalledTimes(1);
-            expect(search.create.mock.calls[0][0].filters).toEqual([]);
+            expect(search.create.mock.calls[0][0].filters).toEqual(
+                [['custrecord_sust_mp_superseded_by', 'anyof', '@NONE@']]);
         });
 
         test('returns null for the manual source', () => {

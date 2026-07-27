@@ -220,6 +220,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/lo
                 label: 'Lot Quality Notes', container: 'grp_quality'
             });
             moistureField.setHelpText({ help: 'Optional. Captured at the scale and written to the lot; high moisture/contamination drive supplier settlement penalties and the yard exception flags.' });
+            baleField.setHelpText({ help: 'Best practice: leave blank to auto-derive (net lbs / grade standard bale weight). A keyed count more than 20% off the derived value is flagged on the lot for verification.' });
             if (existingQuality.moisture !== undefined) moistureField.defaultValue = existingQuality.moisture;
             if (existingQuality.contamination !== undefined) contaminationField.defaultValue = existingQuality.contamination;
             if (existingQuality.fiber !== undefined) fiberField.defaultValue = existingQuality.fiber;
@@ -381,13 +382,18 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/lo
                 .some(function(v) { return v !== undefined && v !== null && String(v).trim() !== ''; });
             if (irId && capturedQuality) {
                 const notes = (p.custpage_lot_notes || '').trim();
+                // Bale-count best practice: bales = net lbs / grade standard bale weight.
+                // Blank -> auto-derived; keyed count >20% off the derived value -> variance note.
+                const baleInfo = deriveBaleCount(ticketNumber, net, p.custpage_bales);
+                let notesLine = notes ? ('[Kiosk ' + new Date().toISOString().substring(0, 10) + ', ticket ' + ticketNumber + '] ' + notes) : '';
+                if (baleInfo.note) notesLine = notesLine ? (notesLine + '\n' + baleInfo.note) : baleInfo.note;
                 const lotWrite = lotAttr.writeLotQuality(ticketNumber, {
                     moisture: p.custpage_moisture,
                     contamination: p.custpage_contamination,
                     fiber: p.custpage_fiber,
-                    baleCount: p.custpage_bales,
+                    baleCount: baleInfo.baleCount,
                     vendorLot: p.custpage_vendor_lot,
-                    notesAppend: notes ? ('[Kiosk ' + new Date().toISOString().substring(0, 10) + ', ticket ' + ticketNumber + '] ' + notes) : null
+                    notesAppend: notesLine || null
                 });
                 if (lotWrite && lotWrite.ok) {
                     links.push({
@@ -565,6 +571,39 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/lo
             }
             html += '</div>';
             context.response.write(html);
+        }
+
+        /**
+         * Bale-count best practice: bales = net lbs / grade standard bale weight
+         * (custitem_sust_std_bale_lbs). Blank entry auto-derives; a keyed count
+         * deviating >20% from the derived value gets a variance audit note.
+         * @returns {Object} { baleCount, note|null }
+         */
+        function deriveBaleCount(lotNumber, netLbs, entered) {
+            const out = { baleCount: entered, note: null };
+            try {
+                const lotId = lotAttr.resolveLotId(lotNumber);
+                if (!lotId || !(netLbs > 0)) return out;
+                const lk = search.lookupFields({ type: 'inventorynumber', id: lotId, columns: ['item'] });
+                const itemId = Array.isArray(lk.item) && lk.item.length ? lk.item[0].value : null;
+                if (!itemId) return out;
+                const itemLk = search.lookupFields({ type: search.Type.ITEM, id: itemId, columns: ['custitem_sust_std_bale_lbs'] });
+                const std = parseFloat(itemLk.custitem_sust_std_bale_lbs) || 0;
+                if (!(std > 0)) return out;
+                const derived = Math.max(1, Math.round(netLbs / std));
+                const enteredNum = parseInt(entered, 10);
+                if (!enteredNum || isNaN(enteredNum)) {
+                    out.baleCount = derived;
+                    out.note = '[Bale count auto-derived] ' + derived + ' bales = ' + Math.round(netLbs)
+                        + ' net lbs / ' + std + ' lbs std bale.';
+                } else if (Math.abs(enteredNum - derived) / derived > 0.2) {
+                    out.note = '[BALE VARIANCE] keyed ' + enteredNum + ' vs derived ' + derived
+                        + ' (' + Math.round(netLbs) + ' lbs / ' + std + ' std) — verify count or grade.';
+                }
+            } catch (e) {
+                log.debug('deriveBaleCount skipped', e.message);
+            }
+            return out;
         }
 
         function escapeHtml(s) {

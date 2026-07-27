@@ -127,6 +127,10 @@ effect is the failure signal, not an on-screen error.
 
 Negative check: change the SOP output line to **31** tons (output > input) and try to save → blocked client-side.
 
+**Multi-input variant (demo 5.4 — multiple grades into one output):** header input = **White Ledger / WL-SEED-001 / 30 tons** as above, then in **Additional Input Materials** add two lines: **Mixed Paper / MP-SEED-001 / 15** and **SOP / SOP-SEED-001 / 10** (total input 55 tons). Outputs: **SOP 50 (Fiber)** + **Mill Residuals 3 (Residual)**. Yield banner: 53 out / 55 in → **2 tons moisture loss**, yield ≈ 96.4%. On Completed: ONE Inventory Adjustment consumes all three input lots and creates the finished-goods SOP lot; genealogy links the output to **all three** input lots (prorated); no BOM/recipe/routing/WO anywhere.
+
+**Bale-count best practice:** bales = net lbs ÷ the grade's **Standard Bale Weight** (item field, seeded: WL 1200 / MP 1300 / MOP 1250 / SOP 1100 lbs). At the kiosk, leave Bale Count **blank** to auto-derive; a keyed count >20% off the derived value stamps a `[BALE VARIANCE]` note on the lot for verification.
+
 ---
 
 ## TC-INDEX — 1:30 Index pricing & true-up ⭐
@@ -135,7 +139,10 @@ Negative check: change the SOP output line to **31** tons (output > input) and t
 |---|---|
 | **Preconditions** | A supplier settlement (from TC-RCV) and seeded RISI prices + Purchase schedule. |
 | **Steps** | 1. Open the supplier schedule (RISI White Ledger − $0.0075/lb) and the market price list. 2. Open the settlement → **Calculate Settlement**. 3. Add a schedule penalty: Moisture % over 10% at $0.50/pt (lot moisture 12%). 4. Recalculate. 5. Mark **Provisional Paid**. 6. Enter a later RISI value, recalc, mark **Final Settled**. |
-| **Expected** | (1) prices stored $/lb with $/ton raw rate — verify precision e.g. Feb RISI SOP = `0.0925` (FLOAT, not `0.09`). (2) `effective = index × % + adj`, gross/net/balance shown. (4) a deduction row for Moisture % (excess 2 pts). (5) provisional **Vendor Bill** auto-created (tranid `SETTLE-…-PROV`). (6) **final Vendor Bill** for the balance (true-up). |
+| **Expected** | (1) prices stored $/lb with $/ton raw rate — verify precision e.g. Feb RISI SOP = `0.0925` (FLOAT, not `0.09`). (2) `effective = index × % + adj`, gross/net/balance shown. (4) a deduction row for Moisture % (excess 2 pts). (5) provisional **Vendor Bill** auto-created (tranid `SETTLE-…-PROV`). (6) **final Vendor Bill** for the balance (true-up). **Deductions post as a separate Vendor Credit** (`SETTLE-…-DED`) netting a GROSS final bill when gross value and deductions are on the settlement — AP shows bill − credit = net, not a net-only bill. |
+| **Formulas (5.8)** | Seeded: customer **RISI SOP + $0.005/lb (+$10/ton)** Sale schedule; supplier **RISI White Ledger − $0.0075/lb (−$15/ton)** Purchase schedule. |
+| **Correction / version control** | The seeder stages a **published correction**: last month's RISI White Ledger +$6/ton. The original price record is kept and stamped *Superseded By* the correction record (*Is Correction* ✓, note shows original → corrected). All pricing lookups use only the active version — open the Market Price list to show both. |
+| **Lag pricing** | Set **Index Lag (months)** on a settlement schedule (e.g. 1 = price on M−1's index). New settlements price with the index value from N months before the transaction date; 0/blank = current effective price (most recent on/before — effective dating). |
 
 ---
 

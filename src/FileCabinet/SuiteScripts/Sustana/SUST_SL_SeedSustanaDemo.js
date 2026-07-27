@@ -77,11 +77,11 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
         // Grade items. marketSource/category/allocClass are DISPLAY TEXTS of the
         // corresponding custom lists (set with setText, never numeric ids).
         const GRADE_ITEMS = [
-            { key: 'WL',    name: 'White Ledger',              extid: EXT_PREFIX + 'ITEM_WL',    marketSource: 'RISI White Ledger',       category: 'Recovered Paper', allocClass: 'Primary',   typicalRecovery: 95,   scrap: true },
-            { key: 'MP',    name: 'Mixed Paper',               extid: EXT_PREFIX + 'ITEM_MP',    marketSource: 'RISI Mixed Paper',        category: 'Recovered Paper', allocClass: 'Primary',   typicalRecovery: 90,   scrap: true },
-            { key: 'MOP',   name: 'Mixed Office Paper',        extid: EXT_PREFIX + 'ITEM_MOP',   marketSource: 'RISI Mixed Office Paper', category: 'Recovered Paper', allocClass: 'Primary',   typicalRecovery: 92,   scrap: true },
-            { key: 'SOP',   name: 'SOP (Sorted Office Paper)', extid: EXT_PREFIX + 'ITEM_SOP',   marketSource: 'RISI SOP',                category: 'Finished Fiber',  allocClass: 'Primary',   typicalRecovery: 96,   scrap: true },
-            { key: 'RESID', name: 'Mill Residuals',            extid: EXT_PREFIX + 'ITEM_RESID', marketSource: null,                      category: 'Residual',        allocClass: 'Byproduct', typicalRecovery: null, scrap: false }
+            { key: 'WL',    name: 'White Ledger',              extid: EXT_PREFIX + 'ITEM_WL',    marketSource: 'RISI White Ledger',       category: 'Recovered Paper', allocClass: 'Primary',   typicalRecovery: 95,   stdBaleLbs: 1200, scrap: true },
+            { key: 'MP',    name: 'Mixed Paper',               extid: EXT_PREFIX + 'ITEM_MP',    marketSource: 'RISI Mixed Paper',        category: 'Recovered Paper', allocClass: 'Primary',   typicalRecovery: 90,   stdBaleLbs: 1300, scrap: true },
+            { key: 'MOP',   name: 'Mixed Office Paper',        extid: EXT_PREFIX + 'ITEM_MOP',   marketSource: 'RISI Mixed Office Paper', category: 'Recovered Paper', allocClass: 'Primary',   typicalRecovery: 92,   stdBaleLbs: 1250, scrap: true },
+            { key: 'SOP',   name: 'SOP (Sorted Office Paper)', extid: EXT_PREFIX + 'ITEM_SOP',   marketSource: 'RISI SOP',                category: 'Finished Fiber',  allocClass: 'Primary',   typicalRecovery: 96,   stdBaleLbs: 1100, scrap: true },
+            { key: 'RESID', name: 'Mill Residuals',            extid: EXT_PREFIX + 'ITEM_RESID', marketSource: null,                      category: 'Residual',        allocClass: 'Byproduct', typicalRecovery: null, stdBaleLbs: 1500, scrap: false }
         ];
 
         const FEE_ITEM = { name: 'Settlement Fee', extid: EXT_PREFIX + 'ITEM_SETTLEFEE' };
@@ -586,6 +586,10 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             if (spec.typicalRecovery !== null && spec.typicalRecovery !== undefined) {
                 item.setValue({ fieldId: 'custitem_sust_typical_recovery', value: spec.typicalRecovery }); // PERCENT: 0-100
             }
+            if (spec.stdBaleLbs) {
+                try { item.setValue({ fieldId: 'custitem_sust_std_bale_lbs', value: spec.stdBaleLbs }); }
+                catch (eBale) { log.debug('std bale weight skipped', eBale.message); }
+            }
         }
 
         function ensureGradeItem(ctx, spec, existingId, section) {
@@ -805,6 +809,24 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                         failCount++;
                     }
                 });
+                // Correction/version-control example: the last published month of
+                // RISI White Ledger is corrected upward. storeIndexPrice detects the
+                // changed value, keeps the original (superseded), and creates a
+                // correction record — original vs corrected stays visible.
+                if (idx.sourceText === 'RISI White Ledger') {
+                    const lastIdx = idx.values.length - 1;
+                    const corrDate = new Date(INDEX_START.year, INDEX_START.month + lastIdx, 1);
+                    const corrId = marketPriceLib.storeIndexPrice({
+                        sourceText: idx.sourceText,
+                        date: corrDate,
+                        pricePerTon: idx.values[lastIdx] + 6   // published correction +$6/ton
+                    });
+                    if (corrId) {
+                        addRow(section, 'updated', idx.sourceText + ' ' + formatDate(corrDate)
+                            + ': CORRECTION staged $' + idx.values[lastIdx] + ' -> $' + (idx.values[lastIdx] + 6)
+                            + '/ton (original kept, superseded)', MARKET_PRICE_TYPE, corrId);
+                    }
+                }
                 const rangeText = formatDate(new Date(INDEX_START.year, INDEX_START.month, 1))
                     + ' - ' + formatDate(new Date(INDEX_START.year, INDEX_START.month + idx.values.length - 1, 1));
                 if (failCount === 0) {

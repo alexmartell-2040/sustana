@@ -71,7 +71,10 @@ define(['N/record', 'N/search', 'N/log', 'N/format', './SUST_Lib_Units'],
                 let existingRecordId = null;
                 search.create({
                     type: 'customrecord_sust_market_price',
-                    filters: [['custrecord_sust_mp_date', 'on', formattedDate]],
+                    filters: [
+                        ['custrecord_sust_mp_date', 'on', formattedDate], 'AND',
+                        ['custrecord_sust_mp_superseded_by', 'anyof', '@NONE@']
+                    ],
                     columns: ['internalid', 'custrecord_sust_mp_source']
                 }).run().each(function(result) {
                     if (result.getText('custrecord_sust_mp_source') === sourceText) {
@@ -82,9 +85,33 @@ define(['N/record', 'N/search', 'N/log', 'N/format', './SUST_Lib_Units'],
                 });
 
                 let priceRecord;
+                let supersededId = null;
                 if (existingRecordId) {
-                    priceRecord = record.load({ type: 'customrecord_sust_market_price', id: existingRecordId });
-                    log.debug('storeIndexPrice', 'Updating ' + sourceText + ' for ' + formattedDate + ' (record ' + existingRecordId + ')');
+                    const existing = record.load({ type: 'customrecord_sust_market_price', id: existingRecordId });
+                    const existingLb = parseFloat(existing.getValue({ fieldId: 'custrecord_sust_mp_price_per_lb' })) || 0;
+                    if (Math.abs(existingLb - pricePerLb) < 0.0000001) {
+                        // Same value — refresh metadata in place (idempotent re-run).
+                        priceRecord = existing;
+                        log.debug('storeIndexPrice', 'Unchanged ' + sourceText + ' for ' + formattedDate + ' (record ' + existingRecordId + ')');
+                    } else {
+                        // CORRECTION: version-control the change. Keep the original,
+                        // create a correction record, chain them — original vs
+                        // corrected stays visible; lookups use only the correction.
+                        supersededId = existingRecordId;
+                        priceRecord = record.create({ type: 'customrecord_sust_market_price' });
+                        priceRecord.setValue({ fieldId: 'custrecord_sust_mp_date', value: effectiveDate });
+                        priceRecord.setText({ fieldId: 'custrecord_sust_mp_source', text: sourceText });
+                        try {
+                            priceRecord.setValue({ fieldId: 'custrecord_sust_mp_corrected', value: true });
+                            priceRecord.setValue({
+                                fieldId: 'custrecord_sust_mp_correction_note',
+                                value: 'Corrects record ' + existingRecordId + ': $' + existingLb.toFixed(4)
+                                    + '/lb -> $' + pricePerLb.toFixed(4) + '/lb (' + new Date().toISOString().substring(0, 10) + ')'
+                            });
+                        } catch (eCorr) { log.debug('correction fields skipped', eCorr.message); }
+                        log.audit('storeIndexPrice — CORRECTION',
+                            sourceText + ' ' + formattedDate + ': $' + existingLb.toFixed(4) + ' -> $' + pricePerLb.toFixed(4) + '/lb');
+                    }
                 } else {
                     priceRecord = record.create({ type: 'customrecord_sust_market_price' });
                     priceRecord.setValue({ fieldId: 'custrecord_sust_mp_date', value: effectiveDate });
@@ -98,6 +125,14 @@ define(['N/record', 'N/search', 'N/log', 'N/format', './SUST_Lib_Units'],
                 priceRecord.setValue({ fieldId: 'custrecord_sust_mp_fetched_at', value: new Date().toISOString() });
 
                 const savedId = priceRecord.save();
+                if (supersededId) {
+                    try {
+                        record.submitFields({
+                            type: 'customrecord_sust_market_price', id: supersededId,
+                            values: { custrecord_sust_mp_superseded_by: savedId }
+                        });
+                    } catch (eSup) { log.error('supersede stamp failed', eSup.message); }
+                }
                 return savedId;
             } catch (e) {
                 log.error('storeIndexPrice', (params && params.sourceText) + ': ' + e.toString());
@@ -119,7 +154,7 @@ define(['N/record', 'N/search', 'N/log', 'N/format', './SUST_Lib_Units'],
 
                 const priceSearch = search.create({
                     type: 'customrecord_sust_market_price',
-                    filters: [],
+                    filters: [['custrecord_sust_mp_superseded_by', 'anyof', '@NONE@']],
                     columns: [
                         'custrecord_sust_mp_price_per_lb',
                         search.createColumn({
@@ -183,7 +218,8 @@ define(['N/record', 'N/search', 'N/log', 'N/format', './SUST_Lib_Units'],
                 const priceSearch = search.create({
                     type: 'customrecord_sust_market_price',
                     filters: [
-                        ['custrecord_sust_mp_date', 'onorbefore', formattedDate]
+                        ['custrecord_sust_mp_date', 'onorbefore', formattedDate], 'AND',
+                        ['custrecord_sust_mp_superseded_by', 'anyof', '@NONE@']
                     ],
                     columns: [
                         'custrecord_sust_mp_price_per_lb',

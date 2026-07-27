@@ -234,6 +234,19 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
                 return null;
             }
 
+            // Multi-input: additional input lines (customrecord_sust_proc_input_line).
+            // input_lbs on the header is the TOTAL; the primary lot's own quantity is
+            // total minus the additional lines.
+            const additionalInputs = getInputLines(processingId);
+            const additionalLbs = additionalInputs.reduce(function(acc, il) { return acc + (il.qty || 0); }, 0);
+            const primaryQty = Math.max(inputWeight - additionalLbs, 0);
+            const allInputs = [{ itemId: inputItem, lotId: inputLot, qty: primaryQty }]
+                .concat(additionalInputs)
+                .filter(function(il) { return il.qty > 0; });
+            log.audit('Multi-input consumption',
+                allInputs.length + ' input lot(s), total ' + inputWeight + ' lbs (primary ' + primaryQty
+                + ' + additional ' + additionalLbs + ')');
+
             if (!location) {
                 log.error('createInventoryAdjustmentFromProcessing', 'Location is required for inventory adjustment');
                 return null;
@@ -306,50 +319,31 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
 
             log.debug('createInventoryAdjustmentFromProcessing', '✓ Completed all header fields');
 
-            // Add input consumption line FIRST (negative quantity to consume existing lot)
-            log.debug('createInventoryAdjustmentFromProcessing', `Adding input consumption line: item=${inputItem}, lot=${inputLot}, qty=-${inputWeight}`);
-
+            // Add input consumption lines FIRST (negative quantities), one per input lot
             try {
-                invAdj.setSublistValue({ sublistId: 'inventory', fieldId: 'item', line: 0, value: inputItem });
-                log.debug('createInventoryAdjustmentFromProcessing', `✓ Set input item ${inputItem} on line 0`);
-
-                invAdj.setSublistValue({ sublistId: 'inventory', fieldId: 'adjustqtyby', line: 0, value: -inputWeight });
-                log.debug('createInventoryAdjustmentFromProcessing', `✓ Set input adjustqtyby -${inputWeight} on line 0`);
-
-                invAdj.setSublistValue({ sublistId: 'inventory', fieldId: 'location', line: 0, value: location });
-                log.debug('createInventoryAdjustmentFromProcessing', `✓ Set input location ${location} on line 0`);
-
-                // Set inventory detail for consuming lot
-                const invDetailSubrecord = invAdj.getSublistSubrecord({
-                    sublistId: 'inventory',
-                    fieldId: 'inventorydetail',
-                    line: 0
+                allInputs.forEach(function(input, idx) {
+                    invAdj.setSublistValue({ sublistId: 'inventory', fieldId: 'item', line: idx, value: input.itemId });
+                    invAdj.setSublistValue({ sublistId: 'inventory', fieldId: 'adjustqtyby', line: idx, value: -input.qty });
+                    invAdj.setSublistValue({ sublistId: 'inventory', fieldId: 'location', line: idx, value: location });
+                    const invDetailSubrecord = invAdj.getSublistSubrecord({
+                        sublistId: 'inventory', fieldId: 'inventorydetail', line: idx
+                    });
+                    if (invDetailSubrecord) {
+                        invDetailSubrecord.setSublistValue({
+                            sublistId: 'inventoryassignment', fieldId: 'issueinventorynumber',
+                            line: 0, value: input.lotId
+                        });
+                        invDetailSubrecord.setSublistValue({
+                            sublistId: 'inventoryassignment', fieldId: 'quantity',
+                            line: 0, value: -Math.abs(input.qty)
+                        });
+                    }
+                    log.debug('createInventoryAdjustmentFromProcessing',
+                        `✓ Input line ${idx}: item ${input.itemId}, lot ${input.lotId}, -${input.qty} lbs`);
                 });
-                log.debug('createInventoryAdjustmentFromProcessing', `✓ Got input inventory detail subrecord`);
-
-                if (invDetailSubrecord) {
-                    invDetailSubrecord.setSublistValue({
-                        sublistId: 'inventoryassignment',
-                        fieldId: 'issueinventorynumber',
-                        line: 0,
-                        value: inputLot
-                    });
-                    log.debug('createInventoryAdjustmentFromProcessing', `✓ Set issue lot number ${inputLot}`);
-
-                    // For consumption (negative adjustment), quantity should be negative
-                    invDetailSubrecord.setSublistValue({
-                        sublistId: 'inventoryassignment',
-                        fieldId: 'quantity',
-                        line: 0,
-                        value: -Math.abs(inputWeight)
-                    });
-                    log.debug('createInventoryAdjustmentFromProcessing', `✓ Set inventory detail quantity -${inputWeight}`);
-                }
-
-                log.debug('createInventoryAdjustmentFromProcessing', '✓ Completed input consumption line 0');
             } catch (inputError) {
                 log.error('createInventoryAdjustmentFromProcessing', {
-                    error: '❌ Error processing input line',
+                    error: '❌ Error processing input lines',
                     message: inputError.message,
                     stack: inputError.stack
                 });
@@ -393,7 +387,7 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
             // Add output creation lines (positive quantities) AFTER input line
             log.debug('createInventoryAdjustmentFromProcessing', 'Adding output creation lines');
             outputLines.forEach((outputLine, index) => {
-                const lineNum = index + 1; // Line 0 is input, output lines start at 1
+                const lineNum = index + allInputs.length; // outputs start after ALL input lines
                 log.debug('createInventoryAdjustmentFromProcessing', `Processing output line ${lineNum}: item=${outputLine.itemId}, weight=${outputLine.weight}`);
 
                 try {
@@ -569,6 +563,14 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
                 const inputWeight = parseFloat(procRec.getValue({ fieldId: 'custrecord_sust_processing_input_lbs' }));
                 const procNumber = procRec.getValue({ fieldId: 'name' });
 
+                // Multi-input: genealogy links EVERY input lot to every output lot,
+                // consumed qty prorated by each input's share of total input.
+                const extraInputs = getInputLines(processingId);
+                const extraLbs = extraInputs.reduce(function(acc, il) { return acc + (il.qty || 0); }, 0);
+                const parentLots = [{ lotId: inputLotId, qty: Math.max(inputWeight - extraLbs, 0) }]
+                    .concat(extraInputs.map(function(il) { return { lotId: il.lotId, qty: il.qty }; }))
+                    .filter(function(pl) { return pl.lotId && pl.qty > 0; });
+
                 // Get output lot numbers from inventory adjustment
                 const outputLots = getCreatedOutputLots(invAdjustmentId, procNumber);
                 log.audit('processOutputLots', `Found ${outputLots.length} created output lots`);
@@ -578,8 +580,11 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
                     // Set output lot defaults (source type, status)
                     initializeOutputLot(outputLot.lotId);
 
-                    // Create lot genealogy record
-                    createLotGenealogy(inputLotId, outputLot.lotId, outputLot.weight, inputWeight, processingId);
+                    // Genealogy per input lot, prorated by input share
+                    parentLots.forEach(function(pl) {
+                        const share = inputWeight > 0 ? (pl.qty / inputWeight) : 0;
+                        createLotGenealogy(pl.lotId, outputLot.lotId, outputLot.weight * share, inputWeight, processingId);
+                    });
                 });
 
                 log.audit('processOutputLots', 'Completed processing all output lots');
@@ -659,6 +664,31 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
                     lotId: lotId
                 });
             }
+        };
+
+        /**
+         * Additional input lines (multi-input) for a processing record.
+         * @returns {Array} [{ itemId, lotId, qty }]
+         */
+        const getInputLines = (processingId) => {
+            const rows = [];
+            try {
+                search.create({
+                    type: 'customrecord_sust_proc_input_line',
+                    filters: [['custrecord_sust_pil_processing', 'anyof', processingId]],
+                    columns: ['custrecord_sust_pil_item', 'custrecord_sust_pil_lot', 'custrecord_sust_pil_qty_consumed']
+                }).run().each(function(r) {
+                    rows.push({
+                        itemId: r.getValue('custrecord_sust_pil_item'),
+                        lotId: r.getValue('custrecord_sust_pil_lot'),
+                        qty: parseFloat(r.getValue('custrecord_sust_pil_qty_consumed')) || 0
+                    });
+                    return true;
+                });
+            } catch (e) {
+                log.error('getInputLines', e.message);
+            }
+            return rows;
         };
 
         /**

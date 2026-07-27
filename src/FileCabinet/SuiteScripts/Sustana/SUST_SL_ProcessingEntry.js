@@ -295,6 +295,45 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             // Default to Byproduct on new records. On edit, value is set by loadExistingProcessing().
 
             // ==================== OUTPUT LINES SUBLIST ====================
+            // ==================== ADDITIONAL INPUTS (multi-input) ====================
+            // The header Input Item/Lot/Weight is the PRIMARY input; these lines add
+            // more grades consumed into the same run (e.g. 30t WL + 15t MP + 10t SOP).
+            const inputSublist = form.addSublist({
+                id: 'custpage_input_lines',
+                type: serverWidget.SublistType.INLINEEDITOR,
+                label: 'Additional Input Materials (multi-input)'
+            });
+            inputSublist.addField({
+                id: 'custpage_in_line_num',
+                type: serverWidget.FieldType.INTEGER,
+                label: 'Line #'
+            }).updateDisplayType({ displayType: serverWidget.FieldDisplayType.DISABLED });
+            const inItemField = inputSublist.addField({
+                id: 'custpage_in_item',
+                type: serverWidget.FieldType.SELECT,
+                label: 'Input Item',
+                source: 'item'
+            });
+            inItemField.isMandatory = true;
+            const inLotField = inputSublist.addField({
+                id: 'custpage_in_lot',
+                type: serverWidget.FieldType.SELECT,
+                label: 'Input Lot',
+                source: 'inventorynumber'
+            });
+            inLotField.isMandatory = true;
+            const inWeightField = inputSublist.addField({
+                id: 'custpage_in_weight',
+                type: serverWidget.FieldType.FLOAT,
+                label: 'Weight (tons)'
+            });
+            inWeightField.isMandatory = true;
+            inputSublist.addField({
+                id: 'custpage_in_pct',
+                type: serverWidget.FieldType.PERCENT,
+                label: '% of Total Input'
+            }).updateDisplayType({ displayType: serverWidget.FieldDisplayType.DISABLED });
+
             const outputSublist = form.addSublist({
                 id: 'custpage_output_lines',
                 type: serverWidget.SublistType.INLINEEDITOR,
@@ -456,7 +495,8 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                     }
                 } catch (e) { /* field add best-effort */ }
 
-                // Load output lines
+                // Load input + output lines
+                loadExistingInputLines(form, processingId);
                 loadExistingOutputLines(form, processingId);
 
                 log.audit('loadExistingProcessing', 'Loaded processing record: ' + processingId);
@@ -593,8 +633,17 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 }
 
                 // Set input fields — form weights arrive in TONS; convert to POUNDS
-                // with units.toLbs() BEFORE any record write (stored values stay lbs)
-                const inputWeightLbs = units.toLbs(params.custpage_input_weight);
+                // with units.toLbs() BEFORE any record write (stored values stay lbs).
+                // Multi-input: input_lbs stores the TOTAL (primary + additional lines);
+                // per-line detail lives on customrecord_sust_proc_input_line.
+                const primaryInputLbs = units.toLbs(params.custpage_input_weight);
+                let additionalInputLbs = 0;
+                const inLineCount = context.request.getLineCount({ group: 'custpage_input_lines' }) || 0;
+                for (let ii = 0; ii < inLineCount; ii++) {
+                    const w = context.request.getSublistValue({ group: 'custpage_input_lines', name: 'custpage_in_weight', line: ii });
+                    if (w) additionalInputLbs += units.toLbs(w);
+                }
+                const inputWeightLbs = primaryInputLbs + additionalInputLbs;
                 procRec.setValue({ fieldId: 'custrecord_sust_processing_input_item', value: params.custpage_input_item });
                 procRec.setValue({ fieldId: 'custrecord_sust_processing_input_lot', value: params.custpage_input_lot });
                 procRec.setValue({ fieldId: 'custrecord_sust_processing_input_lbs', value: inputWeightLbs });
@@ -638,6 +687,9 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 // Save output lines (input weight passed in POUNDS)
                 saveOutputLines(processingId, context.request, inputWeightLbs);
 
+                // Save additional input lines (multi-input)
+                saveInputLines(processingId, context.request, inputWeightLbs);
+
                 // If this was a new record with COMPLETED status, now update to trigger the
                 // User Event. MUST be a full load+save (EDIT context) — submitFields fires
                 // the UE as XEDIT, which the IA-creation UE ignores, so the Inventory
@@ -673,6 +725,79 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
          * @param {ServerRequest} request
          * @param {number} inputWeightLbs input weight in POUNDS
          */
+        /**
+         * Persist the additional input lines (multi-input) as
+         * customrecord_sust_proc_input_line children. Delete-and-recreate,
+         * matching the output-line pattern.
+         */
+        const saveInputLines = (processingId, request, totalInputLbs) => {
+            search.create({
+                type: 'customrecord_sust_proc_input_line',
+                filters: [['custrecord_sust_pil_processing', 'anyof', processingId]],
+                columns: ['internalid']
+            }).run().each(result => {
+                try {
+                    record.delete({ type: 'customrecord_sust_proc_input_line', id: result.id });
+                } catch (e) {
+                    log.error('saveInputLines', 'Error deleting existing line: ' + e.message);
+                }
+                return true;
+            });
+
+            const lineCount = request.getLineCount({ group: 'custpage_input_lines' }) || 0;
+            for (let i = 0; i < lineCount; i++) {
+                const inItem = request.getSublistValue({ group: 'custpage_input_lines', name: 'custpage_in_item', line: i });
+                const inLot = request.getSublistValue({ group: 'custpage_input_lines', name: 'custpage_in_lot', line: i });
+                const inWeight = request.getSublistValue({ group: 'custpage_input_lines', name: 'custpage_in_weight', line: i });
+                if (!inItem || !inLot || !inWeight) continue;
+                try {
+                    const line = record.create({ type: 'customrecord_sust_proc_input_line' });
+                    const inWeightLbs = units.toLbs(inWeight);
+                    line.setValue({ fieldId: 'custrecord_sust_pil_processing', value: processingId });
+                    line.setValue({ fieldId: 'custrecord_sust_pil_line_number', value: i + 1 });
+                    line.setValue({ fieldId: 'custrecord_sust_pil_item', value: inItem });
+                    line.setValue({ fieldId: 'custrecord_sust_pil_lot', value: inLot });
+                    line.setValue({ fieldId: 'custrecord_sust_pil_qty_consumed', value: inWeightLbs });
+                    if (totalInputLbs > 0) {
+                        line.setValue({ fieldId: 'custrecord_sust_pil_weight_pct', value: (inWeightLbs / totalInputLbs) * 100 });
+                    }
+                    const lineId = line.save();
+                    log.audit('saveInputLines', 'Created input line: ' + lineId);
+                } catch (e) {
+                    log.error('saveInputLines', { error: e.message, line: i });
+                }
+            }
+        };
+
+        /**
+         * Load existing additional-input lines into the sublist (edit mode).
+         */
+        const loadExistingInputLines = (form, processingId) => {
+            try {
+                const sublist = form.getSublist({ id: 'custpage_input_lines' });
+                let lineNum = 0;
+                search.create({
+                    type: 'customrecord_sust_proc_input_line',
+                    filters: [['custrecord_sust_pil_processing', 'anyof', processingId]],
+                    columns: ['custrecord_sust_pil_line_number', 'custrecord_sust_pil_item',
+                        'custrecord_sust_pil_lot', 'custrecord_sust_pil_qty_consumed',
+                        'custrecord_sust_pil_weight_pct']
+                }).run().each(result => {
+                    sublist.setSublistValue({ id: 'custpage_in_line_num', line: lineNum, value: result.getValue('custrecord_sust_pil_line_number') || String(lineNum + 1) });
+                    sublist.setSublistValue({ id: 'custpage_in_item', line: lineNum, value: result.getValue('custrecord_sust_pil_item') });
+                    sublist.setSublistValue({ id: 'custpage_in_lot', line: lineNum, value: result.getValue('custrecord_sust_pil_lot') });
+                    const lbs = parseFloat(result.getValue('custrecord_sust_pil_qty_consumed')) || 0;
+                    sublist.setSublistValue({ id: 'custpage_in_weight', line: lineNum, value: String(units.toTons(lbs)) });
+                    const pct = result.getValue('custrecord_sust_pil_weight_pct');
+                    if (pct) sublist.setSublistValue({ id: 'custpage_in_pct', line: lineNum, value: String(pct) });
+                    lineNum++;
+                    return true;
+                });
+            } catch (e) {
+                log.error('loadExistingInputLines', e.message);
+            }
+        };
+
         const saveOutputLines = (processingId, request, inputWeightLbs) => {
             // Delete existing output lines
             const existingLines = search.create({

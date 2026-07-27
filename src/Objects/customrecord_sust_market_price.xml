@@ -114,5 +114,51 @@
       <showinlist>F</showinlist>
       <storevalue>T</storevalue>
     </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_superseded_by">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Set when a correction replaces this price. Lookups skip superseded rows; the chain preserves original vs corrected values.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>Set when a correction replaces this price. Lookups skip superseded rows; the chain preserves original vs corrected values.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Superseded By</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_market_price]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_corrected">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>This price record is a correction of an earlier published value for the same date + source.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CHECKBOX</fieldtype>
+      <help>This price record is a correction of an earlier published value for the same date + source.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Is Correction</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_mp_correction_note">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Original vs corrected value and when the correction was entered.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXTAREA</fieldtype>
+      <help>Original vs corrected value and when the correction was entered.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Correction Note</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
   </customrecordcustomfields>
 </customrecordtype>
