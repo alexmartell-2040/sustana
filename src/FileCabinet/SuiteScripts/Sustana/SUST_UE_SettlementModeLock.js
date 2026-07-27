@@ -254,23 +254,74 @@ define(['N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', 'N/ui/serverWidge
          * Settlement form Suitelet handles both modes via ?email=T param.
          */
         /**
-         * One-click lifecycle buttons (VIEW mode), contextual to the current
-         * status. Each button hits SUST_SL_SettlementAction, which performs the
-         * same edit-and-save a user would — guards and bill-creating UEs all
-         * still fire — then redirects back here.
+         * Lifecycle tracker + one-click actions (VIEW mode) — pizza-tracker
+         * style: Draft → Approved → Provisional Paid (optional) → Final
+         * Settled, with the current stage lit and the next action(s) as
+         * buttons. Buttons hit SUST_SL_SettlementAction (URL resolved via
+         * N/url so it always points at the live deployment); guards and
+         * bill-creating UEs still fire on the server-side save.
          */
         function renderStatusButtons(form, rec, statusText) {
             try {
                 if (!rec.id) return;
-                const base = '/app/site/hosting/scriptlet.nl?script=customscript_sust_sl_settle_action'
-                    + '&deploy=customdeploy_sust_sl_settle_action&settle=' + rec.id + '&action=';
+
+                let base;
+                try {
+                    base = url.resolveScript({
+                        scriptId: 'customscript_sust_sl_settle_action',
+                        deploymentId: 'customdeploy_sust_sl_settle_action'
+                    }) + '&settle=' + rec.id + '&action=';
+                } catch (eUrl) {
+                    log.error('Settlement action Suitelet unresolvable',
+                        'Deploy customscript_sust_sl_settle_action first: ' + eUrl.message);
+                    base = null; // tracker still renders; buttons hidden
+                }
+
                 const priceFixed = rec.getValue({ fieldId: 'custrecord_sust_settlement_price_fixed' });
                 const isFixed = (priceFixed === true || priceFixed === 'T');
 
+                // ── Tracker ──
+                const STAGES = [
+                    { key: 'Draft',            label: 'Draft' },
+                    { key: 'Completed',        label: 'Approved' },
+                    { key: 'Provisional Paid', label: 'Provisional Paid', optional: true },
+                    { key: 'Final Settled',    label: 'Final Settled &rarr; AP Bill' }
+                ];
+                const currentIdx = STAGES.map(function(s) { return s.key; }).indexOf(statusText);
+                const isVoided = (statusText === 'Voided');
+
+                const chips = STAGES.map(function(s, i) {
+                    let bg = '#f1f5f9', border = '#cbd5e1', color = '#94a3b8', icon = '';
+                    if (!isVoided && currentIdx > -1) {
+                        if (i < currentIdx) {
+                            bg = '#dcfce7'; border = '#16a34a'; color = '#14532d'; icon = '&#10004; ';
+                        } else if (i === currentIdx) {
+                            bg = '#2976F3'; border = '#1F5FCC'; color = '#ffffff'; icon = '&#9679; ';
+                        }
+                        // A skipped optional stage stays gray even when passed
+                        if (s.optional && currentIdx === 3 && i === 2) {
+                            bg = '#f8fafc'; border = '#cbd5e1'; color = '#94a3b8'; icon = '';
+                        }
+                    }
+                    const lock = (s.key === 'Final Settled' && !isFixed && currentIdx < 3 && !isVoided)
+                        ? ' &#128274;' : '';
+                    const opt = s.optional ? '<div style="font-size:9px;opacity:0.8;">optional</div>' : '';
+                    return '<div style="flex:1;text-align:center;padding:8px 6px;background:' + bg
+                        + ';border:2px solid ' + border + ';color:' + color
+                        + ';border-radius:6px;font-weight:600;font-size:12px;min-width:110px;">'
+                        + icon + s.label + lock + opt + '</div>';
+                }).join('<div style="align-self:center;color:#94a3b8;font-size:14px;padding:0 4px;">&#8594;</div>');
+
+                const tracker = isVoided
+                    ? '<div style="padding:8px 12px;background:#fef2f2;border:2px solid #dc2626;color:#7f1d1d;border-radius:6px;font-weight:600;font-size:13px;">&#10006; Voided — lifecycle ended. Bills are not auto-voided; reverse manually if any exist.</div>'
+                    : '<div style="display:flex;gap:2px;align-items:stretch;">' + chips + '</div>';
+
+                // ── Action buttons for the current stage ──
                 const btn = function(action, label, bg, confirmMsg) {
+                    if (!base) return '';
                     return '<a href="' + base + action + '"'
                         + (confirmMsg ? ' onclick="return confirm(\'' + confirmMsg + '\');"' : '')
-                        + ' style="display:inline-block;padding:8px 16px;margin-right:8px;background:' + bg
+                        + ' style="display:inline-block;padding:8px 16px;margin:8px 8px 0 0;background:' + bg
                         + ';color:#fff;text-decoration:none;border-radius:4px;font-weight:600;font-size:13px;">'
                         + label + '</a>';
                 };
@@ -290,10 +341,8 @@ define(['N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', 'N/ui/serverWidge
                     buttons += btn('finalize', '&#129534; Final Settle &rarr; Create AP Bill', '#b45309',
                         'Final Settle now? The final vendor bill for the balance due will be created.');
                 }
-                if (!buttons) return;
-
                 const hint = (statusText === 'Completed' || statusText === 'Provisional Paid') && !isFixed
-                    ? '<span style="margin-left:10px;color:#92400e;font-size:11px;">Final Settle is blocked until Price Fixed — that guard still applies.</span>'
+                    ? '<div style="color:#92400e;font-size:11px;margin-top:6px;">&#128274; Final Settle is blocked until Price Fixed — that guard still applies.</div>'
                     : '';
 
                 const fld = form.addField({
@@ -302,10 +351,11 @@ define(['N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', 'N/ui/serverWidge
                     label: ' '
                 });
                 fld.defaultValue =
-                    '<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;'
-                    + 'padding:10px 14px;margin:8px 0;font-family:Arial,sans-serif;font-size:13px;">'
-                    + '<span style="font-weight:bold;margin-right:12px;">Lifecycle:</span>'
-                    + buttons + hint
+                    '<div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:8px;'
+                    + 'padding:12px 14px;margin:8px 0;font-family:Arial,sans-serif;">'
+                    + tracker
+                    + (buttons ? '<div>' + buttons + '</div>' : '')
+                    + hint
                     + '</div>';
             } catch (e) {
                 log.debug('renderStatusButtons skipped', e.message);
