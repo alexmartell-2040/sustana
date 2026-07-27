@@ -31,8 +31,8 @@
  * Date: June 2026 (v2)
  */
 
-define(['N/record', 'N/runtime', 'N/log', 'N/ui/serverWidget'],
-    function(record, runtime, log, serverWidget) {
+define(['N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', 'N/ui/serverWidget'],
+    function(record, search, runtime, url, log, serverWidget) {
 
         // Calc/derived fields that lock in Auto mode
         const CALC_FIELDS = [
@@ -91,6 +91,7 @@ define(['N/record', 'N/runtime', 'N/log', 'N/ui/serverWidget'],
                 // On VIEW, no need to disable fields (everything's already display-only)
                 if (context.type === context.UserEventType.VIEW) {
                     renderModeBanner(form, modeText, statusText);
+                    renderAggregationPanel(form, rec);
                     renderActionLinks(form, rec.id);
                     return;
                 }
@@ -98,6 +99,7 @@ define(['N/record', 'N/runtime', 'N/log', 'N/ui/serverWidget'],
                 // EDIT/CREATE: lock fields per mode + status
                 applyFieldLocks(form, modeText, statusText);
                 renderModeBanner(form, modeText, statusText);
+                renderAggregationPanel(form, rec);
                 renderActionLinks(form, rec.id);
 
             } catch (e) {
@@ -250,6 +252,104 @@ define(['N/record', 'N/runtime', 'N/log', 'N/ui/serverWidget'],
          * v2 Chunk CC: Print + Email vendor-form action links.
          * Settlement form Suitelet handles both modes via ?email=T param.
          */
+        /**
+         * Aggregated-settlement panel: when this settlement carries a period key
+         * (Weekly/Monthly cadence), show WHICH receipt slices make it up — IR
+         * drill-down, line, date, gross/net lbs, slice value — with totals, so
+         * the parent is clearly distinguishable from a one-off settlement.
+         */
+        function renderAggregationPanel(form, rec) {
+            try {
+                const periodKey = rec.getValue({ fieldId: 'custrecord_sust_settle_period_key' });
+                if (!periodKey || !rec.id) return;
+
+                const slices = [];
+                search.create({
+                    type: 'customrecord_sust_settle_slice',
+                    filters: [['custrecord_sust_slice_settlement', 'anyof', rec.id]],
+                    columns: ['custrecord_sust_slice_ir', 'custrecord_sust_slice_source_line',
+                        'custrecord_sust_slice_date', 'custrecord_sust_slice_gross_lbs',
+                        'custrecord_sust_slice_net_lbs', 'custrecord_sust_slice_value',
+                        'custrecord_sust_slice_lot']
+                }).run().each(function(r) {
+                    slices.push({
+                        irId: r.getValue('custrecord_sust_slice_ir') || null,
+                        irText: r.getText('custrecord_sust_slice_ir') || '',
+                        line: r.getValue('custrecord_sust_slice_source_line') || '',
+                        date: r.getValue('custrecord_sust_slice_date') || '',
+                        gross: parseFloat(r.getValue('custrecord_sust_slice_gross_lbs')) || 0,
+                        net: parseFloat(r.getValue('custrecord_sust_slice_net_lbs')) || 0,
+                        value: parseFloat(r.getValue('custrecord_sust_slice_value')) || 0,
+                        lot: r.getText('custrecord_sust_slice_lot') || ''
+                    });
+                    return true;
+                });
+
+                const cadence = String(periodKey).indexOf('-W') !== -1 ? 'Weekly' : 'Monthly';
+                let totG = 0, totN = 0, totV = 0;
+                const rows = slices.map(function(s) {
+                    totG += s.gross; totN += s.net; totV += s.value;
+                    let irCell = '&mdash;';
+                    if (s.irId) {
+                        try {
+                            const u = url.resolveRecord({ recordType: 'itemreceipt', recordId: s.irId });
+                            irCell = `<a href="${u}" style="color:#2976F3;">${escapeHtml(s.irText || ('IR #' + s.irId))}</a>`;
+                        } catch (eUrl) { irCell = escapeHtml(s.irText || ('IR #' + s.irId)); }
+                    }
+                    return `<tr>
+                        <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${irCell}</td>
+                        <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${escapeHtml(String(s.line))}</td>
+                        <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${escapeHtml(String(s.date))}</td>
+                        <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${escapeHtml(s.lot)}</td>
+                        <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">${s.gross.toLocaleString()}</td>
+                        <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">${s.net.toLocaleString()}</td>
+                        <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;text-align:right;">$${s.value.toFixed(2)}</td>
+                      </tr>`;
+                }).join('');
+
+                const body = slices.length
+                    ? `<table style="border-collapse:collapse;border:1px solid #cbd5e1;min-width:640px;font-size:12px;">
+                         <thead><tr style="background:#7c3aed;color:#fff;">
+                           <th style="padding:5px 10px;text-align:left;">Item Receipt</th>
+                           <th style="padding:5px 10px;text-align:left;">Line</th>
+                           <th style="padding:5px 10px;text-align:left;">Date</th>
+                           <th style="padding:5px 10px;text-align:left;">Lot</th>
+                           <th style="padding:5px 10px;text-align:right;">Gross Lbs</th>
+                           <th style="padding:5px 10px;text-align:right;">Net Lbs</th>
+                           <th style="padding:5px 10px;text-align:right;">Slice Value</th>
+                         </tr></thead>
+                         <tbody>${rows}
+                           <tr style="background:#f5f3ff;font-weight:bold;">
+                             <td style="padding:4px 10px;" colspan="4">Total (${slices.length} slice${slices.length === 1 ? '' : 's'})</td>
+                             <td style="padding:4px 10px;text-align:right;">${totG.toLocaleString()}</td>
+                             <td style="padding:4px 10px;text-align:right;">${totN.toLocaleString()}</td>
+                             <td style="padding:4px 10px;text-align:right;">$${totV.toFixed(2)}</td>
+                           </tr>
+                         </tbody>
+                       </table>`
+                    : `<div style="color:#64748b;font-size:12px;">No receipt slices recorded yet — the next receipt for this vendor in period ${escapeHtml(String(periodKey))} will append here.</div>`;
+
+                const panel = form.addField({
+                    id: 'custpage_sust_agg_panel',
+                    type: serverWidget.FieldType.INLINEHTML,
+                    label: ' '
+                });
+                panel.defaultValue =
+                    `<div style="margin:8px 0 12px;font-family:Arial,sans-serif;border:2px solid #7c3aed;border-radius:6px;padding:12px 14px;background:#faf5ff;">
+                       <div style="font-weight:bold;font-size:14px;color:#5b21b6;margin-bottom:2px;">
+                         &#128257; ${cadence} Aggregated Settlement &mdash; period ${escapeHtml(String(periodKey))}
+                       </div>
+                       <div style="font-size:12px;color:#4c1d95;margin-bottom:8px;">
+                         This is a PARENT settlement: the receipt lines below were rolled into it by the vendor's ${cadence} settlement cadence
+                         (values are schedule-priced per slice, before deductions). Slices also appear on the <b>Settlement Receipt Slice</b> child sublist.
+                       </div>
+                       ${body}
+                     </div>`;
+            } catch (e) {
+                log.debug('renderAggregationPanel skipped', e.message);
+            }
+        }
+
         function renderActionLinks(form, settleId) {
             if (!settleId) return;
 

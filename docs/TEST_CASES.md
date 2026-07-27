@@ -173,6 +173,27 @@ Click **Create Calculator Settlement** → you land on the new settlement record
 
 ---
 
+## TC-AGG — Weekly aggregated settlement → finalize → payable ⭐
+
+| | |
+|---|---|
+| **Preconditions** | Seeder run (stages the `[SUSTDEMO AGG]` sample and sets Fox Valley Recycling's **Settlement Cadence = Weekly**). |
+| **What it shows** | One parent settlement per vendor per week instead of one per receipt, with full drill-down to the receipts that make it up, real deductions, and the path to the vendor payable. |
+
+**Walkthrough:**
+
+1. **Open the aggregated settlement** (link on the seeder results row, or the newest Draft settlement whose **Settlement Period** field is populated, e.g. `2026-W30`).
+2. **Purple "Weekly Aggregated Settlement" panel** at the top marks it as a PARENT and lists each **receipt slice**: Item Receipt (click to drill down), line, date, lot, gross/net lbs, slice value, with totals. The same rows live on the **Settlement Receipt Slice** child sublist.
+3. **Economics are populated like a real one**: Gross Value ($2,394 = 39,900 net lbs × $0.06) − **Moisture penalty** ($199.50 = 2 pts over the 10% threshold × $0.0025/lb/pt; see the Penalty Detail child row) − **Treatment charge** ($150) = **Net Value / Balance Due ≈ $2,044.50**.
+4. **Live aggregation** (optional): weigh in a new scale ticket against a Fox Valley PO — the receipt's scrap line appends to this week's settlement as a new slice rather than creating a new settlement.
+5. **Finalize → payable** (same lifecycle as any settlement — aggregation changes nothing downstream):
+   1. End of week: review the settlement, optionally **Calculate Settlement** to re-derive pricing/penalties from schedules.
+   2. Set Status **Completed**.
+   3. *(Optional demo beat)* Try **Final Settled** with **Price Fixed** unchecked → blocked (SETTLE-012).
+   4. Check **Price Fixed** → set Status **Final Settled** → the StatusChange UE **auto-creates the final Vendor Bill** for the balance due. (Or use **Provisional Paid** first for a provisional bill + later true-up, as in TC-INDEX.)
+
+---
+
 ## TC-COSTFLOW — Deferred-cost flow-back ⭐
 
 | | |

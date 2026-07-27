@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<customrecordtype scriptid="customrecord_sust_settle_slice">
+  <allowattachments>F</allowattachments>
+  <allownumberingoverride>F</allownumberingoverride>
+  <allowquickadd>F</allowquickadd>
+  <allowquicksearch>T</allowquicksearch>
+  <allowuiaccess>T</allowuiaccess>
+  <description>Settlement Receipt Slice - child of Settlement Record. One row per receipt line rolled into an aggregated (Weekly/Monthly cadence) settlement, so the parent shows exactly which receipts make it up.</description>
+  <enabledle>F</enabledle>
+  <enablekeywords>F</enablekeywords>
+  <enablemailmerge>F</enablemailmerge>
+  <enablenumbering>F</enablenumbering>
+  <enableoptimisticlocking>F</enableoptimisticlocking>
+  <enablesystemnotes>F</enablesystemnotes>
+  <iconbuiltin>T</iconbuiltin>
+  <includename>F</includename>
+  <recordname>Settlement Receipt Slice</recordname>
+  <showcreationdate>F</showcreationdate>
+  <showcreationdateonlist>F</showcreationdateonlist>
+  <showid>T</showid>
+  <showlastmodified>F</showlastmodified>
+  <showlastmodifiedonlist>F</showlastmodifiedonlist>
+  <showowner>F</showowner>
+  <showowneronlist>F</showowneronlist>
+  <customrecordcustomfields>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_settlement">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Parent aggregated settlement</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>The aggregated settlement this receipt slice rolls into. Shown as a sublist on the settlement record.</help>
+      <isformula>F</isformula>
+      <ismandatory>T</ismandatory>
+      <isparent>T</isparent>
+      <label>Settlement Record</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>[scriptid=customrecord_sust_settlement_record]</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_ir">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Source Item Receipt for this slice</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>The Item Receipt whose line was rolled into the parent settlement.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Item Receipt</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-30</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_source_line">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>1-based line key on the source receipt</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>INTEGER</fieldtype>
+      <help>System-managed. Which receipt line this slice came from.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Source Line</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_lot">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Lot received on this slice</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>SELECT</fieldtype>
+      <help>The inventory lot received on this slice's receipt line.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Lot</label>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>-266</selectrecordtype>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_date">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Receipt date of this slice</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>DATE</fieldtype>
+      <help>Transaction date of the source receipt.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Receipt Date</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_gross_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Gross pounds on this slice</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Gross received weight this slice contributed to the parent settlement.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Gross Lbs</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_net_lbs">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Net (recovery-adjusted) pounds on this slice</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>FLOAT</fieldtype>
+      <help>Net weight (gross x recovery %) this slice contributed.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Net Lbs</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_slice_value">
+      <accesslevel>2</accesslevel>
+      <applyformatting>T</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Schedule-priced value of this slice</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>CURRENCY</fieldtype>
+      <help>The dollar value this slice added to the parent settlement (schedule-priced at append time, before deductions).</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Slice Value</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+  </customrecordcustomfields>
+</customrecordtype>

@@ -269,3 +269,43 @@ describe('settlement cadence - createOrAppendLineSettlement', () => {
         expect(result.id).not.toBe(902);
     });
 });
+
+describe('settlement cadence - receipt slice child records', () => {
+    const sliceCreates = () =>
+        record.create.mock.calls.filter(c => c[0] && c[0].type === 'customrecord_sust_settle_slice').length;
+
+    test('opening a weekly period settlement writes one Settlement Receipt Slice', () => {
+        search._setLookupResult('vendor', 50, {
+            custentity_sust_settlement_cadence: [{ value: '2', text: 'Weekly' }]
+        });
+        const before = sliceCreates();
+        lib.createOrAppendLineSettlement(baseParams());
+        expect(sliceCreates() - before).toBe(1);
+    });
+
+    test('appending to an open period settlement writes another slice', () => {
+        search._setLookupResult('vendor', 50, {
+            custentity_sust_settlement_cadence: [{ value: '2', text: 'Weekly' }]
+        });
+        record._setMockRecord('customrecord_sust_settlement_record', 910, {
+            custrecord_sust_settlement_gross_lbs: 20000,
+            custrecord_sust_settle_agg_sources: JSON.stringify(['ir:300:1'])
+        });
+        search._setSearchResults('customrecord_sust_settlement_record', [{
+            id: 910,
+            values: {
+                custrecord_sust_settlement_status_text: 'Draft',
+                custrecord_sust_settle_agg_sources: JSON.stringify(['ir:300:1'])
+            }
+        }]);
+        const before = sliceCreates();
+        lib.createOrAppendLineSettlement(baseParams({ sourceLine: 2, sourceTag: 'Item Receipt #300 line 2' }));
+        expect(sliceCreates() - before).toBe(1);
+    });
+
+    test('per-receipt settlements do not write slices', () => {
+        const before = sliceCreates();
+        lib.createOrAppendLineSettlement(baseParams());
+        expect(sliceCreates() - before).toBe(0);
+    });
+});

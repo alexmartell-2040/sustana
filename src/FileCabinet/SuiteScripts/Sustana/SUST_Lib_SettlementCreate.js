@@ -338,9 +338,40 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             rec.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes.substring(0, 3900) });
 
             rec.save();
+            writeSliceRecord(settlementId, params, netWeight, calc.netValue);
             log.audit('Settlement Line Appended',
                 `Settlement ${settlementId} += ${grossWeight} lbs from ${params.sourceTag || sourceKey} | new gross ${gross} lbs | new value $${value.toFixed(2)}`);
             return settlementId;
+        }
+
+        /**
+         * Write a Settlement Receipt Slice child record so the aggregated parent
+         * shows exactly which receipt lines make it up (native sublist on the
+         * settlement record). Guarded — a slice failure never blocks settlement
+         * creation.
+         */
+        function writeSliceRecord(settlementId, params, netWeight, sliceValue) {
+            try {
+                const slice = record.create({ type: 'customrecord_sust_settle_slice' });
+                slice.setValue({ fieldId: 'custrecord_sust_slice_settlement', value: settlementId });
+                if (params.itemReceiptId) {
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_ir', value: parseInt(params.itemReceiptId, 10) });
+                }
+                if (params.sourceLine !== null && params.sourceLine !== undefined && params.sourceLine !== '') {
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_source_line', value: parseInt(params.sourceLine, 10) });
+                }
+                if (params.lotInternalId) {
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_lot', value: params.lotInternalId });
+                }
+                slice.setValue({ fieldId: 'custrecord_sust_slice_date', value: new Date(params.tranDate || Date.now()) });
+                slice.setValue({ fieldId: 'custrecord_sust_slice_gross_lbs', value: parseFloat(params.grossWeight || 0) });
+                slice.setValue({ fieldId: 'custrecord_sust_slice_net_lbs', value: netWeight });
+                slice.setValue({ fieldId: 'custrecord_sust_slice_value', value: sliceValue || 0 });
+                return slice.save();
+            } catch (e) {
+                log.error('writeSliceRecord', `Settlement ${settlementId}: ${e.message}`);
+                return null;
+            }
         }
 
         /**
@@ -377,6 +408,13 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
                     custrecord_sust_settle_agg_sources: JSON.stringify([sourceKey])
                 }
             });
+            const firstRecovery = (params.recoveryPct !== null && params.recoveryPct !== undefined && params.recoveryPct !== '')
+                ? parseFloat(params.recoveryPct) : 100;
+            const firstNet = parseFloat(params.grossWeight || 0) * (firstRecovery / 100);
+            const firstCalc = computeScheduleValue(
+                params.scheduleInfo || findSettlementSchedule(params.vendorId, params.itemId),
+                firstNet, firstRecovery);
+            writeSliceRecord(id, params, firstNet, firstCalc.netValue);
             log.audit('Period Settlement Opened',
                 `Settlement ${id} opens ${cadence} period ${periodKey} for vendor ${params.vendorId}`);
             return { id: id, action: 'created', cadence: cadence, periodKey: periodKey };

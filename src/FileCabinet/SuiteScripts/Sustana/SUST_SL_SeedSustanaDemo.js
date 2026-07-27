@@ -1415,10 +1415,24 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settleId });
                 const gross = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_gross_lbs' })) || 0) + 22000;
                 const net = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_lbs' })) || 0) + (22000 * 0.95);
-                const value = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_value' })) || 0) * (gross / 20000);
+
+                // Realistic economics: schedule-ish price on net lbs, then quality
+                // deductions (moisture over threshold) + treatment charge.
+                const pricePerLb = 0.06;
+                const grossValue = net * pricePerLb;                      // 39,900 × $0.06 = $2,394
+                const moistureExcessPts = 2;                              // 12% actual vs 10% threshold
+                const penaltyRatePerPt = 0.0025;                          // $/lb per point
+                const penaltyAmt = net * penaltyRatePerPt * moistureExcessPts; // ≈ $199.50
+                const treatment = 150;
+                const netValue = grossValue - penaltyAmt - treatment;
+
                 rec.setValue({ fieldId: 'custrecord_sust_settlement_gross_lbs', value: gross });
                 rec.setValue({ fieldId: 'custrecord_sust_settlement_net_lbs', value: net });
-                rec.setValue({ fieldId: 'custrecord_sust_settlement_net_value', value: value });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_gross_value', value: grossValue });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_penalties', value: penaltyAmt });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_treatment', value: treatment });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_net_value', value: netValue });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_balance_due', value: netValue });
                 rec.setValue({ fieldId: 'custrecord_sust_settle_period_key', value: periodKey });
                 rec.setValue({
                     fieldId: 'custrecord_sust_settle_agg_sources',
@@ -1426,10 +1440,47 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 });
                 const notes = (rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '')
                     + '\n+ receipt slice 2: 22000 lbs gross'
-                    + '\nWeekly-cadence aggregation: both receipt lines rolled into this single ' + periodKey + ' settlement.';
+                    + '\nWeekly-cadence aggregation: both receipt lines rolled into this single ' + periodKey + ' settlement.'
+                    + '\nDeductions: Moisture 12% vs 10% threshold (' + moistureExcessPts + ' pts x $' + penaltyRatePerPt
+                    + '/lb/pt = $' + penaltyAmt.toFixed(2) + ') + treatment charge $' + treatment.toFixed(2) + '.';
                 rec.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes });
                 rec.save();
-                addRow(section, 'created', 'Aggregated (Weekly) sample settlement - 42,000 lbs across 2 receipt slices, period ' + periodKey,
+
+                // Receipt-slice child rows (what the aggregation panel + child sublist show)
+                step = 'slice-records';
+                [
+                    { gross: 20000, daysBack: 3 },
+                    { gross: 22000, daysBack: 1 }
+                ].forEach(function(sl, idx) {
+                    const slice = record.create({ type: 'customrecord_sust_settle_slice' });
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_settlement', value: settleId });
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_source_line', value: 1 });
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_date', value: daysAgo(sl.daysBack) });
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_gross_lbs', value: sl.gross });
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_net_lbs', value: sl.gross * 0.95 });
+                    slice.setValue({ fieldId: 'custrecord_sust_slice_value', value: sl.gross * 0.95 * pricePerLb });
+                    slice.save();
+                });
+
+                // Penalty detail row (the Deductions section on the settlement)
+                step = 'penalty-detail';
+                try {
+                    const pen = record.create({ type: 'customrecord_sust_penalty_detail' });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_settlement', value: settleId });
+                    pen.setText({ fieldId: 'custrecord_sust_penalty_detail_element', text: 'Moisture %' });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_actual', value: 12 });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_threshold', value: 10 });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_excess', value: moistureExcessPts });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_rate', value: penaltyRatePerPt });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_amount', value: penaltyAmt });
+                    pen.save();
+                } catch (ePen) {
+                    log.error('seedAggregatedSettlement penalty detail', ePen.message);
+                }
+
+                addRow(section, 'created', 'Aggregated (Weekly) sample settlement - 42,000 lbs / 2 receipt slices, period ' + periodKey
+                    + ', gross $' + grossValue.toFixed(2) + ' - deductions $' + (penaltyAmt + treatment).toFixed(2)
+                    + ' = net $' + netValue.toFixed(2),
                     'customrecord_sust_settlement_record', settleId);
             } catch (e) {
                 addRow(section, 'error', 'Aggregated sample settlement [step=' + step + ']: ' + e.message);
