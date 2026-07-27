@@ -298,10 +298,15 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             // ==================== ADDITIONAL INPUTS (multi-input) ====================
             // The header Input Item/Lot/Weight is the PRIMARY input; these lines add
             // more grades consumed into the same run (e.g. 30t WL + 15t MP + 10t SOP).
+            // Single "Materials" tab: both sublists stack on one view instead of
+            // rendering as separate subtabs.
+            form.addTab({ id: 'custpage_tab_materials', label: 'Materials — Inputs & Outputs' });
+
             const inputSublist = form.addSublist({
                 id: 'custpage_input_lines',
                 type: serverWidget.SublistType.INLINEEDITOR,
-                label: 'Additional Input Materials (multi-input)'
+                label: 'Additional Input Materials (multi-input)',
+                tab: 'custpage_tab_materials'
             });
             inputSublist.addField({
                 id: 'custpage_in_line_num',
@@ -337,7 +342,8 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             const outputSublist = form.addSublist({
                 id: 'custpage_output_lines',
                 type: serverWidget.SublistType.INLINEEDITOR,
-                label: 'Output Materials'
+                label: 'Output Materials',
+                tab: 'custpage_tab_materials'
             });
 
             // Line Number
