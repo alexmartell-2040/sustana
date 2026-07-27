@@ -627,6 +627,10 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 // Set notes
                 procRec.setValue({ fieldId: 'custrecord_sust_processing_notes', value: params.custpage_notes || '' });
 
+                // Start/End times: start stamps when work begins (In Process, or any
+                // completed-path save without one), end stamps at Completed.
+                stampTimes(procRec, requestedStatus);
+
                 // Save parent record
                 processingId = procRec.save();
                 log.audit('processFormSubmission', 'Saved processing record: ' + processingId);
@@ -634,16 +638,16 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 // Save output lines (input weight passed in POUNDS)
                 saveOutputLines(processingId, context.request, inputWeightLbs);
 
-                // If this was a new record with COMPLETED status, now update to trigger User Event
+                // If this was a new record with COMPLETED status, now update to trigger the
+                // User Event. MUST be a full load+save (EDIT context) — submitFields fires
+                // the UE as XEDIT, which the IA-creation UE ignores, so the Inventory
+                // Adjustment silently never happened for form-submitted Completed records.
                 if (!isEdit && requestedStatus === PROCESSING_STATUS.COMPLETED) {
                     log.audit('processFormSubmission', 'Updating status to COMPLETED to trigger Inventory Adjustment creation');
-                    record.submitFields({
-                        type: 'customrecord_sust_processing_record',
-                        id: processingId,
-                        values: {
-                            custrecord_sust_processing_status: PROCESSING_STATUS.COMPLETED
-                        }
-                    });
+                    const flip = record.load({ type: 'customrecord_sust_processing_record', id: processingId });
+                    flip.setValue({ fieldId: 'custrecord_sust_processing_status', value: PROCESSING_STATUS.COMPLETED });
+                    stampTimes(flip, PROCESSING_STATUS.COMPLETED);
+                    flip.save();
                     log.audit('processFormSubmission', 'Status updated to COMPLETED');
                 }
 
@@ -742,6 +746,26 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
          * Generate a processing number in format PROC-YYMMDD-NNN
          * @returns {string}
          */
+        /**
+         * Stamp start/end dates for the requested status: start when work
+         * begins (In Process) or when completing without one; end at Completed.
+         * Never overwrites an existing stamp.
+         */
+        function stampTimes(procRec, statusVal) {
+            try {
+                const started = procRec.getValue({ fieldId: 'custrecord_sust_processing_start_date' });
+                const ended = procRec.getValue({ fieldId: 'custrecord_sust_processing_end_date' });
+                if (!started && (statusVal === PROCESSING_STATUS.IN_PROCESS || statusVal === PROCESSING_STATUS.COMPLETED)) {
+                    procRec.setValue({ fieldId: 'custrecord_sust_processing_start_date', value: new Date() });
+                }
+                if (!ended && statusVal === PROCESSING_STATUS.COMPLETED) {
+                    procRec.setValue({ fieldId: 'custrecord_sust_processing_end_date', value: new Date() });
+                }
+            } catch (e) {
+                log.debug('stampTimes skipped', e.message);
+            }
+        }
+
         const generateProcessingNumber = () => {
             const now = new Date();
             const yy = String(now.getFullYear()).slice(-2);

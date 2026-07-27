@@ -51,16 +51,24 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
                     log.debug('afterSubmit', `Status "${newStatusText}" is not Completed — skipping IA creation`);
                     return;
                 }
-                if (oldStatusText === STATUS_TEXT.COMPLETED) {
-                    log.debug('afterSubmit', 'Status was already Completed — skipping IA creation');
-                    return;
-                }
-
                 // Check if inventory adjustment already exists
                 const existingAdj = newRecord.getValue({ fieldId: 'custrecord_sust_processing_work_order' });
                 if (existingAdj) {
                     log.debug('afterSubmit', 'Inventory Adjustment already exists: ' + existingAdj);
                     return;
+                }
+
+                // Already-Completed records normally skip — EXCEPT the self-heal case:
+                // Completed with no IA and no deferred-IA flag (e.g. records stuck by
+                // the old XEDIT flip bug). A plain save re-runs the IA for those.
+                const iaPending = newRecord.getValue({ fieldId: 'custrecord_sust_proc_ia_pending' });
+                if (oldStatusText === STATUS_TEXT.COMPLETED && (iaPending === true || iaPending === 'T')) {
+                    log.debug('afterSubmit', 'Already Completed with deferred IA pending — skipping (cost flow-back will fire it)');
+                    return;
+                }
+                if (oldStatusText === STATUS_TEXT.COMPLETED) {
+                    log.audit('afterSubmit — self-heal',
+                        'Record already Completed but no IA linked — re-running IA creation.');
                 }
 
                 // v2.2: detect deferred-pricing path — Total Input Cost = 0 means we cannot
