@@ -74,6 +74,13 @@ define(['N/record', 'N/runtime', 'N/log', './SUST_Lib_Config'],
                     functionName: 'openProcessScrap'
                 });
 
+                // Add "Regrade Lot" button (demo 5.3 — inspection & regrade)
+                form.addButton({
+                    id: 'custpage_btn_regrade',
+                    label: 'Regrade Lot',
+                    functionName: 'openRegrade'
+                });
+
                 log.debug('beforeLoad', `Added buttons to Item Receipt ${itemReceipt.id}`);
 
             } catch (e) {

@@ -173,6 +173,28 @@ Click **Create Calculator Settlement** → you land on the new settlement record
 
 ---
 
+## TC-REGRADE — 8:00 Inspection & Regrade (WL → MOP) ⭐
+
+| | |
+|---|---|
+| **Preconditions** | A received White Ledger lot on hand (e.g. from a TC-RCV scale ticket, or seeded WL-SEED-001); Mixed Office Paper item exists (seeded); vendor + MOP settlement schedule seeded for re-pricing. |
+| **Design stance** | The grade IS the commodity, so a regrade is an **item change**, not a lot flag — valuation, supplier settlement pricing, and position reporting all key off the item. The lot number stays the same; the original receipt is never modified. |
+
+**Walkthrough:**
+
+1. Open the **Item Receipt** → click **Regrade Lot** (next to Enter Lot Quality / Process Material).
+2. On the regrade page: pick the lot, **New Grade = Mixed Office Paper**, Reason e.g. "Inspection: mixed content, fails WL spec" → **Regrade Lot**.
+3. The result page links every record created/updated:
+   - **Inventory Adjustment** — OUT White Ledger / IN Mixed Office Paper, same lot number, unit cost carried (the valuation move; the GL impact is on this transaction)
+   - **Regraded lot** — same lot number under MOP; quality attributes copied; `[REGRADE <date-time> by <user>] White Ledger -> Mixed Office Paper … Reason: …` audit line
+   - **Original lot** — zero on hand, same audit line (original + revised grade both visible)
+   - **Genealogy** — Grade Transformation row links original lot → regraded lot → original receipt (drill the lot's relationship records)
+   - **Supplier settlement** — if still Draft/Completed: **re-priced on the vendor + MOP schedule** with a before/after note (WL money → MOP money = the payable/accrual impact). If already Provisional Paid / Final Settled: untouched, flagged "issue a vendor credit / true-up".
+4. **Audit history**: the audit line carries user + date/time + reason on both lots; NetSuite System Notes on the lots/IA give the field-level trail.
+5. **Reporting impact**: refresh the Fiber Position Report — WL on-hand drops, MOP rises; the yard detail shows the lot under its new grade.
+
+---
+
 ## TC-AGG — Weekly aggregated settlement → finalize → payable ⭐
 
 | | |

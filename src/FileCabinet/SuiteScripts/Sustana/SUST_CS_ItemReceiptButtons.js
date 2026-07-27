@@ -70,10 +70,29 @@ define(['N/currentRecord', 'N/url', 'N/log'],
             }
         }
 
+        /**
+         * Open Inspection & Regrade Suitelet scoped to this receipt's lots
+         */
+        function openRegrade() {
+            try {
+                const record = currentRecord.get();
+                const suiteletUrl = url.resolveScript({
+                    scriptId: 'customscript_sust_sl_regrade',
+                    deploymentId: 'customdeploy_sust_sl_regrade',
+                    params: { ir: record.id }
+                });
+                window.open(suiteletUrl, '_blank');
+            } catch (e) {
+                log.error('openRegrade', e.toString());
+                alert('Error opening Regrade form: ' + e.message);
+            }
+        }
+
         return {
             pageInit: pageInit,
             openLotQuality: openLotQuality,
-            openProcessScrap: openProcessScrap
+            openProcessScrap: openProcessScrap,
+            openRegrade: openRegrade
         };
 
     });

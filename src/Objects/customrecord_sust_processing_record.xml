@@ -25,9 +25,10 @@
     <customrecordcustomfield scriptid="custrecord_sust_processing_po">
       <accesslevel>2</accesslevel>
       <applyformatting>T</applyformatting>      <defaultchecked>F</defaultchecked>
+      <description>Optional source transaction (PO or IR). Standalone processing (no BOM/WO, yard-initiated) legitimately has none.</description>
       <displaytype>NORMAL</displaytype>      <fieldtype>SELECT</fieldtype>      <help/>
       <isformula>F</isformula>
-      <ismandatory>T</ismandatory>      <label>Purchase Order</label>      <maxlength/>      <searchlevel>2</searchlevel>
+      <ismandatory>F</ismandatory>      <label>Purchase Order</label>      <maxlength/>      <searchlevel>2</searchlevel>
       <selectrecordtype>-30</selectrecordtype>      <fldcurselrectype>-30</fldcurselrectype>
       <showinlist>T</showinlist>
       <storevalue>T</storevalue>
