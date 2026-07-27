@@ -22,8 +22,8 @@
  * Date: July 2026
  */
 
-define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log'],
-    function(serverWidget, record, search, redirect, log) {
+define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', './SUST_Lib_LotAttributes'],
+    function(serverWidget, record, search, redirect, log, lotAttr) {
 
         // The four lot quality fields (custitemnumber_sust_* on inventorynumber)
         const QUALITY_FIELDS = [
@@ -32,8 +32,6 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log'],
             { id: 'fiber_content', fieldId: 'custitemnumber_sust_fiber_content_pct', label: 'Fiber Content %', type: 'percent' },
             { id: 'bale_count',    fieldId: 'custitemnumber_sust_bale_count',        label: 'Bale Count',      type: 'integer' }
         ];
-
-        const NOTES_MAX = 3999;
 
         /**
          * Main entry point
@@ -404,104 +402,30 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log'],
                     continue;
                 }
 
-                try {
-                    const invNumber = record.load({
-                        type: record.Type.INVENTORY_NUMBER,
-                        id: parseInt(lotId, 10)
+                // Quality values from the sublist. PERCENT form values arrive on POST
+                // with a '%' suffix (e.g. "65.0%") — the lib's parseFloat handles it.
+                // Explicit zeroes pass through; blanks are left untouched.
+                const sub = function(name) {
+                    return context.request.getSublistValue({
+                        group: 'custpage_lot_lines', name: name, line: i
                     });
+                };
+                const result = lotAttr.writeLotQuality(parseInt(lotId, 10), {
+                    moisture:      sub('custpage_quality_moisture'),
+                    contamination: sub('custpage_quality_contamination'),
+                    fiber:         sub('custpage_quality_fiber_content'),
+                    baleCount:     sub('custpage_quality_bale_count'),
+                    yieldPct:      sub('custpage_yield_pct'),
+                    vendorLot:     sub('custpage_vendor_lot'),
+                    auditRef:      'IR ' + itemReceiptId
+                });
 
-                    // Ensure required Source Type is set (default to Purchased for IR lots)
-                    const existingSourceType = invNumber.getValue({ fieldId: 'custitemnumber_sust_lot_source_type' });
-                    if (!existingSourceType) {
-                        invNumber.setText({
-                            fieldId: 'custitemnumber_sust_lot_source_type',
-                            text: 'Purchased'
-                        });
-                    }
-
-                    // Capture original values before applying revisions (for the
-                    // quality-audit note on regrades)
-                    const originals = {};
-                    QUALITY_FIELDS.forEach(function(q) {
-                        originals[q.id] = parseNumeric(invNumber.getValue({ fieldId: q.fieldId }));
-                    });
-
-                    // Set quality values. NOTE: PERCENT form values arrive on POST
-                    // with a '%' suffix (e.g. "65.0%") — parseFloat handles it.
-                    // Allow explicit zeroes (val !== '').
-                    const changes = [];
-                    QUALITY_FIELDS.forEach(function(q) {
-                        const raw = context.request.getSublistValue({
-                            group: 'custpage_lot_lines',
-                            name: 'custpage_quality_' + q.id,
-                            line: i
-                        });
-
-                        if (raw === null || raw === undefined || raw === '') return;
-
-                        const num = q.type === 'integer' ? parseInt(raw, 10) : parseFloat(raw);
-                        if (isNaN(num)) return;
-
-                        invNumber.setValue({ fieldId: q.fieldId, value: num });
-
-                        if (originals[q.id] !== num) {
-                            changes.push(q.label + ': ' + fmtOriginal(originals[q.id]) + ' -> ' + num);
-                        }
-                    });
-
-                    // Regrade audit: when a previously graded lot is revised, append
-                    // an audit line to the lot notes recording original vs revised.
-                    const hadPriorValues = QUALITY_FIELDS.some(function(q) { return originals[q.id] !== null; });
-                    if (hadPriorValues && changes.length > 0) {
-                        appendQualityAuditNote(invNumber, itemReceiptId, changes);
-                    }
-
-                    // Set Yield % (PERCENT — '%' suffix on POST, parseFloat first)
-                    const yieldPct = context.request.getSublistValue({
-                        group: 'custpage_lot_lines',
-                        name: 'custpage_yield_pct',
-                        line: i
-                    });
-                    if (yieldPct !== null && yieldPct !== '') {
-                        const yieldNum = parseFloat(yieldPct);
-                        if (!isNaN(yieldNum)) {
-                            invNumber.setValue({
-                                fieldId: 'custitemnumber_sust_recovery_percentage',
-                                value: yieldNum
-                            });
-                        }
-                    }
-
-                    // Set vendor lot number
-                    const vendorLot = context.request.getSublistValue({
-                        group: 'custpage_lot_lines',
-                        name: 'custpage_vendor_lot',
-                        line: i
-                    });
-                    if (vendorLot) {
-                        invNumber.setValue({
-                            fieldId: 'custitemnumber_sust_vendor_lot_number',
-                            value: vendorLot
-                        });
-                    }
-
-                    // Quality check moves the lot Received -> Yard. Only advance from
-                    // Received (or empty) — never regress later statuses.
-                    const statusText = invNumber.getText({ fieldId: 'custitemnumber_sust_lot_status' }) || '';
-                    if (statusText === '' || statusText === 'Received') {
-                        invNumber.setText({
-                            fieldId: 'custitemnumber_sust_lot_status',
-                            text: 'Yard'
-                        });
-                    }
-
-                    invNumber.save();
+                if (result.ok) {
                     successCount++;
                     log.audit('processSubmission', `Updated quality for lot ${lotId} (${lotNumber})`);
-
-                } catch (e) {
+                } else {
                     errorCount++;
-                    log.error('processSubmission', `Error updating lot ${lotId}: ${e.message}\n${e.stack || ''}`);
+                    log.error('processSubmission', `Error updating lot ${lotId}: ${result.error}`);
                 }
             }
 
@@ -515,27 +439,6 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log'],
         }
 
         /**
-         * Append a quality-audit line (original vs revised values) to the lot notes.
-         * @param {Record} invNumber  loaded inventorynumber record (not yet saved)
-         * @param {string} itemReceiptId
-         * @param {Array} changes  e.g. ['Moisture %: 12 -> 9', ...]
-         */
-        function appendQualityAuditNote(invNumber, itemReceiptId, changes) {
-            try {
-                const existingNotes = invNumber.getValue({ fieldId: 'custitemnumber_sust_lot_notes' }) || '';
-                const newNote = '[Quality Regrade ' + new Date().toISOString().substring(0, 10)
-                    + ', IR ' + itemReceiptId + '] ' + changes.join('; ') + '.';
-                const merged = existingNotes ? existingNotes + '\n' + newNote : newNote;
-                invNumber.setValue({
-                    fieldId: 'custitemnumber_sust_lot_notes',
-                    value: merged.substring(0, NOTES_MAX)
-                });
-            } catch (e) {
-                log.error('appendQualityAuditNote', e.message);
-            }
-        }
-
-        /**
          * Parse a numeric field value that may arrive as a number, '' or a
          * percent-formatted string ("65.0%"). Returns null when unset.
          */
@@ -543,11 +446,6 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log'],
             if (v === null || v === undefined || v === '') return null;
             const n = parseFloat(v);
             return isNaN(n) ? null : n;
-        }
-
-        /** Display helper for audit lines: null originals render as '(none)'. */
-        function fmtOriginal(v) {
-            return (v === null || v === undefined) ? '(none)' : String(v);
         }
 
         return {

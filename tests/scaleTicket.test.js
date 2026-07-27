@@ -25,6 +25,14 @@ global.define = function(deps, factory) {
 };
 require('../src/FileCabinet/SuiteScripts/Sustana/SUST_Lib_Units');
 
+// Load the REAL lot-attributes lib with mocked N/ modules injected.
+let lotAttrLib;
+global.define = function(deps, factory) {
+    const depMap = { 'N/record': record, 'N/search': search, 'N/log': log };
+    lotAttrLib = factory(...deps.map(d => depMap[d]));
+};
+require('../src/FileCabinet/SuiteScripts/Sustana/SUST_Lib_LotAttributes');
+
 let scaleTicket;
 global.define = function(deps, factory) {
     const depMap = {
@@ -34,7 +42,8 @@ global.define = function(deps, factory) {
         'N/runtime': runtime,
         'N/url': urlMock,
         'N/log': log,
-        './SUST_Lib_Units': unitsLib
+        './SUST_Lib_Units': unitsLib,
+        './SUST_Lib_LotAttributes': lotAttrLib
     };
     const resolvedDeps = deps.map(d => {
         if (!(d in depMap)) throw new Error('Unmapped AMD dependency in ScaleTicket SL test: ' + d);

@@ -30,8 +30,8 @@
  * Date: July 2026
  */
 
-define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', './SUST_Lib_Units'],
-    function(serverWidget, record, search, runtime, url, log, units) {
+define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', './SUST_Lib_Units', './SUST_Lib_LotAttributes'],
+    function(serverWidget, record, search, runtime, url, log, units, lotAttr) {
 
         const TICKET_TYPE = 'customrecord_sust_scale_ticket';
         const F = Object.freeze({
@@ -188,6 +188,44 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/lo
             });
             if (existing) notesField.defaultValue = existing.getValue({ fieldId: F.NOTES });
 
+            // ── Lot Quality (captured at the scale, pushed to the lot record on save) ──
+            // Lot number = ticket number, so these write straight onto that lot via
+            // SUST_Lib_LotAttributes. Pre-populated from the lot on the correction path.
+            const quality = form.addFieldGroup({ id: 'grp_quality', label: 'Lot Quality (pushed to the lot record)' });
+            const existingQuality = existing
+                ? lotAttr.readLotQuality(existing.getValue({ fieldId: F.NUMBER }))
+                : {};
+            const moistureField = form.addField({
+                id: 'custpage_moisture', type: serverWidget.FieldType.FLOAT,
+                label: 'Moisture %', container: 'grp_quality'
+            });
+            const contaminationField = form.addField({
+                id: 'custpage_contamination', type: serverWidget.FieldType.FLOAT,
+                label: 'Contamination %', container: 'grp_quality'
+            });
+            const fiberField = form.addField({
+                id: 'custpage_fiber', type: serverWidget.FieldType.FLOAT,
+                label: 'Fiber Content %', container: 'grp_quality'
+            });
+            const baleField = form.addField({
+                id: 'custpage_bales', type: serverWidget.FieldType.INTEGER,
+                label: 'Bale Count', container: 'grp_quality'
+            });
+            const vendorLotField = form.addField({
+                id: 'custpage_vendor_lot', type: serverWidget.FieldType.TEXT,
+                label: 'Vendor Lot #', container: 'grp_quality'
+            });
+            const lotNotesField = form.addField({
+                id: 'custpage_lot_notes', type: serverWidget.FieldType.TEXTAREA,
+                label: 'Lot Quality Notes', container: 'grp_quality'
+            });
+            moistureField.setHelpText({ help: 'Optional. Captured at the scale and written to the lot; high moisture/contamination drive supplier settlement penalties and the yard exception flags.' });
+            if (existingQuality.moisture !== undefined) moistureField.defaultValue = existingQuality.moisture;
+            if (existingQuality.contamination !== undefined) contaminationField.defaultValue = existingQuality.contamination;
+            if (existingQuality.fiber !== undefined) fiberField.defaultValue = existingQuality.fiber;
+            if (existingQuality.baleCount !== undefined) baleField.defaultValue = existingQuality.baleCount;
+            if (existingQuality.vendorLot !== undefined) vendorLotField.defaultValue = existingQuality.vendorLot;
+
             if (existing && existing.getValue({ fieldId: F.IR })) {
                 const note = form.addField({
                     id: 'custpage_resync_note', type: serverWidget.FieldType.INLINEHTML, label: ' '
@@ -333,6 +371,32 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/lo
                     'Ticket ' + escapeHtml(ticketNumber) + ' was saved, but receiving failed: ' + escapeHtml(irErr.message) +
                     '. Use the manual Item Receipt path (outage fallback), or correct the ticket and retry.',
                     links.concat([{ label: 'Back to kiosk', href: kioskUrl() }]));
+            }
+
+            // Push captured lot-quality onto the lot record (lot number = ticket number).
+            // Only when the operator actually entered quality, so an empty capture doesn't
+            // silently advance the lot's status.
+            const capturedQuality = [p.custpage_moisture, p.custpage_contamination, p.custpage_fiber,
+                p.custpage_bales, p.custpage_vendor_lot, p.custpage_lot_notes]
+                .some(function(v) { return v !== undefined && v !== null && String(v).trim() !== ''; });
+            if (irId && capturedQuality) {
+                const notes = (p.custpage_lot_notes || '').trim();
+                const lotWrite = lotAttr.writeLotQuality(ticketNumber, {
+                    moisture: p.custpage_moisture,
+                    contamination: p.custpage_contamination,
+                    fiber: p.custpage_fiber,
+                    baleCount: p.custpage_bales,
+                    vendorLot: p.custpage_vendor_lot,
+                    notesAppend: notes ? ('[Kiosk ' + new Date().toISOString().substring(0, 10) + ', ticket ' + ticketNumber + '] ' + notes) : null
+                });
+                if (lotWrite && lotWrite.ok) {
+                    links.push({
+                        label: 'Lot ' + escapeHtml(ticketNumber) + ' quality captured (' + escapeHtml((lotWrite.applied || []).join(', ') || 'status → Yard') + ')',
+                        href: '/app/common/search/searchresults.nl?searchtype=InvtNumber&IT_Number=' + encodeURIComponent(ticketNumber)
+                    });
+                } else if (lotWrite && !lotWrite.ok) {
+                    log.error('Kiosk lot-quality write failed', ticketNumber + ': ' + lotWrite.error);
+                }
             }
 
             // Settlement created by the IR UE chain (if any)
