@@ -115,9 +115,15 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', 'N/ui/serverWidget', './SU
                     trueNet = round4(gross - tareActual);
                     rec.setValue({ fieldId: 'custrecord_sust_proc_true_net_lbs', value: trueNet });
                 } else {
-                    // Fall back to the legacy input_lbs field if true-net inputs aren't set
+                    // Fall back to the keyed Input Weight when the scale-reconciliation
+                    // fields (Gross/Tare) aren't used — and PERSIST it, so the yield
+                    // banner (which reads the stored True Net) doesn't claim nothing
+                    // was computed.
                     const legacyInputLbs = toNum(rec.getValue({ fieldId: 'custrecord_sust_processing_input_lbs' }));
-                    if (legacyInputLbs !== null) trueNet = legacyInputLbs;
+                    if (legacyInputLbs !== null) {
+                        trueNet = legacyInputLbs;
+                        rec.setValue({ fieldId: 'custrecord_sust_proc_true_net_lbs', value: round4(legacyInputLbs) });
+                    }
                 }
 
                 // 2. Sum output line weights (only meaningful on EDIT — output lines exist)
