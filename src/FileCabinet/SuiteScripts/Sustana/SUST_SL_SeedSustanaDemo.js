@@ -48,8 +48,8 @@
  */
 
 define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url',
-        './SUST_Lib_MarketPrice', './SUST_Lib_Config'],
-    function(record, search, log, serverWidget, format, url, marketPriceLib, configLib) {
+        './SUST_Lib_MarketPrice', './SUST_Lib_Config', './SUST_Lib_SettlementCreate'],
+    function(record, search, log, serverWidget, format, url, marketPriceLib, configLib, settlementLib) {
 
         const EXT_PREFIX = 'SUSTDEMO_';
         const US_SUB_NAME = 'Sustana Recovery US';
@@ -122,7 +122,9 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             { paramId: 'custpage_grp_schedules', label: 'Group 6 - Settlement schedules (supplier Purchase + customer Sale)',           defaultChecked: true },
             { paramId: 'custpage_grp_po',        label: 'Group 7 - Open PO-10001 (left un-received for the receiving demo)',            defaultChecked: true },
             { paramId: 'custpage_grp_onhand',    label: 'Group 8 - On-hand lots (inventory adjustment + lot quality)',                  defaultChecked: true },
-            { paramId: 'custpage_grp_planning',  label: 'Group 9 - Planning scenario (7 sales orders + 3 estimates) - OPTIONAL',        defaultChecked: false }
+            { paramId: 'custpage_grp_planning',  label: 'Group 9 - Planning scenario (7 confirmed SOs + 2 delayed + 1 cancelled)',      defaultChecked: true },
+            { paramId: 'custpage_grp_templates', label: 'Group 10 - Item output templates (default outputs for Processing Entry)',      defaultChecked: true },
+            { paramId: 'custpage_grp_settlements', label: 'Group 11 - Sample settlements (feed the Close-Out dashboard)',                defaultChecked: true }
         ];
 
         function onRequest(context) {
@@ -260,6 +262,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             if (checked('custpage_grp_po'))        seedOpenPO(ctx, out);
             if (checked('custpage_grp_onhand'))    seedOnHandLots(ctx, out);
             if (checked('custpage_grp_planning'))  seedPlanning(ctx, out);
+            if (checked('custpage_grp_templates')) seedItemOutputTemplates(ctx, out);
+            if (checked('custpage_grp_settlements')) seedSampleSettlements(ctx, out);
 
             context.response.write({ output: resultsHtml(out) });
         }
@@ -771,7 +775,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             const sopId = resolveItemId(ctx, 'SOP');
 
             if (vendorId && wlId) {
-                ensureSchedule({
+                const supplierSchedId = ensureSchedule({
                     label: 'Supplier schedule: ' + VENDOR.name + ' / White Ledger - Purchase, % of Index (100% of RISI White Ledger - $0.0075/lb)',
                     entityField: 'custrecord_sust_schedule_vendor',
                     entityId: vendorId,
@@ -781,6 +785,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     marketPct: 100,
                     marketAdj: -0.0075
                 }, section);
+                seedPenalties(supplierSchedId, section);
             } else {
                 addRow(section, 'error', 'Supplier schedule skipped - missing '
                     + missingList([[vendorId, 'vendor (run the Entities group)'], [wlId, 'White Ledger item (run the Items group)']]));
@@ -825,9 +830,66 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 sched.setValue({ fieldId: 'custrecord_sust_schedule_effective_date', value: new Date(INDEX_START.year, INDEX_START.month, 1) });
                 const id = sched.save();
                 addRow(section, action, spec.label, SCHEDULE_TYPE, id);
+                return id;
             } catch (e) {
                 addRow(section, 'error', spec.label + ': ' + e.message);
                 log.error('ensureSchedule', spec.label + ': ' + e.message);
+                return null;
+            }
+        }
+
+        // ─── Group 6b: quality-deduction / penalty definitions (children of a schedule) ──
+        // Penalty RULES live on the settlement SCHEDULE. The Settlement Calculator applies
+        // them when a lot's measured moisture/contamination exceeds the threshold. Element
+        // text must be exactly 'Moisture %' / 'Contamination %' or the calculator skips it.
+        const SUPPLIER_PENALTIES = [
+            { element: 'Moisture %',      threshold: 12, rate: 0.001, calc: 'Per Percentage Point' },
+            { element: 'Contamination %', threshold: 5,  rate: 0.002, calc: 'Per Percentage Point' }
+        ];
+
+        function seedPenalties(scheduleId, section) {
+            if (!scheduleId) return;
+            SUPPLIER_PENALTIES.forEach(function(spec) {
+                try {
+                    if (findPenaltyByKey(scheduleId, spec.element)) {
+                        addRow(section, 'exists', 'Penalty rule: ' + spec.element + ' > ' + spec.threshold + '% (already defined)',
+                            'customrecord_sust_settlement_penalty', null);
+                        return;
+                    }
+                    const pen = record.create({ type: 'customrecord_sust_settlement_penalty' });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_schedule', value: scheduleId });
+                    pen.setText({ fieldId: 'custrecord_sust_penalty_element', text: spec.element });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_threshold', value: spec.threshold }); // PERCENT 0-100
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_rate', value: spec.rate });           // $/lb per point
+                    pen.setText({ fieldId: 'custrecord_sust_penalty_calculation', text: spec.calc });
+                    const id = pen.save();
+                    addRow(section, 'created', 'Penalty rule: ' + spec.element + ' > ' + spec.threshold + '% @ $' + spec.rate + '/lb/pt (' + spec.calc + ')',
+                        'customrecord_sust_settlement_penalty', id);
+                } catch (e) {
+                    addRow(section, 'error', 'Penalty rule ' + spec.element + ': ' + e.message);
+                    log.error('seedPenalties', spec.element + ': ' + e.message);
+                }
+            });
+        }
+
+        function findPenaltyByKey(scheduleId, elementText) {
+            try {
+                let found = null;
+                search.create({
+                    type: 'customrecord_sust_settlement_penalty',
+                    filters: [['custrecord_sust_penalty_schedule', 'anyof', scheduleId]],
+                    columns: ['internalid', 'custrecord_sust_penalty_element']
+                }).run().each(function(res) {
+                    if ((res.getText({ name: 'custrecord_sust_penalty_element' }) || '') === elementText) {
+                        found = parseInt(res.id, 10);
+                        return false;
+                    }
+                    return true;
+                });
+                return found;
+            } catch (e) {
+                log.error('findPenaltyByKey', e.message);
+                return null;
             }
         }
 
@@ -1130,6 +1192,154 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             const out = [];
             for (let i = 1; i <= 7; i++) out.push(EXT_PREFIX + 'SO_0' + i);
             return out;
+        }
+
+        // ─── Group 10: item output templates (default outputs for Processing Entry) ──
+        // Each scrap input grade gets a default recipe: a finished-fiber output at the
+        // item's typical recovery %, plus a residual line. The Processing Entry
+        // "Load Default Outputs" button reads these to pre-fill output lines.
+        const OUTPUT_TEMPLATES = [
+            { inputKey: 'WL',  fiberPct: 95, residPct: 3 },
+            { inputKey: 'MP',  fiberPct: 90, residPct: 5 },
+            { inputKey: 'MOP', fiberPct: 92, residPct: 4 }
+        ];
+
+        function seedItemOutputTemplates(ctx, out) {
+            const section = newSection(out, 'Group 10 - Item output templates');
+            const sopId = resolveItemId(ctx, 'SOP');
+            const residId = resolveItemId(ctx, 'RESID');
+            if (!sopId || !residId) {
+                addRow(section, 'error', 'Group skipped - missing '
+                    + missingList([[sopId, 'SOP item (run the Items group)'], [residId, 'Mill Residuals item (run the Items group)']]));
+                return;
+            }
+            OUTPUT_TEMPLATES.forEach(function(t) {
+                const inputId = resolveItemId(ctx, t.inputKey);
+                if (!inputId) {
+                    addRow(section, 'error', 'Template for ' + t.inputKey + ' skipped - input item not seeded');
+                    return;
+                }
+                ensureTemplateLine(section, inputId, t.inputKey, sopId, 'SOP',  'Fiber',    t.fiberPct, 'To Inventory', 1);
+                ensureTemplateLine(section, inputId, t.inputKey, residId, 'Mill Residuals', 'Residual', t.residPct, 'Waste', 2);
+            });
+        }
+
+        function ensureTemplateLine(section, inputId, inputKey, outputId, outputLabel, typeText, pct, dispText, seq) {
+            try {
+                if (findTemplateByKey(inputId, outputId)) {
+                    addRow(section, 'exists', inputKey + ' -> ' + outputLabel + ' (' + pct + '%) template already defined',
+                        'customrecord_sust_item_output_template', null);
+                    return;
+                }
+                const tmpl = record.create({ type: 'customrecord_sust_item_output_template' });
+                tmpl.setValue({ fieldId: 'custrecord_sust_template_input_item', value: inputId });
+                tmpl.setValue({ fieldId: 'custrecord_sust_template_output_item', value: outputId });
+                tmpl.setText({ fieldId: 'custrecord_sust_template_output_type', text: typeText });
+                tmpl.setValue({ fieldId: 'custrecord_sust_template_default_pct', value: pct });
+                tmpl.setText({ fieldId: 'custrecord_sust_template_disposition', text: dispText });
+                tmpl.setValue({ fieldId: 'custrecord_sust_template_sequence', value: seq });
+                tmpl.setValue({ fieldId: 'custrecord_sust_template_active', value: true });
+                const id = tmpl.save();
+                addRow(section, 'created', inputKey + ' -> ' + outputLabel + ' (' + pct + '%, ' + typeText + '/' + dispText + ')',
+                    'customrecord_sust_item_output_template', id);
+            } catch (e) {
+                addRow(section, 'error', inputKey + ' -> ' + outputLabel + ' template: ' + e.message);
+                log.error('ensureTemplateLine', inputKey + '->' + outputLabel + ': ' + e.message);
+            }
+        }
+
+        function findTemplateByKey(inputId, outputId) {
+            try {
+                const res = search.create({
+                    type: 'customrecord_sust_item_output_template',
+                    filters: [
+                        ['custrecord_sust_template_input_item', 'anyof', inputId], 'AND',
+                        ['custrecord_sust_template_output_item', 'anyof', outputId]
+                    ],
+                    columns: ['internalid']
+                }).run().getRange({ start: 0, end: 1 });
+                return res.length ? parseInt(res[0].id, 10) : null;
+            } catch (e) {
+                log.error('findTemplateByKey', e.message);
+                return null;
+            }
+        }
+
+        // ─── Group 11: sample settlements (feed the Settlement Close-Out dashboard) ──
+        // Reuses SUST_Lib_SettlementCreate (the same creator the receiving UE and the
+        // line-picker Suitelet use) so values are realistic, then backdates + sets the
+        // lifecycle status so the dashboard's aging tiles (Watch/Stale) populate.
+        // NOTE: statuses are limited to Draft / Completed on purpose. 'Provisional Paid'
+        // and 'Final Settled' trigger vendor-bill creation in SUST_UE_Settlement_StatusChange,
+        // which must not fire while seeding demo data.
+        const SAMPLE_SETTLEMENTS = [
+            { tag: 'A', grossLbs: 40000, ageDays: 5,  status: 'Draft' },
+            { tag: 'B', grossLbs: 42000, ageDays: 45, status: 'Completed' },
+            { tag: 'C', grossLbs: 38000, ageDays: 72, status: 'Completed' }
+        ];
+
+        function seedSampleSettlements(ctx, out) {
+            const section = newSection(out, 'Group 11 - Sample settlements');
+            const vendorId = resolveVendorId(ctx);
+            const wlId = resolveItemId(ctx, 'WL');
+            if (!vendorId || !wlId) {
+                addRow(section, 'error', 'Group skipped - missing '
+                    + missingList([[vendorId, 'vendor (run the Entities group)'], [wlId, 'White Ledger item (run the Items group)']]));
+                return;
+            }
+            SAMPLE_SETTLEMENTS.forEach(function(spec) {
+                const marker = '[SUSTDEMO ' + spec.tag + ']';
+                try {
+                    if (findSettlementByMarker(marker)) {
+                        addRow(section, 'exists', 'Sample settlement ' + spec.tag + ' (' + spec.status + ') already seeded',
+                            'customrecord_sust_settlement_record', null);
+                        return;
+                    }
+                    const tranDate = daysAgo(spec.ageDays);
+                    const settleId = settlementLib.createLineSettlement({
+                        vendorId: vendorId,
+                        tranDate: tranDate,
+                        itemId: wlId,
+                        grossWeight: spec.grossLbs,
+                        recoveryPct: 95,
+                        sourceTag: marker + ' sample settlement'
+                    });
+                    // Backdate + advance status + expose a balance due for the dashboard tiles.
+                    const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settleId });
+                    rec.setValue({ fieldId: 'custrecord_sust_settlement_date', value: tranDate });
+                    rec.setText({ fieldId: 'custrecord_sust_settlement_status', text: spec.status });
+                    try { rec.setText({ fieldId: 'custrecord_sust_settlement_mode', text: 'Auto' }); } catch (eMode) { log.debug('sample mode', eMode.message); }
+                    const netVal = parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_value' })) || 0;
+                    rec.setValue({ fieldId: 'custrecord_sust_settlement_balance_due', value: netVal });
+                    rec.save();
+                    addRow(section, 'created', 'Sample settlement ' + spec.tag + ' - ' + spec.grossLbs.toLocaleString()
+                        + ' lbs, ' + spec.status + ', ~' + spec.ageDays + 'd old, net $' + netVal.toFixed(2),
+                        'customrecord_sust_settlement_record', settleId);
+                } catch (e) {
+                    addRow(section, 'error', 'Sample settlement ' + spec.tag + ': ' + e.message);
+                    log.error('seedSampleSettlements', spec.tag + ': ' + e.message);
+                }
+            });
+        }
+
+        function findSettlementByMarker(marker) {
+            try {
+                const res = search.create({
+                    type: 'customrecord_sust_settlement_record',
+                    filters: [['custrecord_sust_settlement_notes', 'contains', marker]],
+                    columns: ['internalid']
+                }).run().getRange({ start: 0, end: 1 });
+                return res.length ? parseInt(res[0].id, 10) : null;
+            } catch (e) {
+                log.error('findSettlementByMarker', e.message);
+                return null;
+            }
+        }
+
+        function daysAgo(n) {
+            const d = new Date();
+            d.setDate(d.getDate() - n);
+            return d;
         }
 
         // ─── Shared resolvers (lazy — used by later groups when an earlier
