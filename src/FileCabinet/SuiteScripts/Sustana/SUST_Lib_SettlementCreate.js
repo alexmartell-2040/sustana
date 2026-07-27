@@ -233,6 +233,17 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             settlement.setValue({ fieldId: 'custrecord_sust_settlement_date', value: new Date(params.tranDate || Date.now()) });
             settlement.setText({ fieldId: 'custrecord_sust_settlement_status', text: 'Draft' });
 
+            // Explicitly set a valid Settlement Mode so the record never falls back to a
+            // field default. On this account an unset mode resolves to an unusable "Custom"
+            // value that throws INVALID_NUMBER at save (mode-driven field-lock is applied by
+            // SUST_UE_SettlementModeLock; Auto = schedule-driven). Guarded so a mode-field
+            // config issue can never abort settlement creation.
+            try {
+                settlement.setText({ fieldId: 'custrecord_sust_settlement_mode', text: scheduleInfo ? 'Auto' : 'Calculator' });
+            } catch (eMode) {
+                log.audit('Settlement mode preset skipped', eMode.message);
+            }
+
             // Method + schedule link (defensive: schedule fields may hold text, not ids)
             if (scheduleInfo && (scheduleInfo.methodId || scheduleInfo.methodText)) {
                 setSelectField(settlement, 'custrecord_sust_settlement_method', scheduleInfo.methodId, scheduleInfo.methodText);

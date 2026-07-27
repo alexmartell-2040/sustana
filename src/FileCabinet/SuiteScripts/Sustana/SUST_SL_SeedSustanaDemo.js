@@ -1328,6 +1328,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             }
             SAMPLE_SETTLEMENTS.forEach(function(spec) {
                 const marker = '[SUSTDEMO ' + spec.tag + ']';
+                let step = 'start';
                 try {
                     if (findSettlementByMarker(marker)) {
                         addRow(section, 'exists', 'Sample settlement ' + spec.tag + ' (' + spec.status + ') already seeded',
@@ -1335,6 +1336,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                         return;
                     }
                     const tranDate = daysAgo(spec.ageDays);
+                    step = 'createLineSettlement';
                     const settleId = settlementLib.createLineSettlement({
                         vendorId: vendorId,
                         tranDate: tranDate,
@@ -1344,6 +1346,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                         sourceTag: marker + ' sample settlement'
                     });
                     // Backdate + advance status + expose a balance due for the dashboard tiles.
+                    step = 'load/adjust/save';
                     const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settleId });
                     rec.setValue({ fieldId: 'custrecord_sust_settlement_date', value: tranDate });
                     rec.setText({ fieldId: 'custrecord_sust_settlement_status', text: spec.status });
@@ -1355,8 +1358,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                         + ' lbs, ' + spec.status + ', ~' + spec.ageDays + 'd old, net $' + netVal.toFixed(2),
                         'customrecord_sust_settlement_record', settleId);
                 } catch (e) {
-                    addRow(section, 'error', 'Sample settlement ' + spec.tag + ': ' + e.message);
-                    log.error('seedSampleSettlements', spec.tag + ': ' + e.message);
+                    addRow(section, 'error', 'Sample settlement ' + spec.tag + ' [step=' + step + ']: ' + e.message);
+                    log.error('seedSampleSettlements', spec.tag + ' [step=' + step + ']: ' + e.message);
                 }
             });
         }
