@@ -19,6 +19,32 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
             log.debug('pageInit', 'Processing Entry form loaded');
         };
 
+        const MAT_SUBLIST = 'custpage_material_lines';
+
+        /** Sum grid weights (tons) for one direction ('input'|'output'). */
+        const sumDirection = (record, direction) => {
+            const lineCount = record.getLineCount({ sublistId: MAT_SUBLIST });
+            let total = 0;
+            for (let i = 0; i < lineCount; i++) {
+                const dir = record.getSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_direction', line: i });
+                if (dir !== direction) continue;
+                total += parseFloat(record.getSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_weight', line: i })) || 0;
+            }
+            return total;
+        };
+
+        /** First grid row matching a direction, or null. */
+        const firstDirectionValue = (record, direction, fieldId) => {
+            const lineCount = record.getLineCount({ sublistId: MAT_SUBLIST });
+            for (let i = 0; i < lineCount; i++) {
+                const dir = record.getSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_direction', line: i });
+                if (dir === direction) {
+                    return record.getSublistValue({ sublistId: MAT_SUBLIST, fieldId: fieldId, line: i });
+                }
+            }
+            return null;
+        };
+
         /**
          * Field changed event handler
          * @param {Object} context
@@ -28,12 +54,9 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
             const fieldId = context.fieldId;
 
             try {
-                if (fieldId === 'custpage_input_item') {
-                    // When input item changes, could trigger default output loading
-                    log.debug('fieldChanged', 'Input item changed');
-                } else if (fieldId === 'custpage_input_weight') {
-                    // Recalculate output percentages
-                    recalculateOutputPercentages(record);
+                if (fieldId === 'custpage_mat_weight' || fieldId === 'custpage_mat_direction') {
+                    // % recomputed on commit via sublistChanged; nothing per-keystroke
+                    log.debug('fieldChanged', 'Materials grid edit');
                 }
             } catch (e) {
                 log.error('fieldChanged', {
@@ -52,8 +75,8 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
             const sublistId = context.sublistId;
 
             try {
-                if (sublistId === 'custpage_output_lines') {
-                    // Recalculate percentages when output weights change
+                if (sublistId === MAT_SUBLIST) {
+                    // Recalculate every row's % of total input when the grid changes
                     recalculateOutputPercentages(record);
                 }
             } catch (e) {
@@ -73,28 +96,23 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
             const record = context.currentRecord;
 
             try {
-                // Validate that we have at least one output line
-                const lineCount = record.getLineCount({ sublistId: 'custpage_output_lines' });
-                if (lineCount === 0) {
+                // The Materials grid needs at least one Input and one Output row.
+                const inputWeight = sumDirection(record, 'input');
+                const totalOutputWeight = sumDirection(record, 'output');
+
+                if (inputWeight <= 0) {
                     dialog.alert({
                         title: 'Validation Error',
-                        message: 'At least one output line is required.'
+                        message: 'Add at least one Input row (Direction = Input) to the Materials grid.'
                     });
                     return false;
                 }
-
-                // Validate that total output weight doesn't exceed input weight.
-                // Both values are the form's TON entries — the comparison is unit-agnostic.
-                const inputWeight = parseFloat(record.getValue({ fieldId: 'custpage_input_weight' })) || 0;
-                let totalOutputWeight = 0;
-
-                for (let i = 0; i < lineCount; i++) {
-                    const outWeight = parseFloat(record.getSublistValue({
-                        sublistId: 'custpage_output_lines',
-                        fieldId: 'custpage_out_weight',
-                        line: i
-                    })) || 0;
-                    totalOutputWeight += outWeight;
+                if (totalOutputWeight <= 0) {
+                    dialog.alert({
+                        title: 'Validation Error',
+                        message: 'Add at least one Output row (Direction = Output) to the Materials grid.'
+                    });
+                    return false;
                 }
 
                 if (totalOutputWeight > inputWeight) {
@@ -120,12 +138,14 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
          */
         const loadDefaultOutputs = () => {
             const record = currentRecord.get();
-            const inputItem = record.getValue({ fieldId: 'custpage_input_item' });
+            // Primary input = first Input row on the Materials grid (header fallback)
+            const inputItem = firstDirectionValue(record, 'input', 'custpage_mat_item')
+                || record.getValue({ fieldId: 'custpage_input_item' });
 
             if (!inputItem) {
                 dialog.alert({
-                    title: 'Missing Input Item',
-                    message: 'Please select an input item first.'
+                    title: 'Missing Input',
+                    message: 'Add an Input row to the Materials grid first (Direction = Input, item, lot, weight).'
                 });
                 return;
             }
@@ -173,57 +193,27 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
                 // Sort by sequence
                 results.sort((a, b) => a.sequence - b.sequence);
 
-                // Clear existing lines
+                // Clear existing OUTPUT rows only (inputs stay)
                 clearOutputLines();
 
-                // Add template lines
-                const inputWeight = parseFloat(record.getValue({ fieldId: 'custpage_input_weight' })) || 0;
+                // Template %s apply to TOTAL input tons across all Input rows
+                const inputWeight = sumDirection(record, 'input');
 
-                results.forEach((template, index) => {
-                    record.selectNewLine({ sublistId: 'custpage_output_lines' });
-
-                    record.setCurrentSublistValue({
-                        sublistId: 'custpage_output_lines',
-                        fieldId: 'custpage_line_num',
-                        value: index + 1
-                    });
-
-                    record.setCurrentSublistValue({
-                        sublistId: 'custpage_output_lines',
-                        fieldId: 'custpage_out_item',
-                        value: template.outputItem
-                    });
-
-                    record.setCurrentSublistValue({
-                        sublistId: 'custpage_output_lines',
-                        fieldId: 'custpage_out_type',
-                        value: template.outputType
-                    });
-
-                    // Calculate weight from percentage — inputWeight is TONS, so this
-                    // stays in TONS (4 decimals ≈ 0.2 lb; POST converts to lbs)
-                    const outWeight = inputWeight * (template.defaultPct / 100);
-                    record.setCurrentSublistValue({
-                        sublistId: 'custpage_output_lines',
-                        fieldId: 'custpage_out_weight',
-                        value: outWeight.toFixed(4)
-                    });
-
-                    record.setCurrentSublistValue({
-                        sublistId: 'custpage_output_lines',
-                        fieldId: 'custpage_out_pct',
-                        value: template.defaultPct
-                    });
-
-                    if (template.disposition) {
-                        record.setCurrentSublistValue({
-                            sublistId: 'custpage_output_lines',
-                            fieldId: 'custpage_disposition',
-                            value: template.disposition
-                        });
+                results.forEach((template) => {
+                    record.selectNewLine({ sublistId: MAT_SUBLIST });
+                    record.setCurrentSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_direction', value: 'output' });
+                    record.setCurrentSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_item', value: template.outputItem });
+                    if (template.outputType) {
+                        record.setCurrentSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_type', value: template.outputType });
                     }
-
-                    record.commitLine({ sublistId: 'custpage_output_lines' });
+                    // Weight from % — TONS in, TONS out (POST converts to lbs)
+                    const outWeight = inputWeight * (template.defaultPct / 100);
+                    record.setCurrentSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_weight', value: outWeight.toFixed(4) });
+                    record.setCurrentSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_pct', value: template.defaultPct });
+                    if (template.disposition) {
+                        record.setCurrentSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_disposition', value: template.disposition });
+                    }
+                    record.commitLine({ sublistId: MAT_SUBLIST });
                 });
 
                 // Show success message
@@ -252,16 +242,16 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
          */
         const clearOutputLines = () => {
             const record = currentRecord.get();
-            const lineCount = record.getLineCount({ sublistId: 'custpage_output_lines' });
+            const lineCount = record.getLineCount({ sublistId: MAT_SUBLIST });
 
             for (let i = lineCount - 1; i >= 0; i--) {
-                record.removeLine({
-                    sublistId: 'custpage_output_lines',
-                    line: i
-                });
+                const dir = record.getSublistValue({ sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_direction', line: i });
+                if (dir === 'output') {
+                    record.removeLine({ sublistId: MAT_SUBLIST, line: i });
+                }
             }
 
-            log.debug('clearOutputLines', 'Cleared all output lines');
+            log.debug('clearOutputLines', 'Cleared output rows (input rows kept)');
         };
 
         /**
@@ -270,32 +260,22 @@ define(['N/currentRecord', 'N/search', 'N/ui/dialog', 'N/log', 'N/ui/message'],
          * @param {Record} record
          */
         const recalculateOutputPercentages = (record) => {
-            const inputWeight = parseFloat(record.getValue({ fieldId: 'custpage_input_weight' })) || 0;
+            const inputWeight = sumDirection(record, 'input');
+            if (inputWeight <= 0) return;
 
-            if (inputWeight <= 0) {
-                return;
-            }
-
-            const lineCount = record.getLineCount({ sublistId: 'custpage_output_lines' });
-
+            const lineCount = record.getLineCount({ sublistId: MAT_SUBLIST });
             for (let i = 0; i < lineCount; i++) {
-                const outWeight = parseFloat(record.getSublistValue({
-                    sublistId: 'custpage_output_lines',
-                    fieldId: 'custpage_out_weight',
-                    line: i
+                const w = parseFloat(record.getSublistValue({
+                    sublistId: MAT_SUBLIST, fieldId: 'custpage_mat_weight', line: i
                 })) || 0;
-
-                const outPct = (outWeight / inputWeight) * 100;
-
                 record.setSublistValue({
-                    sublistId: 'custpage_output_lines',
-                    fieldId: 'custpage_out_pct',
+                    sublistId: MAT_SUBLIST,
+                    fieldId: 'custpage_mat_pct',
                     line: i,
-                    value: outPct.toFixed(2)
+                    value: ((w / inputWeight) * 100).toFixed(2)
                 });
             }
-
-            log.debug('recalculateOutputPercentages', 'Recalculated output percentages');
+            log.debug('recalculateOutputPercentages', 'Recalculated grid percentages');
         };
 
         return {
