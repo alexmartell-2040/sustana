@@ -544,79 +544,79 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 items: items, lots: lots, templates: templates, initial: initial
             };
 
-            const html = ''
-+ '<div id="sustmat"></div>'
-+ '<script>(function(){'
-+ 'var D=' + JSON.stringify(boot) + ';'
-+ 'var st={inputs:D.initial.inputs.slice(),outputs:D.initial.outputs.slice()};'
-+ 'function hid(){var els=document.getElementsByName("custpage_materials_json");return els.length?els[0]:null;}'
-+ 'function sync(){var h=hid();if(h){h.value=JSON.stringify({'
-+ 'inputs:st.inputs.filter(function(r){return r.item&&parseFloat(r.tons)>0;}),'
-+ 'outputs:st.outputs.filter(function(r){return r.item&&parseFloat(r.tons)>0;})});}}'
-+ 'function tot(a){var t=0;a.forEach(function(r){t+=parseFloat(r.tons)||0;});return t;}'
-+ 'function fmt(n){return (Math.round(n*100)/100).toLocaleString();}'
-+ 'function itemOpts(sel){var o="<option value=\"\"></option>";D.items.forEach(function(it){o+="<option value=\""+it.id+"\""+(String(sel)===it.id?" selected":"")+">"+it.name+"</option>";});return o;}'
-+ 'function lotOpts(item,sel){var o="<option value=\"\"></option>";D.lots.forEach(function(l){if(item&&l.item!==String(item))return;o+="<option value=\""+l.id+"\""+(String(sel)===l.id?" selected":"")+">"+l.number+" ("+l.tons+" t)</option>";});return o;}'
-+ 'var S={panel:"border:1px solid #cbd5e1;border-radius:8px;margin:10px 0;overflow:hidden;font-family:Arial,sans-serif;",'
-+ 'headI:"background:#eaf2ff;border-left:5px solid #2976F3;padding:10px 14px;font-weight:bold;color:#0d2a52;font-size:14px;display:flex;justify-content:space-between;align-items:center;",'
-+ 'headO:"background:#fff7ed;border-left:5px solid #ea580c;padding:10px 14px;font-weight:bold;color:#7c2d12;font-size:14px;display:flex;justify-content:space-between;align-items:center;",'
-+ 'th:"text-align:left;padding:6px 12px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;",'
-+ 'td:"padding:5px 12px;",'
-+ 'inp:"width:110px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px;",'
-+ 'sel:"min-width:220px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px;",'
-+ 'x:"color:#dc2626;cursor:pointer;font-weight:bold;text-decoration:none;font-size:15px;",'
-+ 'add:"display:inline-block;margin:8px 12px 12px;padding:6px 14px;background:#fff;border:1px solid #2976F3;color:#2976F3;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;",'
-+ 'btn:"margin-left:8px;padding:5px 12px;background:#fff;border:1px solid #ea580c;color:#ea580c;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;"};'
-+ 'function render(){var tin=tot(st.inputs),tout=tot(st.outputs),loss=tin-tout,yld=tin>0?(tout/tin*100):0;'
-+ 'var h="";'
-+ 'h+="<div style=\""+S.panel+"\">";'
-+ 'h+="<div style=\""+S.headI+"\"><span>&#11015;&#65039; Inbound &mdash; Materials Consumed</span><span>"+fmt(tin)+" tons in</span></div>";'
-+ 'h+="<table style=\"width:100%;border-collapse:collapse;\"><tr><th style=\""+S.th+"\">Grade</th><th style=\""+S.th+"\">Lot</th><th style=\""+S.th+"\">Weight (tons)</th><th style=\""+S.th+"\">% of Input</th><th></th></tr>";'
-+ 'st.inputs.forEach(function(r,i){var pct=tin>0?((parseFloat(r.tons)||0)/tin*100):0;'
-+ 'h+="<tr style=\"border-top:1px solid #e5e7eb;\">";'
-+ 'h+="<td style=\""+S.td+"\"><select style=\""+S.sel+"\" onchange=\"SUSTMAT.setIn("+i+",&quot;item&quot;,this.value)\">"+itemOpts(r.item)+"</select></td>";'
-+ 'h+="<td style=\""+S.td+"\"><select style=\""+S.sel+"\" onchange=\"SUSTMAT.setIn("+i+",&quot;lot&quot;,this.value)\">"+lotOpts(r.item,r.lot)+"</select></td>";'
-+ 'h+="<td style=\""+S.td+"\"><input type=\"number\" step=\"0.01\" min=\"0\" style=\""+S.inp+"\" value=\""+(r.tons||"")+"\" onchange=\"SUSTMAT.setIn("+i+",&quot;tons&quot;,this.value)\"/></td>";'
-+ 'h+="<td style=\""+S.td+"color:#64748b;\">"+(r.tons?pct.toFixed(1)+"%":"&mdash;")+"</td>";'
-+ 'h+="<td style=\""+S.td+"\"><a style=\""+S.x+"\" onclick=\"SUSTMAT.delIn("+i+")\">&#10005;</a></td></tr>";});'
-+ 'h+="</table><a style=\""+S.add+"\" onclick=\"SUSTMAT.addIn()\">+ Add Input</a></div>";'
-+ 'h+="<div style=\""+S.panel+"\">";'
-+ 'h+="<div style=\""+S.headO+"\"><span>&#11014;&#65039; Outbound &mdash; Materials Produced</span><span>"'
-+ '+"<button type=\"button\" style=\""+S.btn+"\" onclick=\"SUSTMAT.loadDefaults()\">Load Default Outputs</button>"'
-+ '+"<button type=\"button\" style=\""+S.btn+"\" onclick=\"SUSTMAT.clearOut()\">Clear</button>"'
-+ '+"<span style=\"margin-left:12px;\">"+fmt(tout)+" tons out</span></span></div>";'
-+ 'h+="<table style=\"width:100%;border-collapse:collapse;\"><tr><th style=\""+S.th+"\">Grade</th><th style=\""+S.th+"\">Weight (tons)</th><th style=\""+S.th+"\">% of Input</th><th style=\""+S.th+"\">Output Lot</th><th></th></tr>";'
-+ 'st.outputs.forEach(function(r,i){var pct=tin>0?((parseFloat(r.tons)||0)/tin*100):0;'
-+ 'h+="<tr style=\"border-top:1px solid #e5e7eb;\">";'
-+ 'h+="<td style=\""+S.td+"\"><select style=\""+S.sel+"\" onchange=\"SUSTMAT.setOut("+i+",&quot;item&quot;,this.value)\">"+itemOpts(r.item)+"</select></td>";'
-+ 'h+="<td style=\""+S.td+"\"><input type=\"number\" step=\"0.01\" min=\"0\" style=\""+S.inp+"\" value=\""+(r.tons||"")+"\" onchange=\"SUSTMAT.setOut("+i+",&quot;tons&quot;,this.value)\"/></td>";'
-+ 'h+="<td style=\""+S.td+"color:#64748b;\">"+(r.tons?pct.toFixed(1)+"%":"&mdash;")+"</td>";'
-+ 'h+="<td style=\""+S.td+"color:#94a3b8;\">"+(r.outLot||"(auto on completion)")+"</td>";'
-+ 'h+="<td style=\""+S.td+"\"><a style=\""+S.x+"\" onclick=\"SUSTMAT.delOut("+i+")\">&#10005;</a></td></tr>";});'
-+ 'h+="</table><a style=\""+S.add+"border-color:#ea580c;color:#ea580c;\" onclick=\"SUSTMAT.addOut()\">+ Add Output</a></div>";'
-+ 'var over=tout>tin&&tin>0;'
-+ 'h+="<div style=\"display:flex;gap:18px;align-items:center;border:1px solid #cbd5e1;border-radius:8px;padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;"+(over?"background:#fef2f2;border-color:#dc2626;":"background:#f8fafc;")+"\">";'
-+ 'h+="<b>Balance:</b><span>"+fmt(tin)+" in</span><span>&rarr;</span><span>"+fmt(tout)+" out</span>";'
-+ 'h+="<span style=\"color:#64748b;\">Loss "+fmt(Math.max(loss,0))+" t (residual + moisture)</span>";'
-+ 'h+="<span style=\"font-weight:bold;"+(over?"color:#dc2626;":"color:#0d2a52;")+"\">Yield "+(tin>0?yld.toFixed(1):"0")+"%"+(over?" &mdash; OUTPUT EXCEEDS INPUT":"")+"</span>";'
-+ 'h+="<div style=\"flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;\"><div style=\"height:8px;width:"+Math.min(yld,100)+"%;background:"+(over?"#dc2626":"#2976F3")+";\"></div></div></div>";'
-+ 'document.getElementById("sustmat").innerHTML=h;sync();}'
-+ 'window.SUSTMAT={'
-+ 'setIn:function(i,k,v){st.inputs[i][k]=v;if(k==="item")st.inputs[i].lot="";render();},'
-+ 'setOut:function(i,k,v){st.outputs[i][k]=v;render();},'
-+ 'addIn:function(){st.inputs.push({item:"",lot:"",tons:""});render();},'
-+ 'addOut:function(){st.outputs.push({item:"",tons:""});render();},'
-+ 'delIn:function(i){st.inputs.splice(i,1);if(!st.inputs.length)st.inputs.push({item:"",lot:"",tons:""});render();},'
-+ 'delOut:function(i){st.outputs.splice(i,1);if(!st.outputs.length)st.outputs.push({item:"",tons:""});render();},'
-+ 'clearOut:function(){st.outputs=[{item:"",tons:""}];render();},'
-+ 'loadDefaults:function(){var first=null;for(var i=0;i<st.inputs.length;i++){if(st.inputs[i].item){first=st.inputs[i];break;}}'
-+ 'if(!first){alert("Add an Inbound row first (grade, lot, weight).");return;}'
-+ 'var tpl=D.templates[String(first.item)];'
-+ 'if(!tpl||!tpl.length){alert("No output templates configured for this input grade. Add outputs manually.");return;}'
-+ 'var tin=tot(st.inputs);st.outputs=tpl.map(function(t){return {item:t.item,tons:(tin*t.pct/100).toFixed(2)};});render();}'
-+ '};'
-+ 'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",render);}else{render();}'
-+ '})();</script>';
+            const html = `<div id="sustmat"></div>
+<script>(function(){
+var D=${JSON.stringify(boot)};
+var st={inputs:D.initial.inputs.slice(),outputs:D.initial.outputs.slice()};
+function hid(){var els=document.getElementsByName('custpage_materials_json');return els.length?els[0]:null;}
+function sync(){var h=hid();if(h){h.value=JSON.stringify({
+inputs:st.inputs.filter(function(r){return r.item&&parseFloat(r.tons)>0;}),
+outputs:st.outputs.filter(function(r){return r.item&&parseFloat(r.tons)>0;})});}}
+function tot(a){var t=0;a.forEach(function(r){t+=parseFloat(r.tons)||0;});return t;}
+function fmt(n){return (Math.round(n*100)/100).toLocaleString();}
+function itemOpts(sel){var o='<option value=""></option>';D.items.forEach(function(it){o+='<option value="'+it.id+'"'+(String(sel)===it.id?' selected':'')+'>'+it.name+'</option>';});return o;}
+function lotOpts(item,sel){var o='<option value=""></option>';D.lots.forEach(function(l){if(item&&l.item!==String(item))return;o+='<option value="'+l.id+'"'+(String(sel)===l.id?' selected':'')+'>'+l.number+' ('+l.tons+' t)</option>';});return o;}
+var S={panel:'border:1px solid #cbd5e1;border-radius:8px;margin:10px 0;overflow:hidden;font-family:Arial,sans-serif;',
+headI:'background:#eaf2ff;border-left:5px solid #2976F3;padding:10px 14px;font-weight:bold;color:#0d2a52;font-size:14px;display:flex;justify-content:space-between;align-items:center;',
+headO:'background:#fff7ed;border-left:5px solid #ea580c;padding:10px 14px;font-weight:bold;color:#7c2d12;font-size:14px;display:flex;justify-content:space-between;align-items:center;',
+th:'text-align:left;padding:6px 12px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;',
+td:'padding:5px 12px;',
+inp:'width:110px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px;',
+sel:'min-width:220px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px;',
+x:'color:#dc2626;cursor:pointer;font-weight:bold;text-decoration:none;font-size:15px;',
+add:'display:inline-block;margin:8px 12px 12px;padding:6px 14px;background:#fff;border:1px solid #2976F3;color:#2976F3;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;',
+btn:'margin-left:8px;padding:5px 12px;background:#fff;border:1px solid #ea580c;color:#ea580c;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;'};
+function render(){
+var tin=tot(st.inputs),tout=tot(st.outputs),loss=tin-tout,yld=tin>0?(tout/tin*100):0;
+var h='';
+h+='<div style="'+S.panel+'">';
+h+='<div style="'+S.headI+'"><span>&#11015;&#65039; Inbound &mdash; Materials Consumed</span><span>'+fmt(tin)+' tons in</span></div>';
+h+='<table style="width:100%;border-collapse:collapse;"><tr><th style="'+S.th+'">Grade</th><th style="'+S.th+'">Lot</th><th style="'+S.th+'">Weight (tons)</th><th style="'+S.th+'">% of Input</th><th></th></tr>';
+st.inputs.forEach(function(r,i){var pct=tin>0?((parseFloat(r.tons)||0)/tin*100):0;
+h+='<tr style="border-top:1px solid #e5e7eb;">';
+h+='<td style="'+S.td+'"><select style="'+S.sel+'" onchange="SUSTMAT.setIn('+i+',\\'item\\',this.value)">'+itemOpts(r.item)+'</select></td>';
+h+='<td style="'+S.td+'"><select style="'+S.sel+'" onchange="SUSTMAT.setIn('+i+',\\'lot\\',this.value)">'+lotOpts(r.item,r.lot)+'</select></td>';
+h+='<td style="'+S.td+'"><input type="number" step="0.01" min="0" style="'+S.inp+'" value="'+(r.tons||'')+'" onchange="SUSTMAT.setIn('+i+',\\'tons\\',this.value)"/></td>';
+h+='<td style="'+S.td+'color:#64748b;">'+(r.tons?pct.toFixed(1)+'%':'&mdash;')+'</td>';
+h+='<td style="'+S.td+'"><a style="'+S.x+'" onclick="SUSTMAT.delIn('+i+')">&#10005;</a></td></tr>';});
+h+='</table><a style="'+S.add+'" onclick="SUSTMAT.addIn()">+ Add Input</a></div>';
+h+='<div style="'+S.panel+'">';
+h+='<div style="'+S.headO+'"><span>&#11014;&#65039; Outbound &mdash; Materials Produced</span><span>';
+h+='<button type="button" style="'+S.btn+'" onclick="SUSTMAT.loadDefaults()">Load Default Outputs</button>';
+h+='<button type="button" style="'+S.btn+'" onclick="SUSTMAT.clearOut()">Clear</button>';
+h+='<span style="margin-left:12px;">'+fmt(tout)+' tons out</span></span></div>';
+h+='<table style="width:100%;border-collapse:collapse;"><tr><th style="'+S.th+'">Grade</th><th style="'+S.th+'">Weight (tons)</th><th style="'+S.th+'">% of Input</th><th style="'+S.th+'">Output Lot</th><th></th></tr>';
+st.outputs.forEach(function(r,i){var pct=tin>0?((parseFloat(r.tons)||0)/tin*100):0;
+h+='<tr style="border-top:1px solid #e5e7eb;">';
+h+='<td style="'+S.td+'"><select style="'+S.sel+'" onchange="SUSTMAT.setOut('+i+',\\'item\\',this.value)">'+itemOpts(r.item)+'</select></td>';
+h+='<td style="'+S.td+'"><input type="number" step="0.01" min="0" style="'+S.inp+'" value="'+(r.tons||'')+'" onchange="SUSTMAT.setOut('+i+',\\'tons\\',this.value)"/></td>';
+h+='<td style="'+S.td+'color:#64748b;">'+(r.tons?pct.toFixed(1)+'%':'&mdash;')+'</td>';
+h+='<td style="'+S.td+'color:#94a3b8;">'+(r.outLot||'(auto on completion)')+'</td>';
+h+='<td style="'+S.td+'"><a style="'+S.x+'" onclick="SUSTMAT.delOut('+i+')">&#10005;</a></td></tr>';});
+h+='</table><a style="'+S.add+'border-color:#ea580c;color:#ea580c;" onclick="SUSTMAT.addOut()">+ Add Output</a></div>';
+var over=tout>tin&&tin>0;
+h+='<div style="display:flex;gap:18px;align-items:center;border:1px solid #cbd5e1;border-radius:8px;padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;'+(over?'background:#fef2f2;border-color:#dc2626;':'background:#f8fafc;')+'">';
+h+='<b>Balance:</b><span>'+fmt(tin)+' in</span><span>&rarr;</span><span>'+fmt(tout)+' out</span>';
+h+='<span style="color:#64748b;">Loss '+fmt(Math.max(loss,0))+' t (residual + moisture)</span>';
+h+='<span style="font-weight:bold;'+(over?'color:#dc2626;':'color:#0d2a52;')+'">Yield '+(tin>0?yld.toFixed(1):'0')+'%'+(over?' &mdash; OUTPUT EXCEEDS INPUT':'')+'</span>';
+h+='<div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;"><div style="height:8px;width:'+Math.min(yld,100)+'%;background:'+(over?'#dc2626':'#2976F3')+';"></div></div></div>';
+document.getElementById('sustmat').innerHTML=h;sync();}
+window.SUSTMAT={
+setIn:function(i,k,v){st.inputs[i][k]=v;if(k==='item')st.inputs[i].lot='';render();},
+setOut:function(i,k,v){st.outputs[i][k]=v;render();},
+addIn:function(){st.inputs.push({item:'',lot:'',tons:''});render();},
+addOut:function(){st.outputs.push({item:'',tons:''});render();},
+delIn:function(i){st.inputs.splice(i,1);if(!st.inputs.length)st.inputs.push({item:'',lot:'',tons:''});render();},
+delOut:function(i){st.outputs.splice(i,1);if(!st.outputs.length)st.outputs.push({item:'',tons:''});render();},
+clearOut:function(){st.outputs=[{item:'',tons:''}];render();},
+loadDefaults:function(){var first=null;for(var i=0;i<st.inputs.length;i++){if(st.inputs[i].item){first=st.inputs[i];break;}}
+if(!first){alert('Add an Inbound row first (grade, lot, weight).');return;}
+var tpl=D.templates[String(first.item)];
+if(!tpl||!tpl.length){alert('No output templates configured for this input grade. Add outputs manually.');return;}
+var tin=tot(st.inputs);st.outputs=tpl.map(function(t){return {item:t.item,tons:(tin*t.pct/100).toFixed(2)};});render();}
+};
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',render);}else{render();}
+})();<\/script>`;
 
             const uiField = form.addField({
                 id: 'custpage_materials_ui',
