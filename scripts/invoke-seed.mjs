@@ -33,7 +33,7 @@ const pct = (s) => encodeURIComponent(s).replace(/[!*'()]/g, (c) => '%' + c.char
 const hostAccount = NS_ACCOUNT.toLowerCase().replace(/_/g, '-');
 const method = 'POST';
 const url = NS_RESTLET_URL ||
-  `https://${hostAccount}.suitetalk.api.netsuite.com/app/site/hosting/restlet.nl` +
+  `https://${hostAccount}.restlets.api.netsuite.com/app/site/hosting/restlet.nl` +
   `?script=customscript_sust_rl_seed_demo&deploy=customdeploy_sust_rl_seed_demo`;
 
 const u = new URL(url);

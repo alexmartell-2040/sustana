@@ -278,9 +278,9 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
                         const recoveryFactor = (isRecoveredMode && recoveryPct > 0) ? (recoveryPct / 100) : 1;
                         netSettlementValue = netWeight * effective * recoveryFactor;
                         settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_price', value: storedPrice.pricePerLb });
-                        setSelectField(settlement, 'custrecord_sust_settlement_market_source', scheduleInfo.marketRefId, scheduleInfo.marketRefText);
+                        if (isNumericId(scheduleInfo.marketRefId)) settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_source', value: parseInt(scheduleInfo.marketRefId, 10) });
                     } else {
-                        setSelectField(settlement, 'custrecord_sust_settlement_market_source', scheduleInfo.marketRefId, scheduleInfo.marketRefText);
+                        if (isNumericId(scheduleInfo.marketRefId)) settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_source', value: parseInt(scheduleInfo.marketRefId, 10) });
                     }
                 } else if (scheduleInfo.pricePerLb > 0) {
                     netSettlementValue = netWeight * scheduleInfo.pricePerLb;
