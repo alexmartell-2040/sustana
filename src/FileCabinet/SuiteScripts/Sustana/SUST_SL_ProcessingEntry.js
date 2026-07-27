@@ -196,7 +196,11 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             // ==================== INPUT SECTION ====================
             const inputGroup = form.addFieldGroup({
                 id: 'custpage_input_group',
-                label: 'Input Material'
+                label: 'Costing & Equipment'
+            });
+            form.addFieldGroup({
+                id: 'custpage_scale_group',
+                label: 'Scale Reconciliation (optional)'
             });
 
             // v2: Source Type — drives downstream behavior
@@ -251,7 +255,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 id: 'custpage_gross_input',
                 type: serverWidget.FieldType.FLOAT,
                 label: 'Gross Input (tons)',
-                container: 'custpage_input_group'
+                container: 'custpage_scale_group'
             });
 
             // v2: Tare Estimate (from receiver lot at receipt time) — entered in TONS
@@ -259,7 +263,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 id: 'custpage_tare_estimate',
                 type: serverWidget.FieldType.FLOAT,
                 label: 'Tare Estimate (tons)',
-                container: 'custpage_input_group'
+                container: 'custpage_scale_group'
             });
 
             // v2: Tare Actual (measured at processing) — entered in TONS
@@ -267,7 +271,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 id: 'custpage_tare_actual',
                 type: serverWidget.FieldType.FLOAT,
                 label: 'Tare Actual (tons)',
-                container: 'custpage_input_group'
+                container: 'custpage_scale_group'
             });
 
             // v2: Total Input Cost (drives cost allocation)
@@ -298,65 +302,6 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             // ==================== ADDITIONAL INPUTS (multi-input) ====================
             // The header Input Item/Lot/Weight is the PRIMARY input; these lines add
             // more grades consumed into the same run (e.g. 30t WL + 15t MP + 10t SOP).
-            // ==================== MATERIALS GRID (inputs + outputs, one grid) ====================
-            // A single sublist renders inline (no subtabs). Direction says whether a
-            // row is consumed (Input) or produced (Output).
-            const matSublist = form.addSublist({
-                id: 'custpage_material_lines',
-                type: serverWidget.SublistType.INLINEEDITOR,
-                label: 'Materials — Inputs & Outputs'
-            });
-            const matDirField = matSublist.addField({
-                id: 'custpage_mat_direction',
-                type: serverWidget.FieldType.SELECT,
-                label: 'Direction'
-            });
-            matDirField.addSelectOption({ value: '', text: '' });
-            matDirField.addSelectOption({ value: 'input', text: 'Input (consumed)' });
-            matDirField.addSelectOption({ value: 'output', text: 'Output (produced)' });
-            matDirField.isMandatory = true;
-            const matItemField = matSublist.addField({
-                id: 'custpage_mat_item',
-                type: serverWidget.FieldType.SELECT,
-                label: 'Item',
-                source: 'item'
-            });
-            matItemField.isMandatory = true;
-            matSublist.addField({
-                id: 'custpage_mat_lot',
-                type: serverWidget.FieldType.SELECT,
-                label: 'Lot (inputs)',
-                source: 'inventorynumber'
-            });
-            matSublist.addField({
-                id: 'custpage_mat_type',
-                type: serverWidget.FieldType.SELECT,
-                label: 'Output Type',
-                source: 'customlist_sust_output_type'
-            });
-            const matWeightField = matSublist.addField({
-                id: 'custpage_mat_weight',
-                type: serverWidget.FieldType.FLOAT,
-                label: 'Weight (tons)'
-            });
-            matWeightField.isMandatory = true;
-            matSublist.addField({
-                id: 'custpage_mat_pct',
-                type: serverWidget.FieldType.PERCENT,
-                label: '% of Input'
-            }).updateDisplayType({ displayType: serverWidget.FieldDisplayType.DISABLED });
-            matSublist.addField({
-                id: 'custpage_mat_out_lot',
-                type: serverWidget.FieldType.TEXT,
-                label: 'Output Lot'
-            }).updateDisplayType({ displayType: serverWidget.FieldDisplayType.DISABLED });
-            matSublist.addField({
-                id: 'custpage_mat_disposition',
-                type: serverWidget.FieldType.SELECT,
-                label: 'Disposition (outputs)',
-                source: 'customlist_sust_output_disposition'
-            });
-
             // ==================== NOTES SECTION ====================
             const notesField = form.addField({
                 id: 'custpage_notes',
@@ -367,18 +312,6 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             // ==================== BUTTONS ====================
             form.addSubmitButton({ label: 'Save Processing Record' });
 
-            form.addButton({
-                id: 'custpage_btn_load_defaults',
-                label: 'Load Default Outputs',
-                functionName: 'loadDefaultOutputs'
-            });
-
-            form.addButton({
-                id: 'custpage_btn_clear',
-                label: 'Clear Output Lines',
-                functionName: 'clearOutputLines'
-            });
-
             // ==================== LOAD EXISTING DATA ====================
             if (isEdit) {
                 loadExistingProcessing(form, processingId);
@@ -386,10 +319,14 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
 
             // ==================== PRE-POPULATE FROM ITEM RECEIPT ====================
             const itemReceiptId = context.request.parameters.itemreceiptid;
+            let irSeedRow = null;
             if (itemReceiptId && !isEdit) {
                 // v2.3: optional ?line=<lineuniquekey> targets a specific IR scrap line
-                prePopulateFromItemReceipt(form, itemReceiptId, context.request.parameters.line);
+                irSeedRow = prePopulateFromItemReceipt(form, itemReceiptId, context.request.parameters.line);
             }
+
+            // ==================== MATERIALS UI (Inbound / Outbound panels) ====================
+            renderMaterialsUI(form, processingId, irSeedRow);
 
             context.response.writePage(form);
         };
@@ -456,8 +393,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                     }
                 } catch (e) { /* field add best-effort */ }
 
-                // Load the Materials grid (primary input + input lines + outputs)
-                loadExistingMaterialLines(form, procRec, processingId);
+                // Materials rows are rendered by renderMaterialsUI (reads the record directly)
 
                 log.audit('loadExistingProcessing', 'Loaded processing record: ' + processingId);
             } catch (e) {
@@ -473,76 +409,221 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
          * @param {Form} form
          * @param {string|number} processingId
          */
-        const loadExistingMaterialLines = (form, procRec, processingId) => {
-            const sublist = form.getSublist({ id: 'custpage_material_lines' });
-            let lineNum = 0;
-            const put = function(id, value) {
-                if (value !== null && value !== undefined && value !== '') {
-                    sublist.setSublistValue({ id: id, line: lineNum, value: String(value) });
+        /**
+         * Existing materials rows for the UI: primary input (header fields) +
+         * additional input lines + output lines. Tons for display.
+         * @returns {Object} { inputs: [{item,lot,tons}], outputs: [{item,tons,outLot}] }
+         */
+        const collectExistingRows = (processingId) => {
+            const out = { inputs: [], outputs: [] };
+            try {
+                const procRec = record.load({ type: 'customrecord_sust_processing_record', id: processingId });
+                const primItem = procRec.getValue('custrecord_sust_processing_input_item');
+                const primLot = procRec.getValue('custrecord_sust_processing_input_lot');
+                const totalLbs = parseFloat(procRec.getValue('custrecord_sust_processing_input_lbs')) || 0;
+
+                const extraInputs = [];
+                search.create({
+                    type: 'customrecord_sust_proc_input_line',
+                    filters: [['custrecord_sust_pil_processing', 'anyof', processingId]],
+                    columns: ['custrecord_sust_pil_item', 'custrecord_sust_pil_lot', 'custrecord_sust_pil_qty_consumed']
+                }).run().each(result => {
+                    extraInputs.push({
+                        item: result.getValue('custrecord_sust_pil_item'),
+                        lot: result.getValue('custrecord_sust_pil_lot') || '',
+                        tons: units.toTons(parseFloat(result.getValue('custrecord_sust_pil_qty_consumed')) || 0)
+                    });
+                    return true;
+                });
+                const extraLbs = extraInputs.reduce(function(acc, r) { return acc + units.toLbs(r.tons); }, 0);
+                const primLbs = Math.max(totalLbs - extraLbs, 0);
+                if (primItem && primLbs > 0) {
+                    out.inputs.push({ item: String(primItem), lot: primLot ? String(primLot) : '', tons: units.toTons(primLbs) });
                 }
+                extraInputs.forEach(function(r) {
+                    out.inputs.push({ item: String(r.item), lot: r.lot ? String(r.lot) : '', tons: r.tons });
+                });
+
+                search.create({
+                    type: 'customrecord_sust_processing_output_line',
+                    filters: [['custrecord_sust_output_processing', 'anyof', processingId]],
+                    columns: ['custrecord_sust_output_item', 'custrecord_sust_output_weight', 'custrecord_sust_output_lot']
+                }).run().each(result => {
+                    out.outputs.push({
+                        item: String(result.getValue('custrecord_sust_output_item')),
+                        tons: units.toTons(parseFloat(result.getValue('custrecord_sust_output_weight')) || 0),
+                        outLot: result.getValue('custrecord_sust_output_lot') || ''
+                    });
+                    return true;
+                });
+            } catch (e) {
+                log.error('collectExistingRows', e.message);
+            }
+            return out;
+        };
+
+        /**
+         * Materials UI — Inbound / Outbound panels rendered as custom HTML.
+         * State lives in JS and syncs to the hidden custpage_materials_json
+         * field on every change; POST parses that JSON (parseMaterialLines).
+         */
+        const renderMaterialsUI = (form, processingId, irSeedRow) => {
+            // Data for the pickers
+            const items = [];
+            try {
+                search.create({
+                    type: 'item',
+                    filters: [['type', 'anyof', 'InvtPart', 'Assembly'], 'AND', ['isinactive', 'is', 'F']],
+                    columns: ['itemid']
+                }).run().each(function(r) {
+                    items.push({ id: String(r.id), name: r.getValue('itemid') || ('Item ' + r.id) });
+                    return true;
+                });
+            } catch (e) { log.error('renderMaterialsUI items', e.message); }
+            items.sort(function(a, b) { return a.name < b.name ? -1 : 1; });
+
+            const lots = [];
+            try {
+                search.create({
+                    type: 'inventorynumber',
+                    filters: [['quantityonhand', 'greaterthan', 0]],
+                    columns: ['inventorynumber', 'item', 'quantityonhand']
+                }).run().each(function(r) {
+                    lots.push({
+                        id: String(r.id),
+                        number: r.getValue('inventorynumber'),
+                        item: String(r.getValue('item')),
+                        tons: Math.round(units.toTons(parseFloat(r.getValue('quantityonhand')) || 0) * 100) / 100
+                    });
+                    return true;
+                });
+            } catch (e) { log.error('renderMaterialsUI lots', e.message); }
+
+            const templates = {};
+            try {
+                search.create({
+                    type: 'customrecord_sust_item_output_template',
+                    filters: [['custrecord_sust_template_active', 'is', 'T']],
+                    columns: ['custrecord_sust_template_input_item', 'custrecord_sust_template_output_item',
+                        'custrecord_sust_template_default_pct', 'custrecord_sust_template_sequence']
+                }).run().each(function(r) {
+                    const inItem = String(r.getValue('custrecord_sust_template_input_item'));
+                    if (!templates[inItem]) templates[inItem] = [];
+                    templates[inItem].push({
+                        item: String(r.getValue('custrecord_sust_template_output_item')),
+                        pct: parseFloat(r.getValue('custrecord_sust_template_default_pct')) || 0,
+                        seq: parseFloat(r.getValue('custrecord_sust_template_sequence')) || 0
+                    });
+                    return true;
+                });
+                Object.keys(templates).forEach(function(k) {
+                    templates[k].sort(function(a, b) { return a.seq - b.seq; });
+                });
+            } catch (e) { log.error('renderMaterialsUI templates', e.message); }
+
+            // Initial rows
+            let initial = { inputs: [], outputs: [] };
+            if (processingId) {
+                initial = collectExistingRows(processingId);
+            } else if (irSeedRow && irSeedRow.item) {
+                initial.inputs.push(irSeedRow);
+            }
+            if (initial.inputs.length === 0) initial.inputs.push({ item: '', lot: '', tons: '' });
+            if (initial.outputs.length === 0) initial.outputs.push({ item: '', tons: '' });
+
+            // Hidden JSON carrier
+            const jsonField = form.addField({
+                id: 'custpage_materials_json',
+                type: serverWidget.FieldType.LONGTEXT,
+                label: 'Materials JSON'
+            });
+            jsonField.updateDisplayType({ displayType: serverWidget.FieldDisplayType.HIDDEN });
+            jsonField.defaultValue = JSON.stringify(initial);
+
+            const boot = {
+                items: items, lots: lots, templates: templates, initial: initial
             };
 
-            // 1. Primary input (header fields on the record)
-            const primItem = procRec.getValue('custrecord_sust_processing_input_item');
-            const primLot = procRec.getValue('custrecord_sust_processing_input_lot');
-            const totalLbs = parseFloat(procRec.getValue('custrecord_sust_processing_input_lbs')) || 0;
+            const html = ''
++ '<div id="sustmat"></div>'
++ '<script>(function(){'
++ 'var D=' + JSON.stringify(boot) + ';'
++ 'var st={inputs:D.initial.inputs.slice(),outputs:D.initial.outputs.slice()};'
++ 'function hid(){var els=document.getElementsByName("custpage_materials_json");return els.length?els[0]:null;}'
++ 'function sync(){var h=hid();if(h){h.value=JSON.stringify({'
++ 'inputs:st.inputs.filter(function(r){return r.item&&parseFloat(r.tons)>0;}),'
++ 'outputs:st.outputs.filter(function(r){return r.item&&parseFloat(r.tons)>0;})});}}'
++ 'function tot(a){var t=0;a.forEach(function(r){t+=parseFloat(r.tons)||0;});return t;}'
++ 'function fmt(n){return (Math.round(n*100)/100).toLocaleString();}'
++ 'function itemOpts(sel){var o="<option value=\"\"></option>";D.items.forEach(function(it){o+="<option value=\""+it.id+"\""+(String(sel)===it.id?" selected":"")+">"+it.name+"</option>";});return o;}'
++ 'function lotOpts(item,sel){var o="<option value=\"\"></option>";D.lots.forEach(function(l){if(item&&l.item!==String(item))return;o+="<option value=\""+l.id+"\""+(String(sel)===l.id?" selected":"")+">"+l.number+" ("+l.tons+" t)</option>";});return o;}'
++ 'var S={panel:"border:1px solid #cbd5e1;border-radius:8px;margin:10px 0;overflow:hidden;font-family:Arial,sans-serif;",'
++ 'headI:"background:#eaf2ff;border-left:5px solid #2976F3;padding:10px 14px;font-weight:bold;color:#0d2a52;font-size:14px;display:flex;justify-content:space-between;align-items:center;",'
++ 'headO:"background:#fff7ed;border-left:5px solid #ea580c;padding:10px 14px;font-weight:bold;color:#7c2d12;font-size:14px;display:flex;justify-content:space-between;align-items:center;",'
++ 'th:"text-align:left;padding:6px 12px;font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.04em;",'
++ 'td:"padding:5px 12px;",'
++ 'inp:"width:110px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px;",'
++ 'sel:"min-width:220px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:13px;",'
++ 'x:"color:#dc2626;cursor:pointer;font-weight:bold;text-decoration:none;font-size:15px;",'
++ 'add:"display:inline-block;margin:8px 12px 12px;padding:6px 14px;background:#fff;border:1px solid #2976F3;color:#2976F3;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;",'
++ 'btn:"margin-left:8px;padding:5px 12px;background:#fff;border:1px solid #ea580c;color:#ea580c;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;"};'
++ 'function render(){var tin=tot(st.inputs),tout=tot(st.outputs),loss=tin-tout,yld=tin>0?(tout/tin*100):0;'
++ 'var h="";'
++ 'h+="<div style=\""+S.panel+"\">";'
++ 'h+="<div style=\""+S.headI+"\"><span>&#11015;&#65039; Inbound &mdash; Materials Consumed</span><span>"+fmt(tin)+" tons in</span></div>";'
++ 'h+="<table style=\"width:100%;border-collapse:collapse;\"><tr><th style=\""+S.th+"\">Grade</th><th style=\""+S.th+"\">Lot</th><th style=\""+S.th+"\">Weight (tons)</th><th style=\""+S.th+"\">% of Input</th><th></th></tr>";'
++ 'st.inputs.forEach(function(r,i){var pct=tin>0?((parseFloat(r.tons)||0)/tin*100):0;'
++ 'h+="<tr style=\"border-top:1px solid #e5e7eb;\">";'
++ 'h+="<td style=\""+S.td+"\"><select style=\""+S.sel+"\" onchange=\"SUSTMAT.setIn("+i+",&quot;item&quot;,this.value)\">"+itemOpts(r.item)+"</select></td>";'
++ 'h+="<td style=\""+S.td+"\"><select style=\""+S.sel+"\" onchange=\"SUSTMAT.setIn("+i+",&quot;lot&quot;,this.value)\">"+lotOpts(r.item,r.lot)+"</select></td>";'
++ 'h+="<td style=\""+S.td+"\"><input type=\"number\" step=\"0.01\" min=\"0\" style=\""+S.inp+"\" value=\""+(r.tons||"")+"\" onchange=\"SUSTMAT.setIn("+i+",&quot;tons&quot;,this.value)\"/></td>";'
++ 'h+="<td style=\""+S.td+"color:#64748b;\">"+(r.tons?pct.toFixed(1)+"%":"&mdash;")+"</td>";'
++ 'h+="<td style=\""+S.td+"\"><a style=\""+S.x+"\" onclick=\"SUSTMAT.delIn("+i+")\">&#10005;</a></td></tr>";});'
++ 'h+="</table><a style=\""+S.add+"\" onclick=\"SUSTMAT.addIn()\">+ Add Input</a></div>";'
++ 'h+="<div style=\""+S.panel+"\">";'
++ 'h+="<div style=\""+S.headO+"\"><span>&#11014;&#65039; Outbound &mdash; Materials Produced</span><span>"'
++ '+"<button type=\"button\" style=\""+S.btn+"\" onclick=\"SUSTMAT.loadDefaults()\">Load Default Outputs</button>"'
++ '+"<button type=\"button\" style=\""+S.btn+"\" onclick=\"SUSTMAT.clearOut()\">Clear</button>"'
++ '+"<span style=\"margin-left:12px;\">"+fmt(tout)+" tons out</span></span></div>";'
++ 'h+="<table style=\"width:100%;border-collapse:collapse;\"><tr><th style=\""+S.th+"\">Grade</th><th style=\""+S.th+"\">Weight (tons)</th><th style=\""+S.th+"\">% of Input</th><th style=\""+S.th+"\">Output Lot</th><th></th></tr>";'
++ 'st.outputs.forEach(function(r,i){var pct=tin>0?((parseFloat(r.tons)||0)/tin*100):0;'
++ 'h+="<tr style=\"border-top:1px solid #e5e7eb;\">";'
++ 'h+="<td style=\""+S.td+"\"><select style=\""+S.sel+"\" onchange=\"SUSTMAT.setOut("+i+",&quot;item&quot;,this.value)\">"+itemOpts(r.item)+"</select></td>";'
++ 'h+="<td style=\""+S.td+"\"><input type=\"number\" step=\"0.01\" min=\"0\" style=\""+S.inp+"\" value=\""+(r.tons||"")+"\" onchange=\"SUSTMAT.setOut("+i+",&quot;tons&quot;,this.value)\"/></td>";'
++ 'h+="<td style=\""+S.td+"color:#64748b;\">"+(r.tons?pct.toFixed(1)+"%":"&mdash;")+"</td>";'
++ 'h+="<td style=\""+S.td+"color:#94a3b8;\">"+(r.outLot||"(auto on completion)")+"</td>";'
++ 'h+="<td style=\""+S.td+"\"><a style=\""+S.x+"\" onclick=\"SUSTMAT.delOut("+i+")\">&#10005;</a></td></tr>";});'
++ 'h+="</table><a style=\""+S.add+"border-color:#ea580c;color:#ea580c;\" onclick=\"SUSTMAT.addOut()\">+ Add Output</a></div>";'
++ 'var over=tout>tin&&tin>0;'
++ 'h+="<div style=\"display:flex;gap:18px;align-items:center;border:1px solid #cbd5e1;border-radius:8px;padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;"+(over?"background:#fef2f2;border-color:#dc2626;":"background:#f8fafc;")+"\">";'
++ 'h+="<b>Balance:</b><span>"+fmt(tin)+" in</span><span>&rarr;</span><span>"+fmt(tout)+" out</span>";'
++ 'h+="<span style=\"color:#64748b;\">Loss "+fmt(Math.max(loss,0))+" t (residual + moisture)</span>";'
++ 'h+="<span style=\"font-weight:bold;"+(over?"color:#dc2626;":"color:#0d2a52;")+"\">Yield "+(tin>0?yld.toFixed(1):"0")+"%"+(over?" &mdash; OUTPUT EXCEEDS INPUT":"")+"</span>";'
++ 'h+="<div style=\"flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;\"><div style=\"height:8px;width:"+Math.min(yld,100)+"%;background:"+(over?"#dc2626":"#2976F3")+";\"></div></div></div>";'
++ 'document.getElementById("sustmat").innerHTML=h;sync();}'
++ 'window.SUSTMAT={'
++ 'setIn:function(i,k,v){st.inputs[i][k]=v;if(k==="item")st.inputs[i].lot="";render();},'
++ 'setOut:function(i,k,v){st.outputs[i][k]=v;render();},'
++ 'addIn:function(){st.inputs.push({item:"",lot:"",tons:""});render();},'
++ 'addOut:function(){st.outputs.push({item:"",tons:""});render();},'
++ 'delIn:function(i){st.inputs.splice(i,1);if(!st.inputs.length)st.inputs.push({item:"",lot:"",tons:""});render();},'
++ 'delOut:function(i){st.outputs.splice(i,1);if(!st.outputs.length)st.outputs.push({item:"",tons:""});render();},'
++ 'clearOut:function(){st.outputs=[{item:"",tons:""}];render();},'
++ 'loadDefaults:function(){var first=null;for(var i=0;i<st.inputs.length;i++){if(st.inputs[i].item){first=st.inputs[i];break;}}'
++ 'if(!first){alert("Add an Inbound row first (grade, lot, weight).");return;}'
++ 'var tpl=D.templates[String(first.item)];'
++ 'if(!tpl||!tpl.length){alert("No output templates configured for this input grade. Add outputs manually.");return;}'
++ 'var tin=tot(st.inputs);st.outputs=tpl.map(function(t){return {item:t.item,tons:(tin*t.pct/100).toFixed(2)};});render();}'
++ '};'
++ 'if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",render);}else{render();}'
++ '})();</script>';
 
-            // Additional input lines (needed first to derive the primary's own share)
-            const extraInputs = [];
-            search.create({
-                type: 'customrecord_sust_proc_input_line',
-                filters: [['custrecord_sust_pil_processing', 'anyof', processingId]],
-                columns: ['custrecord_sust_pil_line_number', 'custrecord_sust_pil_item',
-                    'custrecord_sust_pil_lot', 'custrecord_sust_pil_qty_consumed',
-                    'custrecord_sust_pil_weight_pct']
-            }).run().each(result => {
-                extraInputs.push({
-                    item: result.getValue('custrecord_sust_pil_item'),
-                    lot: result.getValue('custrecord_sust_pil_lot'),
-                    lbs: parseFloat(result.getValue('custrecord_sust_pil_qty_consumed')) || 0,
-                    pct: result.getValue('custrecord_sust_pil_weight_pct')
-                });
-                return true;
+            const uiField = form.addField({
+                id: 'custpage_materials_ui',
+                type: serverWidget.FieldType.INLINEHTML,
+                label: ' '
             });
-            const extraLbs = extraInputs.reduce(function(acc, r) { return acc + r.lbs; }, 0);
-            const primLbs = Math.max(totalLbs - extraLbs, 0);
-
-            if (primItem && primLbs > 0) {
-                put('custpage_mat_direction', 'input');
-                put('custpage_mat_item', primItem);
-                put('custpage_mat_lot', primLot);
-                put('custpage_mat_weight', units.toTons(primLbs));
-                if (totalLbs > 0) put('custpage_mat_pct', (primLbs / totalLbs) * 100);
-                lineNum++;
-            }
-            extraInputs.forEach(function(r) {
-                put('custpage_mat_direction', 'input');
-                put('custpage_mat_item', r.item);
-                put('custpage_mat_lot', r.lot);
-                put('custpage_mat_weight', units.toTons(r.lbs));
-                put('custpage_mat_pct', r.pct);
-                lineNum++;
-            });
-
-            // 2. Output lines
-            search.create({
-                type: 'customrecord_sust_processing_output_line',
-                filters: [['custrecord_sust_output_processing', 'anyof', processingId]],
-                columns: ['custrecord_sust_output_line_number', 'custrecord_sust_output_item',
-                    'custrecord_sust_output_type', 'custrecord_sust_output_weight',
-                    'custrecord_sust_output_percentage', 'custrecord_sust_output_lot',
-                    'custrecord_sust_output_disposition']
-            }).run().each(result => {
-                put('custpage_mat_direction', 'output');
-                put('custpage_mat_item', result.getValue('custrecord_sust_output_item'));
-                put('custpage_mat_type', result.getValue('custrecord_sust_output_type'));
-                put('custpage_mat_weight', units.toTons(result.getValue('custrecord_sust_output_weight')));
-                put('custpage_mat_pct', result.getValue('custrecord_sust_output_percentage') || 0);
-                put('custpage_mat_out_lot', result.getValue('custrecord_sust_output_lot') || '(Auto-generated)');
-                put('custpage_mat_disposition', result.getValue('custrecord_sust_output_disposition'));
-                lineNum++;
-                return true;
-            });
+            uiField.defaultValue = html;
         };
 
         /**
@@ -701,29 +782,62 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
          * @param {number} inputWeightLbs input weight in POUNDS
          */
         /**
-         * Parse the merged Materials grid into row objects.
+         * Output Type derives from the item (no user entry): Byproduct-class
+         * items (Mill Residuals) -> Residual, everything else -> Fiber.
+         */
+        const _outputTypeCache = {};
+        const deriveOutputTypeId = (itemId) => {
+            if (_outputTypeCache[itemId] !== undefined) return _outputTypeCache[itemId];
+            let text = 'Fiber';
+            try {
+                const lk = search.lookupFields({
+                    type: search.Type.ITEM, id: itemId,
+                    columns: ['itemid', 'custitem_sust_cost_alloc_class']
+                });
+                const alloc = Array.isArray(lk.custitem_sust_cost_alloc_class) && lk.custitem_sust_cost_alloc_class.length
+                    ? lk.custitem_sust_cost_alloc_class[0].text : '';
+                const name = lk.itemid || '';
+                if (alloc === 'Byproduct' || /residual/i.test(name)) text = 'Residual';
+            } catch (e) { log.debug('deriveOutputTypeId', e.message); }
+            _outputTypeCache[itemId] = findListValueId('customlist_sust_output_type', text);
+            return _outputTypeCache[itemId];
+        };
+
+        /**
+         * Parse the Materials UI's hidden JSON into row objects.
+         * Schema: {"inputs":[{"item","lot","tons"}],"outputs":[{"item","tons"}]}
          * @returns {Array} [{ direction, itemId, lotId, typeId, weightLbs, disposition }]
          */
         const parseMaterialLines = (request) => {
             const rows = [];
-            const lineCount = request.getLineCount({ group: 'custpage_material_lines' }) || 0;
-            for (let i = 0; i < lineCount; i++) {
-                const g = function(name) {
-                    return request.getSublistValue({ group: 'custpage_material_lines', name: name, line: i });
-                };
-                const direction = g('custpage_mat_direction');
-                const itemId = g('custpage_mat_item');
-                const weight = g('custpage_mat_weight');
-                if (!direction || !itemId || !weight) continue;
-                rows.push({
-                    direction: direction,
-                    itemId: itemId,
-                    lotId: g('custpage_mat_lot') || null,
-                    typeId: g('custpage_mat_type') || null,
-                    weightLbs: units.toLbs(weight),
-                    disposition: g('custpage_mat_disposition') || null
-                });
+            let data = { inputs: [], outputs: [] };
+            try {
+                data = JSON.parse(request.parameters.custpage_materials_json || '{}') || {};
+            } catch (e) {
+                log.error('parseMaterialLines', 'Bad materials JSON: ' + e.message);
             }
+            (data.inputs || []).forEach(function(r) {
+                if (!r.item || !(parseFloat(r.tons) > 0)) return;
+                rows.push({
+                    direction: 'input',
+                    itemId: String(r.item),
+                    lotId: r.lot ? String(r.lot) : null,
+                    typeId: null,
+                    weightLbs: units.toLbs(r.tons),
+                    disposition: null
+                });
+            });
+            (data.outputs || []).forEach(function(r) {
+                if (!r.item || !(parseFloat(r.tons) > 0)) return;
+                rows.push({
+                    direction: 'output',
+                    itemId: String(r.item),
+                    lotId: null,
+                    typeId: deriveOutputTypeId(String(r.item)),
+                    weightLbs: units.toLbs(r.tons),
+                    disposition: null
+                });
+            });
             return rows;
         };
 
@@ -983,16 +1097,6 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                     form.getField({ id: 'custpage_input_lot' }).defaultValue = lotId;
                 }
 
-                // Seed the Materials grid with the receipt's scrap line as the first
-                // Input row (the hidden header fields are also set for compatibility)
-                try {
-                    const matPrefill = form.getSublist({ id: 'custpage_material_lines' });
-                    matPrefill.setSublistValue({ id: 'custpage_mat_direction', line: 0, value: 'input' });
-                    matPrefill.setSublistValue({ id: 'custpage_mat_item', line: 0, value: String(itemId) });
-                    if (lotId) matPrefill.setSublistValue({ id: 'custpage_mat_lot', line: 0, value: String(lotId) });
-                    if (quantity > 0) matPrefill.setSublistValue({ id: 'custpage_mat_weight', line: 0, value: String(units.toTons(quantity)) });
-                } catch (eGrid) { log.debug('grid prefill skipped', eGrid.message); }
-
                 // Set Input Weight — IR inventory-detail quantity is stored in POUNDS;
                 // the form field is entered/displayed in TONS
                 if (quantity > 0) {
@@ -1029,6 +1133,12 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                     lotId: lotId,
                     quantity: quantity
                 });
+
+                return {
+                    item: String(itemId),
+                    lot: lotId ? String(lotId) : '',
+                    tons: quantity > 0 ? units.toTons(quantity) : 0
+                };
 
             } catch (e) {
                 log.error('prePopulateFromItemReceipt', {
