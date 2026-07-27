@@ -1381,6 +1381,60 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     log.error('seedSampleSettlements', spec.tag + ' [step=' + step + ']: ' + e.message);
                 }
             });
+
+            seedAggregatedSettlement(section, vendorId, wlId);
+        }
+
+        /**
+         * Sample WEEKLY-aggregated settlement (marker [SUSTDEMO AGG]): one Draft
+         * settlement for the current ISO week holding two receipt-line slices
+         * (20,000 + 22,000 lbs), the way createOrAppendLineSettlement builds them
+         * for a Weekly-cadence vendor. Demonstrates the aggregation story without
+         * needing two live receipts first.
+         */
+        function seedAggregatedSettlement(section, vendorId, wlId) {
+            const marker = '[SUSTDEMO AGG]';
+            let step = 'start';
+            try {
+                if (findSettlementByMarker(marker)) {
+                    addRow(section, 'exists', 'Aggregated (Weekly) sample settlement already seeded',
+                        'customrecord_sust_settlement_record', null);
+                    return;
+                }
+                const periodKey = settlementLib.periodKeyFor('Weekly', new Date());
+                step = 'createLineSettlement';
+                const settleId = settlementLib.createLineSettlement({
+                    vendorId: vendorId,
+                    tranDate: new Date(),
+                    itemId: wlId,
+                    grossWeight: 20000,
+                    recoveryPct: 95,
+                    sourceTag: marker + ' weekly aggregated settlement - receipt slice 1'
+                });
+                step = 'aggregate-second-slice';
+                const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settleId });
+                const gross = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_gross_lbs' })) || 0) + 22000;
+                const net = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_lbs' })) || 0) + (22000 * 0.95);
+                const value = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_value' })) || 0) * (gross / 20000);
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_gross_lbs', value: gross });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_net_lbs', value: net });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_net_value', value: value });
+                rec.setValue({ fieldId: 'custrecord_sust_settle_period_key', value: periodKey });
+                rec.setValue({
+                    fieldId: 'custrecord_sust_settle_agg_sources',
+                    value: JSON.stringify(['ir:seed-1:1', 'ir:seed-2:1'])
+                });
+                const notes = (rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '')
+                    + '\n+ receipt slice 2: 22000 lbs gross'
+                    + '\nWeekly-cadence aggregation: both receipt lines rolled into this single ' + periodKey + ' settlement.';
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes });
+                rec.save();
+                addRow(section, 'created', 'Aggregated (Weekly) sample settlement - 42,000 lbs across 2 receipt slices, period ' + periodKey,
+                    'customrecord_sust_settlement_record', settleId);
+            } catch (e) {
+                addRow(section, 'error', 'Aggregated sample settlement [step=' + step + ']: ' + e.message);
+                log.error('seedAggregatedSettlement', '[step=' + step + ']: ' + e.message);
+            }
         }
 
         function findSettlementByMarker(marker) {

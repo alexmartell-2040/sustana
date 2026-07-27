@@ -30,8 +30,8 @@
  * Date: July 2026
  */
 
-define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units', './SUST_Lib_Config'],
-    function(search, serverWidget, runtime, log, units, configLib) {
+define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_Lib_Units', './SUST_Lib_Config'],
+    function(search, serverWidget, runtime, url, log, units, configLib) {
 
         const BRAND = '#2976F3';      // company brand blue
         const BRAND_DARK = '#1F5FCC';
@@ -82,12 +82,19 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
             // 2b. Yard operational view — lots on hand by site/status.
             const yard = buildYardLots(itemMap);              // { rows, error }
 
+            // 2c. Expected outbound (open SO lines, short) + work in process.
+            const so = getOpenSoLines(sub.id, itemMap);       // { rows, mode }
+            const wip = buildActiveProcessing();              // { rows, error }
+
             // 3. Totals (lbs — converted to tons at display time only).
             let openLbs = 0;
             po.rows.forEach(function(r) { openLbs += r.openLbs; });
             let onHandLbs = 0;
             onHand.forEach(function(r) { onHandLbs += r.onHandLbs; });
+            let outLbs = 0;
+            so.rows.forEach(function(r) { outLbs += r.openLbs; });
             const totalLbs = openLbs + onHandLbs;
+            const netLbs = totalLbs - outLbs;
 
             // 4. Build the page.
             const form = serverWidget.createForm({ title: 'Sustana Recovery — Fiber Position Report' });
@@ -97,14 +104,18 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
             addInline(form, 'custpage_tiles', renderTiles({
                 openLbs: openLbs,
                 onHandLbs: onHandLbs,
-                totalLbs: totalLbs,
+                outLbs: outLbs,
+                netLbs: netLbs,
                 poCount: po.rows.length,
+                soCount: so.rows.length,
                 onHandCount: onHand.length,
                 exceptionCount: yard.rows.filter(function(r) { return r.exceptions.length > 0; }).length
             }));
             addInline(form, 'custpage_yard_matrix', renderYardMatrix(yard));
             addInline(form, 'custpage_yard_detail', renderYardDetail(yard));
+            addInline(form, 'custpage_wip', renderWipTable(wip));
             addInline(form, 'custpage_po', renderPoTable(po, openLbs));
+            addInline(form, 'custpage_so', renderSoTable(so, outLbs));
             addInline(form, 'custpage_onhand', renderOnHandTable(onHand, onHandLbs));
             addInline(form, 'custpage_notes', notes(sub, po.mode));
 
@@ -220,6 +231,122 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
 
             rows.sort(function(a, b) { return b.openLbs - a.openLbs; });
             return rows;
+        }
+
+        // ───────────────────────────────────────────────────────────────────────
+        // Data — expected outbound leg (open SOs, short)
+        // ───────────────────────────────────────────────────────────────────────
+
+        function getOpenSoLines(subId, itemMap) {
+            try {
+                return { rows: runSoSearch(subId, itemMap, true), mode: 'net' };
+            } catch (e1) {
+                log.error('open-SO net search failed, falling back', e1.message);
+                try {
+                    return { rows: runSoSearch(subId, itemMap, false), mode: 'gross' };
+                } catch (e2) {
+                    log.error('open-SO fallback search failed', e2.message);
+                    return { rows: [], mode: 'error' };
+                }
+            }
+        }
+
+        function runSoSearch(subId, itemMap, useFormula) {
+            const filters = [
+                ['mainline', 'is', 'F'], 'AND',
+                ['taxline', 'is', 'F'], 'AND',
+                ['shipping', 'is', 'F']
+            ];
+            if (subId) { filters.push('AND', ['subsidiary', 'anyof', subId]); }
+
+            const columns = ['tranid', 'entity', 'trandate', 'item', 'quantity'];
+            if (useFormula) {
+                filters.push('AND', [
+                    'formulanumeric: ABS(NVL({quantity},0)) - ABS(NVL({quantityshiprecv},0))',
+                    'greaterthan', 0
+                ]);
+                columns.push('quantityshiprecv');
+            } else {
+                // open / partially-fulfilled SO statuses
+                filters.push('AND', ['status', 'anyof',
+                    'SalesOrd:A', 'SalesOrd:B', 'SalesOrd:D', 'SalesOrd:E']);
+            }
+
+            const rows = [];
+            search.create({ type: 'salesorder', filters: filters, columns: columns })
+                .run().each(function(r) {
+                    const itemId = r.getValue({ name: 'item' });
+                    const info = itemMap[itemId];
+                    if (!info) return true;
+
+                    const gross = Math.abs(parseFloat(r.getValue({ name: 'quantity' })) || 0);
+                    const shipped = useFormula
+                        ? Math.abs(parseFloat(r.getValue({ name: 'quantityshiprecv' })) || 0)
+                        : 0;
+                    const openQty = Math.max(gross - shipped, 0);
+                    if (!(openQty > 0)) return true;
+
+                    rows.push({
+                        soId: r.id,
+                        tranid: r.getValue({ name: 'tranid' }) || ('SO ' + r.id),
+                        customer: r.getText({ name: 'entity' }) || '—',
+                        date: r.getValue({ name: 'trandate' }) || '',
+                        itemName: info.name,
+                        openLbs: openQty
+                    });
+                    return true;
+                });
+
+            rows.sort(function(a, b) { return b.openLbs - a.openLbs; });
+            return rows;
+        }
+
+        // ───────────────────────────────────────────────────────────────────────
+        // Data — work in process (equipment & labor)
+        // ───────────────────────────────────────────────────────────────────────
+
+        /**
+         * Non-completed processing records: who is running what on which
+         * equipment, and how much material is tied up in WIP.
+         */
+        function buildActiveProcessing() {
+            const rows = [];
+            try {
+                search.create({
+                    type: 'customrecord_sust_processing_record',
+                    filters: [['isinactive', 'is', 'F']],
+                    columns: [
+                        'name',
+                        'custrecord_sust_processing_status',
+                        'custrecord_sust_processing_type',
+                        'custrecord_sust_proc_equipment',
+                        'custrecord_sust_processing_operator',
+                        'custrecord_sust_processing_location',
+                        'custrecord_sust_processing_input_lbs',
+                        'custrecord_sust_processing_date'
+                    ]
+                }).run().each(function(r) {
+                    const status = r.getText({ name: 'custrecord_sust_processing_status' }) || '';
+                    if (status === 'Completed') return true; // only live work
+                    rows.push({
+                        procId: r.id,
+                        name: r.getValue({ name: 'name' }) || ('PROC ' + r.id),
+                        status: status || 'Draft',
+                        type: r.getText({ name: 'custrecord_sust_processing_type' }) || '—',
+                        equipment: r.getText({ name: 'custrecord_sust_proc_equipment' }) || '—',
+                        operator: r.getText({ name: 'custrecord_sust_processing_operator' }) || 'Unassigned',
+                        site: r.getText({ name: 'custrecord_sust_processing_location' }) || '—',
+                        inputLbs: Math.abs(parseFloat(r.getValue({ name: 'custrecord_sust_processing_input_lbs' })) || 0),
+                        date: r.getValue({ name: 'custrecord_sust_processing_date' }) || ''
+                    });
+                    return true;
+                });
+            } catch (e) {
+                log.error('buildActiveProcessing failed', e.message);
+                return { rows: [], error: e.message };
+            }
+            rows.sort(function(a, b) { return b.inputLbs - a.inputLbs; });
+            return { rows: rows, error: null };
         }
 
         // ───────────────────────────────────────────────────────────────────────
@@ -385,9 +512,9 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + '  <div style="font-weight:bold; font-size:15px; margin-bottom:6px; color:' + BRAND_DARK + ';">'
                 + '    Recovered Fiber Position (tons)</div>'
                 + '  <div style="font-size:13px; line-height:1.5;">'
-                + '    Fiber tonnage by grade across <b>two long legs</b>: expected inbound (open purchase commitments, un-received) <b>+</b> on-hand inventory. '
-                + '    All quantities are stored in pounds; tons (2,000 lbs) are shown for readability. '
-                + '    The sales (short) leg and dollar mark-to-market are later phases.'
+                + '    Fiber tonnage by grade: expected inbound (open purchase commitments) <b>+</b> on-hand inventory <b>&minus;</b> expected outbound (open sales commitments), '
+                + '    with the yard operational view and live work-in-process below. '
+                + '    All quantities are stored in pounds; tons (2,000 lbs) are shown for readability. Dollar mark-to-market is a later phase.'
                 + '  </div>'
                 + '</div>';
         }
@@ -412,12 +539,13 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + '<div style="display:flex; gap:12px; flex-wrap:wrap; font-family:Arial,sans-serif; font-size:13px; margin:6px 0 4px;">'
                 + tile('Expected Inbound (tons)', esc(units.formatTons(t.openLbs)), '#eaf2ff', BRAND, '#0d2a52')
                 + tile('On Hand (tons)', esc(units.formatTons(t.onHandLbs)), '#eaf2ff', BRAND, '#0d2a52')
-                + tile('Total Position (tons)', esc(units.formatTons(t.totalLbs)), BRAND, BRAND_DARK, '#ffffff', true)
+                + tile('Expected Outbound (tons)', esc(units.formatTons(t.outLbs)), '#fff7ed', '#ea580c', '#7c2d12')
+                + tile('Net Position (tons)', esc(units.formatTons(t.netLbs)), BRAND, BRAND_DARK, '#ffffff', true)
                 + tile('Lot Exceptions', String(t.exceptionCount), excColors.bg, excColors.border, excColors.text)
                 + '</div>'
                 + '<div style="font-family:Arial,sans-serif; font-size:11px; color:#64748b; margin-bottom:8px;">'
-                + '  ' + t.poCount + ' open PO line(s) &middot; ' + t.onHandCount + ' on-hand grade(s). '
-                + '  1 ton = 2,000 lbs; stored values remain in pounds.'
+                + '  ' + t.poCount + ' open PO line(s) &middot; ' + t.soCount + ' open SO line(s) &middot; ' + t.onHandCount + ' on-hand grade(s). '
+                + '  Net = inbound + on hand &minus; outbound. 1 ton = 2,000 lbs; stored values remain in pounds.'
                 + '</div>';
         }
 
@@ -486,7 +614,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                     + (r.moisture !== null && r.contamination !== null ? ' / ' : '')
                     + (r.contamination !== null ? 'C ' + r.contamination + '%' : '');
                 return '<tr' + (hasExc ? ' style="background:#fff7f7;"' : '') + '>'
-                    + td('<a href="/app/common/item/inventorynumber.nl?id=' + r.lotId + '" style="color:' + BRAND + ';">' + esc(r.lotNumber) + '</a>')
+                    + td(recordLink('inventorynumber', r.lotId, esc(r.lotNumber)))
                     + td(esc(r.site))
                     + td(esc(r.itemName) + (r.category ? '<br/><span style="color:#94a3b8; font-size:11px;">' + esc(r.category) + '</span>' : ''))
                     + td(statusBadge(r.status))
@@ -519,6 +647,59 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + html + '</span>';
         }
 
+        function renderWipTable(wip) {
+            const head = sectionHead('Work in Process — Equipment &amp; Labor',
+                'Open processing runs (Draft / In Process / Awaiting Cost): which operator is on which equipment, and the tonnage tied up. Click a run to open it.');
+            if (wip.error) return head + emptyMsg('Processing search failed: ' + wip.error);
+            if (wip.rows.length === 0) {
+                return head + emptyMsg('No open processing runs. Start one from SUST - Processing Entry or an Item Receipt "Process Material" button.');
+            }
+            const body = wip.rows.map(function(r) {
+                return '<tr>'
+                    + td(recordLink('customrecord_sust_processing_record', r.procId, esc(r.name)))
+                    + td(esc(r.site))
+                    + td(esc(r.type))
+                    + td(esc(r.equipment))
+                    + td(r.operator === 'Unassigned'
+                        ? '<span style="color:#ca8a04;">Unassigned</span>' : esc(r.operator))
+                    + td(statusBadge(r.status))
+                    + tdR('<b>' + esc(units.formatTons(r.inputLbs)) + '</b>')
+                    + '</tr>';
+            }).join('');
+            return head + tableWrap(
+                ['Run #', 'Site', 'Type', 'Equipment', 'Operator', 'Status', 'Input Tons'],
+                body, 6);
+        }
+
+        function renderSoTable(so, totalLbs) {
+            const head = sectionHead('Expected Outbound — Open Sales Commitments (short)',
+                'Committed fiber not yet shipped, by customer and grade. Quantity is net of fulfillments.');
+
+            if (so.rows.length === 0) {
+                return head + emptyMsg('No open sales commitments found.');
+            }
+
+            const body = so.rows.map(function(r) {
+                return '<tr>'
+                    + td(recordLink('salesorder', r.soId, esc(r.tranid)))
+                    + td(esc(r.customer))
+                    + td(esc(r.date))
+                    + td(esc(r.itemName))
+                    + tdR(commas(r.openLbs, 0))
+                    + tdR('<b>' + esc(units.formatTons(r.openLbs)) + '</b>')
+                    + '</tr>';
+            }).join('');
+
+            const foot = '<tr style="background:#fff7ed; font-weight:bold;">'
+                + td('Subtotal — Expected Outbound') + td('') + td('') + td('')
+                + tdR(commas(totalLbs, 0)) + tdR(esc(units.formatTons(totalLbs)))
+                + '</tr>';
+
+            return head + tableWrap(
+                ['SO #', 'Customer', 'Order Date', 'Grade', 'Open Lbs', 'Open Tons'],
+                body + foot, 4);
+        }
+
         function renderPoTable(po, totalLbs) {
             const head = sectionHead('Expected Inbound — Open Purchase Commitments (long)',
                 'Committed fiber not yet received, by vendor and grade. Quantity is net of receipts so it does not overlap the on-hand leg.');
@@ -529,7 +710,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
 
             const body = po.rows.map(function(r) {
                 return '<tr>'
-                    + td('<a href="/app/accounting/transactions/purchord.nl?id=' + r.poId + '" style="color:' + BRAND + ';">' + esc(r.tranid) + '</a>')
+                    + td(recordLink('purchaseorder', r.poId, esc(r.tranid)))
                     + td(esc(r.vendor))
                     + td(esc(r.date))
                     + td(esc(r.itemName))
@@ -591,6 +772,19 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + '<tbody>' + bodyHtml + '</tbody></table></div>';
         }
 
+        /**
+         * Drill-down link to any record via N/url (correct URL per record type
+         * and account). Falls back to plain text if resolution fails.
+         */
+        function recordLink(recordType, id, labelHtml) {
+            try {
+                const u = url.resolveRecord({ recordType: recordType, recordId: id });
+                return '<a href="' + u + '" style="color:' + BRAND + ';">' + labelHtml + '</a>';
+            } catch (e) {
+                return labelHtml;
+            }
+        }
+
         function td(html) { return '<td style="padding:6px 10px; border-bottom:1px solid #e5e7eb;">' + html + '</td>'; }
         function tdR(html) { return '<td style="padding:6px 10px; border-bottom:1px solid #e5e7eb; text-align:right;">' + html + '</td>'; }
 
@@ -617,8 +811,8 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + '<div style="font-weight:bold; color:' + BRAND_DARK + '; margin-bottom:4px;">Methodology &amp; scope</div>'
                 + '<ul style="margin:0 0 0 18px; padding:0; line-height:1.6;">'
                 + '<li>Position = plain fiber tonnage by grade. Each grade line\'s measure is simply its weight; tons are a display conversion (1 ton = 2,000 lbs) — stored values and math stay in pounds.</li>'
-                + '<li>Both legs are <b>long</b> (price-up = gain). The <b>sales/short leg</b> and dollar mark-to-market are later phases.</li>'
-                + '<li>Expected inbound = open PO quantity net of receipts; on-hand = item quantity on hand across locations.</li>'
+                + '<li>Net position = inbound + on hand &minus; outbound (price-up = gain on the net long). Dollar mark-to-market is a later phase.</li>'
+                + '<li>Expected inbound = open PO quantity net of receipts; expected outbound = open SO quantity net of fulfillments; on-hand = item quantity on hand across locations. Work in Process lists non-completed processing records (equipment, operator, input tonnage).</li>'
                 + '<li><b>KPI data source &amp; refresh:</b> every figure is computed live on page load — grades/on-hand from an item search, expected inbound from an open-PO search, yard view from lot (inventory number) records. Nothing is cached or scheduled; reload the page to refresh.</li>'
                 + '<li><b>Exception rules:</b> Moisture &gt; ' + EXC.MOISTURE_PCT + '% or Contamination &gt; ' + EXC.CONTAMINATION_PCT + '% (settlement-penalty breach), Ungraded after ' + EXC.UNGRADED_DAYS + ' days in Received, Aging after ' + EXC.AGING_DAYS + ' days in Yard/Processing Queue.</li>'
                 + '<li>Subsidiary filter: ' + subNote + '. Override with <code>?sub=&lt;id&gt;</code>. The yard view is location-based and unaffected by the subsidiary filter.</li>'

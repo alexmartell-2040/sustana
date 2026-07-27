@@ -276,15 +276,20 @@ un-received) + on-hand inventory.
 
 **Displayed:** blue banner; "Data as of <UTC timestamp>" strip with a Refresh link
 (everything computes live on page load — no cache); tiles Expected Inbound / On Hand /
-Total Position (tons) + **Lot Exceptions** (red when > 0). **Yard operational view**:
+**Expected Outbound** / **Net Position** (= in + on hand − out) + **Lot Exceptions**
+(red when > 0). **Yard operational view**:
 *Tons by Site & Status* matrix (rows = locations, columns = Received / Yard / Processing
 Queue / Staged) and *Yard Lots* detail (Lot #, Site, Grade + material category, status
 badge, Tons, Quality M%/C%, Exception badges, Action column saying what to do). Exception
 rules: Moisture > 12%, Contamination > 5%, Ungraded > 2 days in Received, Aging > 14 days
-in Yard/Processing Queue. Exception lots sort first and link to the lot record. Then the
-two position tables — *Expected Inbound* (PO #, Vendor, Order Date, Grade, Open Lbs, Open
-Tons + subtotal) and *On-Hand Inventory* (Grade, On-Hand Lbs, On-Hand Tons + subtotal).
-**Read-only.**
+in Yard/Processing Queue. Exception lots sort first and link to the lot record (drill-down
+links use `url.resolveRecord`, so they work in any account). **Work in Process — Equipment
+& Labor**: non-completed processing runs (Run #, Site, Type, Equipment, Operator — amber
+"Unassigned" when empty, Status badge, Input Tons), each linking to the processing record.
+Then the position tables — *Expected Inbound* (PO #, Vendor, Order Date, Grade, Open Lbs,
+Open Tons + subtotal), *Expected Outbound* (SO #, Customer, Order Date, Grade, Open Lbs,
+Open Tons + subtotal; open SO qty net of fulfillments) and *On-Hand Inventory* (Grade,
+On-Hand Lbs, On-Hand Tons + subtotal). **Read-only.**
 
 **Inputs:** optional `?sub=<id>` (else script param → config usSubsidiary → unfiltered).
 

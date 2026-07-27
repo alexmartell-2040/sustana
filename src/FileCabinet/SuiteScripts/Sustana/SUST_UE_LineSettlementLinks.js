@@ -71,12 +71,12 @@ define(['N/search', 'N/url', 'N/runtime', 'N/log', './SUST_Lib_Config'],
                 const txnId = rec.id;
                 const poId = isPO ? txnId : (rec.getValue({ fieldId: 'createdfrom' }) || null);
 
-                // Build line-key -> settlement id map (same-document anchor)
-                const settlementMap = buildMap(
-                    'customrecord_sust_settlement_record',
+                // Build line-key -> [settlement, ...] multi-map (same-document anchor).
+                // A PO with multiple receipts has several settlements sharing a line
+                // key (each IR's own line 1) — ALL of them must show, not just the last.
+                const settlementMap = buildSettlementMultiMap(
                     isIR ? [['custrecord_sust_settlement_item_receipt', 'anyof', txnId]]
-                         : [['custrecord_sust_settle_po', 'anyof', txnId]],
-                    'custrecord_sust_settle_source_line'
+                         : [['custrecord_sust_settle_po', 'anyof', txnId]]
                 );
 
                 // Build line-key -> processing id map. Processing records store their source
@@ -96,15 +96,15 @@ define(['N/search', 'N/url', 'N/runtime', 'N/log', './SUST_Lib_Config'],
                 const linkRows = [];
                 for (let i = 0; i < lineCount; i++) {
                     const lineKey = i + 1;
-                    const settleId = settlementMap[lineKey] || null;
+                    const settles = settlementMap[lineKey] || [];
                     const procId = processingMap[lineKey] || null;
-                    if (!settleId && !procId) continue;
-                    if (settleId) trySetSublist(rec, 'custcol_sust_settlement_id', i, settleId);
+                    if (!settles.length && !procId) continue;
+                    if (settles.length) trySetSublist(rec, 'custcol_sust_settlement_id', i, settles[0].id);
                     if (procId) trySetSublist(rec, 'custcol_sust_processing_id', i, procId);
                     linkRows.push({
                         line: lineKey,
                         item: rec.getSublistText({ sublistId: 'item', fieldId: 'item', line: i }) || ('Line ' + lineKey),
-                        settleId: settleId,
+                        settles: settles,
                         procId: procId
                     });
                 }
@@ -143,6 +143,40 @@ define(['N/search', 'N/url', 'N/runtime', 'N/log', './SUST_Lib_Config'],
             } catch (e) {
                 log.error('beforeLoad', e.toString() + '\n' + (e.stack || ''));
             }
+        }
+
+        /**
+         * Build a { sourceLineKey: [ {id, irId, status, periodKey}, ... ] } multi-map
+         * of settlements. Keeps every settlement per line key so a PO whose
+         * receipts each created a settlement shows them all.
+         */
+        function buildSettlementMultiMap(filters) {
+            const map = {};
+            try {
+                search.create({
+                    type: 'customrecord_sust_settlement_record',
+                    filters: filters,
+                    columns: ['internalid', 'custrecord_sust_settle_source_line',
+                        'custrecord_sust_settlement_item_receipt',
+                        'custrecord_sust_settlement_status',
+                        'custrecord_sust_settle_period_key']
+                }).run().each(function(result) {
+                    const key = result.getValue('custrecord_sust_settle_source_line');
+                    if (key === null || key === '' || key === undefined) return true;
+                    const k = parseInt(key, 10);
+                    if (!map[k]) map[k] = [];
+                    map[k].push({
+                        id: result.getValue('internalid') || result.id,
+                        irId: result.getValue('custrecord_sust_settlement_item_receipt') || null,
+                        status: result.getText('custrecord_sust_settlement_status') || '',
+                        periodKey: result.getValue('custrecord_sust_settle_period_key') || ''
+                    });
+                    return true;
+                });
+            } catch (e) {
+                log.error('buildSettlementMultiMap', e.toString());
+            }
+            return map;
         }
 
         /**
@@ -199,13 +233,23 @@ define(['N/search', 'N/url', 'N/runtime', 'N/log', './SUST_Lib_Config'],
             }
             const dash = '<span style="color:#94a3b8;">&mdash;</span>';
             const body = linkRows.map(function(r) {
-                const s = r.settleId ? recLink('customrecord_sust_settlement_record', r.settleId, 'Settlement') : dash;
+                const settles = r.settles && r.settles.length
+                    ? r.settles.map(function(st) {
+                        let label = recLink('customrecord_sust_settlement_record', st.id, 'Settlement');
+                        const extras = [];
+                        if (st.irId) extras.push(recLink('itemreceipt', st.irId, 'IR'));
+                        if (st.status) extras.push(escapeHtml(st.status));
+                        if (st.periodKey) extras.push('period ' + escapeHtml(st.periodKey));
+                        if (extras.length) label += ' <span style="color:#64748b;">(' + extras.join(' · ') + ')</span>';
+                        return label;
+                    }).join('<br/>')
+                    : dash;
                 const p = r.procId ? recLink('customrecord_sust_processing_record', r.procId, 'Processing') : dash;
                 return `<tr>
-                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${r.line}</td>
-                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${escapeHtml(r.item)}</td>
-                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${s}</td>
-                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${p}</td>
+                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;">${r.line}</td>
+                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;">${escapeHtml(r.item)}</td>
+                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;">${settles}</td>
+                          <td style="padding:4px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top;">${p}</td>
                         </tr>`;
             }).join('');
             return `<div style="margin:4px 0 12px;font-family:Arial,sans-serif;font-size:12px;">
