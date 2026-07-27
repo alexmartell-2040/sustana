@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<restlet scriptid="customscript_sust_rl_seed_demo">
+  <name>SUST - Seed Sustana Demo (RESTlet)</name>
+  <scriptfile>[/SuiteScripts/Sustana/SUST_RL_SeedDemo.js]</scriptfile>
+  <description>Token-Based-Auth REST endpoint that runs the full Sustana demo seed programmatically (SUST_SL_SeedSustanaDemo.runSeedAll) and returns a JSON summary. Idempotent; re-running updates rather than duplicates. Used to insert/refresh demo data headlessly without the Suitelet UI.</description>
+  <isinactive>F</isinactive>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_sust_rl_seed_demo">
+      <status>RELEASED</status>
+      <title>SUST - Seed Sustana Demo (RESTlet)</title>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <allroles>T</allroles>
+    </scriptdeployment>
+  </scriptdeployments>
+</restlet>

@@ -268,6 +268,45 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             context.response.write({ output: resultsHtml(out) });
         }
 
+        // ─── Programmatic entry point (used by the SUST_RL_SeedDemo RESTlet) ──────
+        // Runs the FULL seed (all groups) and returns a JSON-safe summary instead of
+        // HTML. Same ctx + dispatch as runSeed, so behavior is identical — it just has
+        // no request/response, so it can be driven by a RESTlet or scheduled script.
+        function runSeedAll() {
+            const out = { sections: [] };
+            const ctx = {
+                usSubId: null, caSubId: null,
+                locIds: {}, itemIds: {},
+                vendorId: null, customerId: null,
+                invAdjAcctId: null, settleExpAcctId: null, feeItemId: null,
+                itemDefaults: null
+            };
+
+            const pre = findDemoSubsidiaries();
+            if (!pre.ok) {
+                const missing = [];
+                if (!pre.usId) missing.push(US_SUB_NAME);
+                if (!pre.caId) missing.push(CA_SUB_NAME);
+                return { ok: false, error: 'Subsidiaries missing: ' + missing.join(', '), sections: [] };
+            }
+            ctx.usSubId = pre.usId;
+            ctx.caSubId = pre.caId;
+
+            seedConfig(ctx, out);
+            seedLocations(ctx, out);
+            seedItems(ctx, out);
+            seedEntities(ctx, out);
+            seedIndexPrices(ctx, out);
+            seedSchedules(ctx, out);
+            seedOpenPO(ctx, out);
+            seedOnHandLots(ctx, out);
+            seedPlanning(ctx, out);
+            seedItemOutputTemplates(ctx, out);
+            seedSampleSettlements(ctx, out);
+
+            return { ok: true, ranAt: new Date().toISOString(), sections: out.sections };
+        }
+
         // ─── Group 0: precheck ────────────────────────────────────────────────
 
         function findDemoSubsidiaries() {
@@ -1546,5 +1585,5 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 .replace(/'/g, '&#39;');
         }
 
-        return { onRequest: onRequest };
+        return { onRequest: onRequest, runSeedAll: runSeedAll };
     });
