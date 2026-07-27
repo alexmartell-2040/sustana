@@ -1396,25 +1396,32 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             const marker = '[SUSTDEMO AGG]';
             let step = 'start';
             try {
-                if (findSettlementByMarker(marker)) {
-                    addRow(section, 'exists', 'Aggregated (Weekly) sample settlement already seeded',
-                        'customrecord_sust_settlement_record', null);
+                const existingId = findSettlementByMarker(marker);
+                if (existingId && countSlices(existingId) > 0) {
+                    addRow(section, 'exists', 'Aggregated (Weekly) sample settlement already seeded (with slices)',
+                        'customrecord_sust_settlement_record', existingId);
                     return;
                 }
                 const periodKey = settlementLib.periodKeyFor('Weekly', new Date());
-                step = 'createLineSettlement';
-                const settleId = settlementLib.createLineSettlement({
-                    vendorId: vendorId,
-                    tranDate: new Date(),
-                    itemId: wlId,
-                    grossWeight: 20000,
-                    recoveryPct: 95,
-                    sourceTag: marker + ' weekly aggregated settlement - receipt slice 1'
-                });
+                let settleId = existingId;
+                if (!settleId) {
+                    step = 'createLineSettlement';
+                    settleId = settlementLib.createLineSettlement({
+                        vendorId: vendorId,
+                        tranDate: new Date(),
+                        itemId: wlId,
+                        grossWeight: 20000,
+                        recoveryPct: 95,
+                        sourceTag: marker + ' weekly aggregated settlement - receipt slice 1'
+                    });
+                }
+                // From here the record is enriched idempotently — a pre-slice-era
+                // settlement (period key set but no slices/deductions) is upgraded
+                // in place rather than skipped.
                 step = 'aggregate-second-slice';
                 const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settleId });
-                const gross = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_gross_lbs' })) || 0) + 22000;
-                const net = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_lbs' })) || 0) + (22000 * 0.95);
+                const gross = 42000;
+                const net = 42000 * 0.95;
 
                 // Realistic economics: schedule-ish price on net lbs, then quality
                 // deductions (moisture over threshold) + treatment charge.
@@ -1438,12 +1445,17 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     fieldId: 'custrecord_sust_settle_agg_sources',
                     value: JSON.stringify(['ir:seed-1:1', 'ir:seed-2:1'])
                 });
-                const notes = (rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '')
-                    + '\n+ receipt slice 2: 22000 lbs gross'
-                    + '\nWeekly-cadence aggregation: both receipt lines rolled into this single ' + periodKey + ' settlement.'
-                    + '\nDeductions: Moisture 12% vs 10% threshold (' + moistureExcessPts + ' pts x $' + penaltyRatePerPt
-                    + '/lb/pt = $' + penaltyAmt.toFixed(2) + ') + treatment charge $' + treatment.toFixed(2) + '.';
-                rec.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes });
+                const existingNotes = rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '';
+                if (existingNotes.indexOf('Weekly-cadence aggregation') === -1) {
+                    rec.setValue({
+                        fieldId: 'custrecord_sust_settlement_notes',
+                        value: existingNotes
+                            + '\n+ receipt slice 2: 22000 lbs gross'
+                            + '\nWeekly-cadence aggregation: both receipt lines rolled into this single ' + periodKey + ' settlement.'
+                            + '\nDeductions: Moisture 12% vs 10% threshold (' + moistureExcessPts + ' pts x $' + penaltyRatePerPt
+                            + '/lb/pt = $' + penaltyAmt.toFixed(2) + ') + treatment charge $' + treatment.toFixed(2) + '.'
+                    });
+                }
                 rec.save();
 
                 // Receipt-slice child rows (what the aggregation panel + child sublist show)
@@ -1485,6 +1497,20 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             } catch (e) {
                 addRow(section, 'error', 'Aggregated sample settlement [step=' + step + ']: ' + e.message);
                 log.error('seedAggregatedSettlement', '[step=' + step + ']: ' + e.message);
+            }
+        }
+
+        /** How many receipt-slice children a settlement already has. */
+        function countSlices(settlementId) {
+            try {
+                return search.create({
+                    type: 'customrecord_sust_settle_slice',
+                    filters: [['custrecord_sust_slice_settlement', 'anyof', settlementId]],
+                    columns: ['internalid']
+                }).run().getRange({ start: 0, end: 10 }).length;
+            } catch (e) {
+                log.error('countSlices', e.message);
+                return 0;
             }
         }
 
