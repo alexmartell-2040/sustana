@@ -67,7 +67,7 @@ beforeEach(() => {
 
 describe('createLineSettlement - defensive SELECT writes (INVALID_NUMBER fix)', () => {
 
-    test('a text market reference ("Custom") goes through setText, never setValue (no INVALID_NUMBER)', () => {
+    test('a text market reference ("Custom") is skipped entirely, never reaching save (no INVALID_NUMBER)', () => {
         const scheduleInfo = {
             scheduleId: 5,
             methodId: 7,
@@ -86,10 +86,10 @@ describe('createLineSettlement - defensive SELECT writes (INVALID_NUMBER fix)', 
         }).not.toThrow();
 
         const v = savedValues(id);
-        // setValue path (numeric field) must NOT have received the text token
+        // Neither setValue nor setText is called for a non-numeric market ref — the field
+        // is left blank so the bad token can never reach save() and throw INVALID_NUMBER.
         expect(v.custrecord_sust_settlement_market_source).toBeUndefined();
-        // setText path carried the display text instead
-        expect(v.custrecord_sust_settlement_market_source_text).toBe('Custom');
+        expect(v.custrecord_sust_settlement_market_source_text).toBeUndefined();
     });
 
     test('a numeric market reference id still uses setValue', () => {
@@ -140,5 +140,22 @@ describe('createLineSettlement - defensive SELECT writes (INVALID_NUMBER fix)', 
         // weights still written
         expect(v.custrecord_sust_settlement_gross_lbs).toBe(40000);
         expect(v.custrecord_sust_settlement_net_lbs).toBeCloseTo(38000, 5); // 40000 * 95%
+    });
+
+    // Settlement Mode is set explicitly so the record never falls back to an account
+    // field default that resolves to the unusable "Custom" text (the live INVALID_NUMBER bug).
+    test('mode is preset to Auto when a schedule is present', () => {
+        const scheduleInfo = {
+            scheduleId: 5, methodId: 7, methodText: '% of Index',
+            marketRefId: 42, marketRefText: 'RISI White Ledger',
+            marketPct: 100, marketAdj: 0, treatmentCharge: 0, pricePerLb: 0
+        };
+        const id = lib.createLineSettlement(baseParams({ scheduleInfo: scheduleInfo }));
+        expect(savedValues(id).custrecord_sust_settlement_mode_text).toBe('Auto');
+    });
+
+    test('mode is preset to Calculator when there is no schedule', () => {
+        const id = lib.createLineSettlement(baseParams({ scheduleInfo: null }));
+        expect(savedValues(id).custrecord_sust_settlement_mode_text).toBe('Calculator');
     });
 });

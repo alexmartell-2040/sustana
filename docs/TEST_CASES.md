@@ -26,9 +26,10 @@ effect is the failure signal, not an on-screen error.
 
 | | |
 |---|---|
-| **Preconditions** | Fresh deploy; both subsidiaries exist. |
-| **Steps** | 1. Open **SUST - Seed Sustana Demo**. 2. Leave all non-optional groups checked. 3. Run Selected Groups. 4. Re-run once more. |
-| **Expected** | Config record created; 4 locations (Markham/Cincinnati/Buffalo/St Joseph); items White Ledger / Mixed Paper / Mixed Office Paper / SOP / Mill Residuals; vendor Fox Valley Recycling; customer Packaging Mill A; RISI SOP + RISI White Ledger monthly prices; 2 schedules (Purchase + Sale); PO-10001 open; 3 on-hand yard lots. Second run reports updates, **no duplicates, no errors** (all `SUSTDEMO_*` externalids). |
+| **Preconditions** | Fresh deploy; both subsidiaries exist (`Sustana Recovery US` / `Sustana Recovery Canada`). |
+| **Steps** | **UI:** open **SUST - Seed Sustana Demo** (`customscript_sust_sl_seed_demo`), leave all 11 groups checked, Run Selected Groups, then re-run once. **Headless (API):** `POST` the RESTlet `customscript_sust_rl_seed_demo` with Token-Based Auth — e.g. `node scripts/invoke-seed.mjs` after setting the `NS_*` env vars; runs all groups and returns a JSON summary. |
+| **Expected** | Groups 1-11 all report created/updated with **no duplicates, no errors** on re-run: config record; 4 locations (Markham/Cincinnati/Buffalo/St Joseph); items White Ledger / Mixed Paper / Mixed Office Paper / SOP / Mill Residuals; vendor Fox Valley Recycling; customer Packaging Mill A; RISI SOP + RISI White Ledger monthly prices; 2 schedules (Purchase + Sale) **with 2 penalty rules** on the supplier schedule (Moisture % > 12, Contamination % > 5); PO-10001 open; 3 on-hand yard lots; **7 planning sales orders**; **3 item output templates** (WL/MP/MOP → SOP + Mill Residuals); **3 sample settlements** (Draft/Completed, aged 5/45/72 days). |
+| **Notes** | The 3 planning **estimates** (delayed×2 / cancelled×1) require the acting role to hold *Transactions → Quote* permission; without it they error and only the 7 sales orders seed. All records use `SUSTDEMO_*` externalids or natural-key/notes markers, so the seeder is fully idempotent. |
 
 ---
 
@@ -36,9 +37,10 @@ effect is the failure signal, not an on-screen error.
 
 | | |
 |---|---|
-| **Preconditions** | TC-SEED done; PO-10001 open. |
-| **Steps** | 1. Open PO-10001 → **Receive**. 2. Key gross 78,500 / tare 38,500 → net 40,000 lbs on the weight columns; quantity 40,000; lot `TRK-001`; location Cincinnati. 3. Save. 4. Edit the IR, change net to 39,500, save. |
-| **Expected** | On save: indigo landed-cost banner (Index Base decomposition); a **line settlement (Draft)** auto-created, linked to PO + IR + line, priced ≈ RISI White Ledger − $15/ton; **lot exists, status Received**, vendor-lot bridged; system note on the IR. On edit: settlement **recalculates** to the new weight (weight true-up). |
+| **Preconditions** | TC-SEED done; PO-10001 open (Fox Valley Recycling, 40,000 lbs White Ledger, header Pricing Timing = *Determined on Arrival*). |
+| **Steps** | 1. Open PO-10001 → **Receive**. 2. Fill the exact fields below. 3. Save. 4. Edit the IR, change Net Weight to 39,500, save. |
+| **Exact fields to key** | **Native:** check the line **Receive** box · **Quantity** = `40000` · **Location** = Cincinnati · open the line's **Inventory Detail** → *Lot/Serial Number* (`receiptinventorynumber`) = `TRK-001`, *Quantity* = `40000`. ⚠️ **The lot detail is mandatory** — the settlement UE sums inventory-detail lot quantities for gross weight; with no lot/qty it silently creates **no** settlement. **Sustana line columns:** *Gross Weight (lbs)* `custcol_sust_scrap_gross_weight` = `78500` · *Net Weight (lbs)* `custcol_sust_scrap_net_weight` = `40000` · *Vendor Lot #* `custcol_sust_vendor_lot_number` = `FV-2026-0142` (optional; bridges onto the lot) · *Pricing Timing* `custcol_sust_pricing_timing` = **leave blank** (inherits header "Determined on Arrival" → settlement auto-creates; "Determined After Processing" would defer it to the button). **Landed-cost (optional):** *Index Base ($/lb)* `custcol_sust_index_base` = `0.155` · *Premium* `custcol_sust_premium` = `0.005` · *Freight* `custcol_sust_freight` = `0.003` · *Financing + Insurance* `custcol_sust_financing_insurance` = `0.001` → line rate auto-rolls to `0.164`. Leave Index Base blank to keep the PO's provisional $0.15/lb. |
+| **Expected** | On save: indigo landed-cost banner (Index Base decomposition); a **line settlement (Draft)** auto-created, linked to PO + IR + line, mode **Auto**, priced ≈ RISI White Ledger − $15/ton, net weight = gross × item recovery (White Ledger 95% → 38,000 lbs); **lot `TRK-001` exists, status Received**, vendor-lot bridged; system note on the IR. On edit: settlement **recalculates** to the new weight (weight true-up). |
 | **Notes** | If the demo account's non-Sustana PO-approval workflow blocks receiving, resolve/disable that workflow first (environmental, not a Sustana defect). |
 
 ---
@@ -58,8 +60,8 @@ effect is the failure signal, not an on-screen error.
 |---|---|
 | **Preconditions** | An Item Receipt (or PO) with a scrap line that has no settlement — e.g. a "Determined After Processing" line the IR deferred, or a 2nd receipt line. A pricing schedule exists for the vendor + item. |
 | **Steps** | 1. From the IR (or PO), click **Create / Manage Line Settlements**. 2. Review the "Existing Settlement" column (already-settled lines show their settlement #, create-only). 3. Check the un-settled line(s) → **Create Selected Settlements**. |
-| **Expected** | Settlement(s) created and you are redirected back to the source transaction. **No `INVALID_NUMBER` error** even when the vendor's schedule has a text-valued Market Reference such as "Custom" — the SELECT writes now fall back to `setText`/skip instead of aborting the save. |
-| **Regression** | Covered by `lineSettlementCreate.test.js`. |
+| **Expected** | Settlement(s) created and you are redirected back to the source transaction, **with no `INVALID_NUMBER` / "You entered Custom…" error**. Root cause (now fixed): a new settlement with no explicit **Settlement Mode** fell back to an account field default that resolves to the unusable text `Custom`, which threw `INVALID_NUMBER` at save. `createLineSettlement` now sets a valid mode (`Auto` when a schedule exists, else `Calculator`), and only writes the market source when it's a numeric internal id. |
+| **Regression** | Covered by `lineSettlementCreate.test.js`. Verified live via the seeder's Group 11 sample settlements (all create cleanly). |
 | **Known UX gap** | The button is *create-only*; you cannot select/re-link an existing settlement from this screen (matches the reported "couldn't select the existing one"). Editing the link is done on the settlement record itself. |
 
 ## TC-KIOSK — 7:30 Scale kiosk (the Suitelet is the scale)
