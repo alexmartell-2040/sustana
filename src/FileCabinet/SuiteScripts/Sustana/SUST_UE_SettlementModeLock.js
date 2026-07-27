@@ -90,6 +90,7 @@ define(['N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', 'N/ui/serverWidge
 
                 // On VIEW, no need to disable fields (everything's already display-only)
                 if (context.type === context.UserEventType.VIEW) {
+                    renderStatusButtons(form, rec, statusText);
                     renderModeBanner(form, modeText, statusText);
                     renderAggregationPanel(form, rec);
                     renderActionLinks(form, rec.id);
@@ -252,6 +253,65 @@ define(['N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', 'N/ui/serverWidge
          * v2 Chunk CC: Print + Email vendor-form action links.
          * Settlement form Suitelet handles both modes via ?email=T param.
          */
+        /**
+         * One-click lifecycle buttons (VIEW mode), contextual to the current
+         * status. Each button hits SUST_SL_SettlementAction, which performs the
+         * same edit-and-save a user would — guards and bill-creating UEs all
+         * still fire — then redirects back here.
+         */
+        function renderStatusButtons(form, rec, statusText) {
+            try {
+                if (!rec.id) return;
+                const base = '/app/site/hosting/scriptlet.nl?script=customscript_sust_sl_settle_action'
+                    + '&deploy=customdeploy_sust_sl_settle_action&settle=' + rec.id + '&action=';
+                const priceFixed = rec.getValue({ fieldId: 'custrecord_sust_settlement_price_fixed' });
+                const isFixed = (priceFixed === true || priceFixed === 'T');
+
+                const btn = function(action, label, bg, confirmMsg) {
+                    return '<a href="' + base + action + '"'
+                        + (confirmMsg ? ' onclick="return confirm(\'' + confirmMsg + '\');"' : '')
+                        + ' style="display:inline-block;padding:8px 16px;margin-right:8px;background:' + bg
+                        + ';color:#fff;text-decoration:none;border-radius:4px;font-weight:600;font-size:13px;">'
+                        + label + '</a>';
+                };
+
+                let buttons = '';
+                if (statusText === 'Draft') {
+                    buttons += btn('approve', '&#10004; Approve &amp; Complete', '#059669',
+                        'Approve this settlement and mark it Completed?');
+                } else if (statusText === 'Completed' || statusText === 'Provisional Paid') {
+                    if (statusText === 'Completed') {
+                        buttons += btn('provisional', '&#128181; Mark Provisional Paid', '#0284c7',
+                            'Mark Provisional Paid? A provisional vendor bill will be created.');
+                    }
+                    if (!isFixed) {
+                        buttons += btn('fixprice', '&#128274; Mark Price Fixed', '#7c3aed');
+                    }
+                    buttons += btn('finalize', '&#129534; Final Settle &rarr; Create AP Bill', '#b45309',
+                        'Final Settle now? The final vendor bill for the balance due will be created.');
+                }
+                if (!buttons) return;
+
+                const hint = (statusText === 'Completed' || statusText === 'Provisional Paid') && !isFixed
+                    ? '<span style="margin-left:10px;color:#92400e;font-size:11px;">Final Settle is blocked until Price Fixed — that guard still applies.</span>'
+                    : '';
+
+                const fld = form.addField({
+                    id: 'custpage_sust_status_actions',
+                    type: serverWidget.FieldType.INLINEHTML,
+                    label: ' '
+                });
+                fld.defaultValue =
+                    '<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;'
+                    + 'padding:10px 14px;margin:8px 0;font-family:Arial,sans-serif;font-size:13px;">'
+                    + '<span style="font-weight:bold;margin-right:12px;">Lifecycle:</span>'
+                    + buttons + hint
+                    + '</div>';
+            } catch (e) {
+                log.debug('renderStatusButtons skipped', e.message);
+            }
+        }
+
         /**
          * Aggregated-settlement panel: when this settlement carries a period key
          * (Weekly/Monthly cadence), show WHICH receipt slices make it up — IR
