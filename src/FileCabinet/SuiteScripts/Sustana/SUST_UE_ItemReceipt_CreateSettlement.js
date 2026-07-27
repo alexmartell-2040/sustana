@@ -141,7 +141,9 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_SettlementCrea
                     if (itemRecovery) recoveryPct = parseFloat(itemRecovery) || 100;
                     const lotInternalId = settlementLib.resolveLotInternalId(firstLot.lotNumber);
 
-                    settlementLib.createLineSettlement({
+                    // Cadence-aware: Per-Receipt vendors get a settlement per line;
+                    // Weekly/Monthly vendors roll into one draft settlement per period.
+                    const result = settlementLib.createOrAppendLineSettlement({
                         vendorId: vendorId,
                         tranDate: tranDate,
                         poId: poId,
@@ -154,7 +156,11 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_SettlementCrea
                         lotDetails: lineInfo.lotDetails,
                         sourceTag: `Item Receipt #${itemReceiptId} line ${i + 1}`
                     });
-                    created++;
+                    if (result.action !== 'skipped') created++;
+                    if (result.periodKey) {
+                        log.audit('Aggregated Settlement',
+                            `IR ${itemReceiptId} line ${i + 1} ${result.action} on ${result.cadence} settlement ${result.id} (period ${result.periodKey})`);
+                    }
                 }
 
                 log.audit('IR Settlement Auto-Create Complete',

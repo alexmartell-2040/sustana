@@ -408,6 +408,36 @@
       <showinlist>F</showinlist>
       <storevalue>T</storevalue>
     </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settle_period_key">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>Aggregation period key when the vendor settles Weekly/Monthly (e.g. 2026-W30 or 2026-07). Blank for per-receipt settlements.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXT</fieldtype>
+      <help>System-managed. Weekly/Monthly-cadence vendors get one draft settlement per period; this key identifies the period. Receipt lines in the same period append to this settlement instead of creating new ones.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Settlement Period</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>T</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
+    <customrecordcustomfield scriptid="custrecord_sust_settle_agg_sources">
+      <accesslevel>2</accesslevel>
+      <applyformatting>F</applyformatting>
+      <defaultchecked>F</defaultchecked>
+      <description>JSON array of source line keys (ir:&lt;id&gt;:&lt;line&gt;) already aggregated into this period settlement. Used for dedup on re-save.</description>
+      <displaytype>NORMAL</displaytype>
+      <fieldtype>TEXTAREA</fieldtype>
+      <help>System-managed. Tracks which Item Receipt lines have been rolled into this aggregated settlement so a re-saved receipt never double-counts.</help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>Aggregated Source Lines</label>
+      <searchlevel>2</searchlevel>
+      <showinlist>F</showinlist>
+      <storevalue>T</storevalue>
+    </customrecordcustomfield>
     <customrecordcustomfield scriptid="custrecord_sust_settlement_processing">
       <accesslevel>2</accesslevel>
       <applyformatting>T</applyformatting>

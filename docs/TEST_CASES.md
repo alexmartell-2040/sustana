@@ -98,10 +98,34 @@ effect is the failure signal, not an on-screen error.
 
 | | |
 |---|---|
-| **Preconditions** | Seeded on-hand lots WL-SEED-001, MP-SEED-001, SOP-SEED-001. |
-| **Steps** | 1. Open **SUST - Processing Entry**. 2. Input (tons): 55 total across the seeded input lot(s). 3. Outputs: SOP 50 tons + Mill Residuals 3 tons. 4. Confirm the Yield/Loss banner. 5. Set Status Completed → Save. 6. Try to save with total output > input. |
-| **Expected** | (4) banner: 53 out / 55 in, loss 2.00 tons, yield ≈ 96.4% (amber/green per threshold). (5) **Inventory Adjustment** posts (no WO/BOM), input consumed, output lots created (status **Yard**), **weight-mode cost allocation** across outputs, genealogy rows (Grade Transformation) link outputs to inputs. (6) blocked client-side. |
-| **Notes** | If the sublist "Add" hangs the browser in the shared demo account, open a fresh tab (environmental). For deferred pricing, leave Total Input Cost $0 → record goes **Awaiting Cost**, IA deferred (see TC-COSTFLOW). |
+| **Preconditions** | Seeded on-hand lots WL-SEED-001 (60,000 lbs = 30 tons), MP-SEED-001, SOP-SEED-001; seeded output templates. |
+| **Expected** | On the Yield banner: outputs 28.5 + 0.9 = 29.4 tons out of 30 in, loss 0.6 tons, yield 98% (green). On Completed save: **Inventory Adjustment** posts (no WO/BOM), WL-SEED-001 consumed 30 tons, output lots `PROC-<num>-OUT1/-OUT2` created (status **Yard**), cost allocated across outputs (Byproduct mode: SOP absorbs, Residuals at NRV), genealogy rows (Grade Transformation) link outputs to input. Over-output save is blocked client-side. |
+| **Notes** | Calculations are **not real-time**: the yield/mass-balance banner and per-line costs are computed by the Derived Fields UE **after save**; the Inventory Adjustment fires when Status reaches **Completed**. If the sublist "Add" hangs the browser in the shared demo account, open a fresh tab (environmental). For deferred pricing, set Total Input Cost $0 → record goes **Awaiting Cost**, IA deferred (see TC-COSTFLOW). |
+
+**Field-by-field entry** (open **SUST - Processing Entry**; anything not listed: leave as-is):
+
+| Field | Enter | Why |
+|---|---|---|
+| Processing Number | *(leave)* — shows "(Auto-generated on save)" | Auto `PROC-YYMMDD-NNN`. |
+| Processing Date | *(leave)* — defaults to today | Mandatory, pre-filled. |
+| Status | **Draft** first save; edit → **Completed** to post | Completed triggers the Inventory Adjustment UE. |
+| Processing Type | **Sorting** | Any value works; Sorting matches the demo story. |
+| Operator | *(optional)* any employee | Display only. |
+| Location | **Cincinnati** | Seeded US location holding the lots. |
+| Source Transaction | *(leave blank)* | Optional back-link; only needed when launched from an IR scrap line (then it pre-fills). |
+| Source Type | **Receiver — Raw Recovered Paper** | Drives downstream behavior; this is the standard receiving-side flow. |
+| Equipment | **Sorting Line** | Display/reporting only. |
+| Input Item | **White Ledger** | Seeded scrap item with 60,000 lbs on hand. |
+| Input Lot | **WL-SEED-001** | The seeded lot for White Ledger. |
+| Input Weight (tons) | **30** | Full seeded lot (60,000 lbs). Must not exceed lot on-hand. |
+| Gross Input / Tare Estimate / Tare Actual (tons) | *(leave blank)* | Optional scale reconciliation fields — not needed when Input Weight is keyed directly. |
+| Total Input Cost ($) | **9000** | 60,000 lbs × $0.15 seeded unit cost. Enter **0** instead to demo the deferred-pricing / Awaiting Cost path (TC-COSTFLOW). |
+| Allocation Mode | **Byproduct (GAAP)** — the default | Primary output absorbs cost, byproducts at NRV. |
+| Output lines | Click **Load Default Outputs** | Template for White Ledger auto-adds: **SOP 95%** (28.5 tons, type Fiber) + **Mill Residuals 3%** (0.9 tons, type Residual). No manual line entry needed. |
+| Output Lot (per line) | *(leave blank)* | Auto-numbered `PROC-<num>-OUTn` on completion. |
+| Processing Notes | *(optional)* e.g. "Demo run 9:15" | Free text. |
+
+Negative check: change the SOP output line to **31** tons (output > input) and try to save → blocked client-side.
 
 ---
 
@@ -129,9 +153,23 @@ effect is the failure signal, not an on-screen error.
 
 | | |
 |---|---|
-| **Preconditions** | Vendor exists; config fee item/expense account set. |
-| **Steps** | 1. Open **SUST - Settlement Calculator**. 2. Vendor, Agreed Weight 20,000 lbs, Agreed $/lb 0.08. 3. Check "Mark as Final Settled now?" → Create. |
-| **Expected** | `total = 20000 × 0.08 = $1,600`; settlement mode **Calculator**, method Fixed Price, status Final Settled; final **Vendor Bill** created via StatusChange. |
+| **Preconditions** | Vendor exists (seeded **Fox Valley Recycling**); config fee item/expense account set (seeder does this). |
+| **Expected** | Total auto-computes `20,000 × 0.08 = $1,600`; settlement saves with mode **Calculator** (pink banner), method Fixed Price, status Final Settled; final **Vendor Bill** auto-created by the StatusChange UE. |
+| **When to use** | The calculator is the *handshake* path — a price agreed on the spot with no schedule, no receipt, no quality data. Use it when a driver and yard manager settle on a number at the gate. Everything else (receipt-driven, schedule-priced, penalty-bearing) flows through the normal settlement records, not this page. |
+
+**Field-by-field entry** (open **SUST - Settlement Calculator**):
+
+| Field | Enter | Why |
+|---|---|---|
+| Vendor | **Fox Valley Recycling** | Mandatory. Any vendor works; this one is seeded. |
+| Settlement Date | *(leave)* — defaults to today | Mandatory, pre-filled. |
+| Agreed Weight (lbs) | **20000** | The handshake weight. Pounds, not tons. |
+| Agreed $/lb | **0.08** | The handshake price. Total = weight × price, computed for you. |
+| Total Settlement Value ($) | *(leave)* | Display of the computed total; only override for a lump-sum deal. |
+| Settlement Notes / Context | e.g. "Gate deal — mixed load, agreed with driver" | Recommended: this is the only audit trail of *why* the price was agreed. |
+| Mark as Final Settled now? | **Check** to demo the full flow | Checked → status Final Settled and the final Vendor Bill is created immediately. Unchecked → stays Draft for later review. |
+
+Click **Create Calculator Settlement** → you land on the new settlement record.
 
 ---
 

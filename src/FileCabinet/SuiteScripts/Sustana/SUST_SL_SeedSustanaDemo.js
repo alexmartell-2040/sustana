@@ -711,6 +711,25 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 recordType: 'customer', label: 'Customer',
                 name: CUSTOMER.name, extid: CUSTOMER.extid, subId: ctx.usSubId
             }, section) || ctx.customerId;
+
+            // Settlement cadence: make the demo vendor Weekly so receipts in the
+            // same ISO week roll into one aggregated draft settlement.
+            if (ctx.vendorId) {
+                try {
+                    const v = record.load({ type: 'vendor', id: ctx.vendorId });
+                    const current = v.getText({ fieldId: 'custentity_sust_settlement_cadence' }) || '';
+                    if (!current) {
+                        v.setText({ fieldId: 'custentity_sust_settlement_cadence', text: 'Weekly' });
+                        v.save({ ignoreMandatoryFields: true });
+                        addRow(section, 'created', 'Vendor ' + VENDOR.name + ' settlement cadence -> Weekly', 'vendor', ctx.vendorId);
+                    } else {
+                        addRow(section, 'exists', 'Vendor ' + VENDOR.name + ' settlement cadence already ' + current, 'vendor', ctx.vendorId);
+                    }
+                } catch (eCad) {
+                    addRow(section, 'error', 'Vendor cadence: ' + eCad.message);
+                    log.error('seedEntities cadence', eCad.message);
+                }
+            }
         }
 
         function ensureEntity(spec, section) {

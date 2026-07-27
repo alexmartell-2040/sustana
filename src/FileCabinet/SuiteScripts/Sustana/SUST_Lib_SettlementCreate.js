@@ -202,6 +202,187 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
         }
 
         /**
+         * Schedule-driven line value. Pure math shared by create + period-append.
+         * @returns {Object} { netValue, marketPrice: number|null, marketRefId: number|null }
+         */
+        function computeScheduleValue(scheduleInfo, netWeight, recoveryPct) {
+            const out = { netValue: 0, marketPrice: null, marketRefId: null };
+            if (!scheduleInfo) return out;
+
+            const methodText = scheduleInfo.methodText || '';
+            const isMarketBased = (methodText === '% of Index' || methodText.indexOf('Recover') !== -1) && scheduleInfo.marketRefText;
+            const isRecoveredMode = methodText.indexOf('Recover') !== -1;
+
+            if (isMarketBased) {
+                if (isNumericId(scheduleInfo.marketRefId)) out.marketRefId = parseInt(scheduleInfo.marketRefId, 10);
+                const storedPrice = marketPriceLib.getLatestPrice(scheduleInfo.marketRefText);
+                if (storedPrice && storedPrice.pricePerLb > 0) {
+                    const pct = scheduleInfo.marketPct || 100;
+                    const adj = scheduleInfo.marketAdj || 0;
+                    const effective = (storedPrice.pricePerLb * pct / 100) + adj;
+                    const recoveryFactor = (isRecoveredMode && recoveryPct > 0) ? (recoveryPct / 100) : 1;
+                    out.netValue = netWeight * effective * recoveryFactor;
+                    out.marketPrice = storedPrice.pricePerLb;
+                }
+            } else if (scheduleInfo.pricePerLb > 0) {
+                out.netValue = netWeight * scheduleInfo.pricePerLb;
+            }
+            return out;
+        }
+
+        // ── Settlement cadence (vendor-driven weekly/monthly aggregation) ──────
+
+        /**
+         * Vendor's settlement cadence text. Defaults to 'Per Receipt' when the
+         * field is empty or unreadable.
+         */
+        function getVendorCadence(vendorId) {
+            try {
+                const lk = search.lookupFields({
+                    type: 'vendor', id: vendorId,
+                    columns: ['custentity_sust_settlement_cadence']
+                });
+                const v = lk.custentity_sust_settlement_cadence;
+                if (Array.isArray(v) && v.length > 0 && v[0].text) return v[0].text;
+            } catch (e) {
+                log.debug('getVendorCadence', `Vendor ${vendorId}: ${e.message}`);
+            }
+            return 'Per Receipt';
+        }
+
+        /**
+         * Period key for a cadence + date: Monthly → '2026-07', Weekly → ISO week '2026-W30'.
+         */
+        function periodKeyFor(cadence, dateVal) {
+            const d = dateVal ? new Date(dateVal) : new Date();
+            if (cadence === 'Monthly') {
+                return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+            }
+            // ISO-8601 week number (week starts Monday; week 1 contains Jan 4)
+            const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            const day = t.getUTCDay() || 7;
+            t.setUTCDate(t.getUTCDate() + 4 - day);
+            const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+            const week = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+            return t.getUTCFullYear() + '-W' + ('0' + week).slice(-2);
+        }
+
+        /**
+         * Find the open (Draft) aggregated settlement for a vendor + period.
+         * @returns {Object|null} { id, sources: [] }
+         */
+        function findOpenPeriodSettlement(vendorId, periodKey) {
+            try {
+                const res = search.create({
+                    type: 'customrecord_sust_settlement_record',
+                    filters: [
+                        ['custrecord_sust_settlement_vendor', 'anyof', vendorId], 'AND',
+                        ['custrecord_sust_settle_period_key', 'is', periodKey], 'AND',
+                        ['isinactive', 'is', 'F']
+                    ],
+                    columns: ['internalid', 'custrecord_sust_settlement_status', 'custrecord_sust_settle_agg_sources']
+                }).run().getRange({ start: 0, end: 10 });
+                for (let i = 0; i < res.length; i++) {
+                    if ((res[i].getText({ name: 'custrecord_sust_settlement_status' }) || '') !== 'Draft') continue;
+                    let sources = [];
+                    try {
+                        sources = JSON.parse(res[i].getValue({ name: 'custrecord_sust_settle_agg_sources' }) || '[]');
+                        if (!Array.isArray(sources)) sources = [];
+                    } catch (ePar) { sources = []; }
+                    return { id: res[i].id, sources: sources };
+                }
+            } catch (e) {
+                log.error('findOpenPeriodSettlement', `Vendor ${vendorId} / ${periodKey}: ${e.message}`);
+            }
+            return null;
+        }
+
+        /**
+         * Roll one receipt line into an existing open period settlement:
+         * accumulate weights + value, track the source key, append notes.
+         */
+        function appendLineToSettlement(settlementId, params, sourceKey) {
+            const recoveryPct = (params.recoveryPct !== null && params.recoveryPct !== undefined && params.recoveryPct !== '')
+                ? parseFloat(params.recoveryPct) : 100;
+            const grossWeight = parseFloat(params.grossWeight || 0);
+            const netWeight = grossWeight * (recoveryPct / 100);
+            const scheduleInfo = params.scheduleInfo || findSettlementSchedule(params.vendorId, params.itemId);
+            const calc = computeScheduleValue(scheduleInfo, netWeight, recoveryPct);
+
+            const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settlementId });
+
+            const gross = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_gross_lbs' })) || 0) + grossWeight;
+            const net = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_lbs' })) || 0) + netWeight;
+            rec.setValue({ fieldId: 'custrecord_sust_settlement_gross_lbs', value: gross });
+            rec.setValue({ fieldId: 'custrecord_sust_settlement_net_lbs', value: net });
+            rec.setValue({ fieldId: 'custrecord_sust_settlement_recovery_pct', value: gross > 0 ? (net / gross) * 100 : 100 });
+
+            const value = (parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_value' })) || 0) + calc.netValue;
+            rec.setValue({ fieldId: 'custrecord_sust_settlement_net_value', value: value });
+            if (calc.marketPrice !== null && !rec.getValue({ fieldId: 'custrecord_sust_settlement_market_price' })) {
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_market_price', value: calc.marketPrice });
+            }
+
+            let sources = [];
+            try {
+                sources = JSON.parse(rec.getValue({ fieldId: 'custrecord_sust_settle_agg_sources' }) || '[]');
+                if (!Array.isArray(sources)) sources = [];
+            } catch (ePar) { sources = []; }
+            sources.push(sourceKey);
+            rec.setValue({ fieldId: 'custrecord_sust_settle_agg_sources', value: JSON.stringify(sources) });
+
+            const lotNumbers = (params.lotDetails || []).map(function(d) { return d.lotNumber; }).filter(Boolean);
+            const addNote = '+ ' + (params.sourceTag || sourceKey) + ': ' + grossWeight + ' lbs gross'
+                + (lotNumbers.length ? ' (lots ' + lotNumbers.join(', ') + ')' : '');
+            const notes = (rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '') + '\n' + addNote;
+            rec.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes.substring(0, 3900) });
+
+            rec.save();
+            log.audit('Settlement Line Appended',
+                `Settlement ${settlementId} += ${grossWeight} lbs from ${params.sourceTag || sourceKey} | new gross ${gross} lbs | new value $${value.toFixed(2)}`);
+            return settlementId;
+        }
+
+        /**
+         * Cadence-aware entry point. Per-Receipt vendors get one settlement per
+         * line (existing behavior); Weekly/Monthly vendors get one draft
+         * settlement per period that receipt lines append into.
+         * @returns {Object} { id, action: 'created'|'appended'|'skipped', cadence, periodKey }
+         */
+        function createOrAppendLineSettlement(params) {
+            const cadence = getVendorCadence(params.vendorId);
+            if (cadence !== 'Weekly' && cadence !== 'Monthly') {
+                return { id: createLineSettlement(params), action: 'created', cadence: cadence, periodKey: null };
+            }
+
+            const periodKey = periodKeyFor(cadence, params.tranDate);
+            const sourceKey = 'ir:' + (params.itemReceiptId || ('po' + params.poId)) + ':' + params.sourceLine;
+
+            const open = findOpenPeriodSettlement(params.vendorId, periodKey);
+            if (open) {
+                if (open.sources.indexOf(sourceKey) !== -1) {
+                    log.debug('Aggregated Line Exists', `${sourceKey} already in settlement ${open.id}`);
+                    return { id: open.id, action: 'skipped', cadence: cadence, periodKey: periodKey };
+                }
+                appendLineToSettlement(open.id, params, sourceKey);
+                return { id: open.id, action: 'appended', cadence: cadence, periodKey: periodKey };
+            }
+
+            // First line of the period — create, then stamp the period identity.
+            const id = createLineSettlement(params);
+            record.submitFields({
+                type: 'customrecord_sust_settlement_record', id: id,
+                values: {
+                    custrecord_sust_settle_period_key: periodKey,
+                    custrecord_sust_settle_agg_sources: JSON.stringify([sourceKey])
+                }
+            });
+            log.audit('Period Settlement Opened',
+                `Settlement ${id} opens ${cadence} period ${periodKey} for vendor ${params.vendorId}`);
+            return { id: id, action: 'created', cadence: cadence, periodKey: periodKey };
+        }
+
+        /**
          * Create a line-scoped settlement record.
          *
          * @param {Object} params
@@ -274,33 +455,17 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             settlement.setValue({ fieldId: 'custrecord_sust_settlement_recovery_pct', value: recoveryPct });
 
             // Initial net value (schedule-driven; mirrors v2 logic)
-            let netSettlementValue = 0;
-            if (scheduleInfo) {
-                const methodText = scheduleInfo.methodText || '';
-                const isMarketBased = (methodText === '% of Index' || methodText.indexOf('Recover') !== -1) && scheduleInfo.marketRefText;
-                const isRecoveredMode = methodText.indexOf('Recover') !== -1;
-
-                if (isMarketBased) {
-                    const storedPrice = marketPriceLib.getLatestPrice(scheduleInfo.marketRefText);
-                    if (storedPrice && storedPrice.pricePerLb > 0) {
-                        const pct = scheduleInfo.marketPct || 100;
-                        const adj = scheduleInfo.marketAdj || 0;
-                        const effective = (storedPrice.pricePerLb * pct / 100) + adj;
-                        const recoveryFactor = (isRecoveredMode && recoveryPct > 0) ? (recoveryPct / 100) : 1;
-                        netSettlementValue = netWeight * effective * recoveryFactor;
-                        settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_price', value: storedPrice.pricePerLb });
-                        if (isNumericId(scheduleInfo.marketRefId)) settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_source', value: parseInt(scheduleInfo.marketRefId, 10) });
-                    } else {
-                        if (isNumericId(scheduleInfo.marketRefId)) settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_source', value: parseInt(scheduleInfo.marketRefId, 10) });
-                    }
-                } else if (scheduleInfo.pricePerLb > 0) {
-                    netSettlementValue = netWeight * scheduleInfo.pricePerLb;
-                }
-
-                if (scheduleInfo.treatmentCharge > 0) {
-                    settlement.setValue({ fieldId: 'custrecord_sust_settlement_treatment', value: scheduleInfo.treatmentCharge });
-                }
+            const calc = computeScheduleValue(scheduleInfo, netWeight, recoveryPct);
+            if (calc.marketPrice !== null) {
+                settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_price', value: calc.marketPrice });
             }
+            if (calc.marketRefId !== null) {
+                settlement.setValue({ fieldId: 'custrecord_sust_settlement_market_source', value: calc.marketRefId });
+            }
+            if (scheduleInfo && scheduleInfo.treatmentCharge > 0) {
+                settlement.setValue({ fieldId: 'custrecord_sust_settlement_treatment', value: scheduleInfo.treatmentCharge });
+            }
+            const netSettlementValue = calc.netValue;
             settlement.setValue({ fieldId: 'custrecord_sust_settlement_net_value', value: netSettlementValue });
 
             // Line-level source FKs (v2.3)
@@ -335,7 +500,11 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             resolveLotInternalId: resolveLotInternalId,
             findSettlementSchedule: findSettlementSchedule,
             findExistingLineSettlement: findExistingLineSettlement,
-            createLineSettlement: createLineSettlement
+            createLineSettlement: createLineSettlement,
+            getVendorCadence: getVendorCadence,
+            periodKeyFor: periodKeyFor,
+            findOpenPeriodSettlement: findOpenPeriodSettlement,
+            createOrAppendLineSettlement: createOrAppendLineSettlement
         };
 
     });

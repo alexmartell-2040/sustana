@@ -1,0 +1,21 @@
+<customlist scriptid="customlist_sust_settle_cadence">
+  <description>How often supplier settlements are cut for a vendor: one per receipt line (default), or aggregated into a single draft settlement per week / per month.</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Settlement Cadence</name>
+  <customvalues>
+    <customvalue scriptid="val_cadence_per_receipt">
+      <isinactive>F</isinactive>
+      <value>Per Receipt</value>
+    </customvalue>
+    <customvalue scriptid="val_cadence_weekly">
+      <isinactive>F</isinactive>
+      <value>Weekly</value>
+    </customvalue>
+    <customvalue scriptid="val_cadence_monthly">
+      <isinactive>F</isinactive>
+      <value>Monthly</value>
+    </customvalue>
+  </customvalues>
+</customlist>

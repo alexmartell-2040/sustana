@@ -159,3 +159,113 @@ describe('createLineSettlement - defensive SELECT writes (INVALID_NUMBER fix)', 
         expect(savedValues(id).custrecord_sust_settlement_mode_text).toBe('Calculator');
     });
 });
+
+// ---------------------------------------------------------------
+// Settlement cadence — vendor-driven weekly/monthly aggregation
+// ---------------------------------------------------------------
+
+describe('settlement cadence - period keys', () => {
+    test('Monthly key is YYYY-MM', () => {
+        expect(lib.periodKeyFor('Monthly', new Date('2026-07-22T12:00:00Z'))).toBe('2026-07');
+    });
+
+    test('Weekly key is the ISO week', () => {
+        // Wed 2026-07-22 falls in ISO week 30 of 2026
+        expect(lib.periodKeyFor('Weekly', new Date('2026-07-22T12:00:00Z'))).toBe('2026-W30');
+    });
+
+    test('Weekly key handles the year boundary (ISO week belongs to next year)', () => {
+        // Mon 2024-12-30 is ISO 2025-W01
+        expect(lib.periodKeyFor('Weekly', new Date('2024-12-30T12:00:00Z'))).toBe('2025-W01');
+    });
+});
+
+describe('settlement cadence - createOrAppendLineSettlement', () => {
+    test('vendor without a cadence gets a per-receipt settlement (default path)', () => {
+        const result = lib.createOrAppendLineSettlement(baseParams());
+        expect(result.action).toBe('created');
+        expect(result.periodKey).toBeNull();
+        expect(savedValues(result.id).custrecord_sust_settlement_gross_lbs).toBe(40000);
+    });
+
+    test('Weekly vendor with no open period settlement creates one and stamps the period', () => {
+        search._setLookupResult('vendor', 50, {
+            custentity_sust_settlement_cadence: [{ value: '2', text: 'Weekly' }]
+        });
+        const result = lib.createOrAppendLineSettlement(baseParams());
+        expect(result.action).toBe('created');
+        expect(result.periodKey).toBe('2026-W27'); // Wed 2026-07-01 is ISO week 27
+        const vals = savedValues(result.id);
+        expect(vals.custrecord_sust_settle_period_key).toBe('2026-W27');
+        expect(JSON.parse(vals.custrecord_sust_settle_agg_sources)).toEqual(['ir:300:1']);
+    });
+
+    test('Weekly vendor with an open Draft period settlement appends weights and tracks the source', () => {
+        search._setLookupResult('vendor', 50, {
+            custentity_sust_settlement_cadence: [{ value: '2', text: 'Weekly' }]
+        });
+        // Existing open settlement for the period, already holding line ir:300:1
+        record._setMockRecord('customrecord_sust_settlement_record', 900, {
+            custrecord_sust_settlement_gross_lbs: 10000,
+            custrecord_sust_settlement_net_lbs: 9500,
+            custrecord_sust_settlement_net_value: 500,
+            custrecord_sust_settle_period_key: '2026-W27',
+            custrecord_sust_settle_agg_sources: JSON.stringify(['ir:300:1']),
+            custrecord_sust_settlement_notes: 'Auto-generated from Item Receipt #300 line 1'
+        });
+        search._setSearchResults('customrecord_sust_settlement_record', [{
+            id: 900,
+            values: {
+                custrecord_sust_settlement_status_text: 'Draft',
+                custrecord_sust_settle_agg_sources: JSON.stringify(['ir:300:1'])
+            }
+        }]);
+
+        const result = lib.createOrAppendLineSettlement(baseParams({ sourceLine: 2, grossWeight: 20000, sourceTag: 'Item Receipt #300 line 2' }));
+        expect(result.action).toBe('appended');
+        expect(result.id).toBe(900);
+        const vals = savedValues(900);
+        expect(vals.custrecord_sust_settlement_gross_lbs).toBe(30000);      // 10000 + 20000
+        expect(vals.custrecord_sust_settlement_net_lbs).toBe(9500 + 19000); // 95% recovery
+        expect(JSON.parse(vals.custrecord_sust_settle_agg_sources)).toEqual(['ir:300:1', 'ir:300:2']);
+        expect(vals.custrecord_sust_settlement_notes).toContain('line 2');
+    });
+
+    test('re-saved receipt line already in the period settlement is skipped, not double-counted', () => {
+        search._setLookupResult('vendor', 50, {
+            custentity_sust_settlement_cadence: [{ value: '3', text: 'Monthly' }]
+        });
+        record._setMockRecord('customrecord_sust_settlement_record', 901, {
+            custrecord_sust_settlement_gross_lbs: 40000,
+            custrecord_sust_settle_agg_sources: JSON.stringify(['ir:300:1'])
+        });
+        search._setSearchResults('customrecord_sust_settlement_record', [{
+            id: 901,
+            values: {
+                custrecord_sust_settlement_status_text: 'Draft',
+                custrecord_sust_settle_agg_sources: JSON.stringify(['ir:300:1'])
+            }
+        }]);
+
+        const result = lib.createOrAppendLineSettlement(baseParams());
+        expect(result.action).toBe('skipped');
+        expect(savedValues(901).custrecord_sust_settlement_gross_lbs).toBe(40000); // unchanged
+    });
+
+    test('a non-Draft settlement in the period does not absorb new lines (a fresh one opens)', () => {
+        search._setLookupResult('vendor', 50, {
+            custentity_sust_settlement_cadence: [{ value: '2', text: 'Weekly' }]
+        });
+        search._setSearchResults('customrecord_sust_settlement_record', [{
+            id: 902,
+            values: {
+                custrecord_sust_settlement_status_text: 'Final Settled',
+                custrecord_sust_settle_agg_sources: JSON.stringify(['ir:299:1'])
+            }
+        }]);
+
+        const result = lib.createOrAppendLineSettlement(baseParams());
+        expect(result.action).toBe('created');
+        expect(result.id).not.toBe(902);
+    });
+});

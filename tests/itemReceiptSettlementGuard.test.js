@@ -25,7 +25,8 @@ const settlementLibMock = {
     }),
     findExistingLineSettlement: jest.fn(() => null),
     resolveLotInternalId: jest.fn(() => 111),
-    createLineSettlement: jest.fn(() => 999)
+    createLineSettlement: jest.fn(() => 999),
+    createOrAppendLineSettlement: jest.fn(() => ({ id: 999, action: 'created', cadence: 'Per Receipt', periodKey: null }))
 };
 
 let ue;
@@ -89,6 +90,7 @@ beforeEach(() => {
     record._reset();
     search._reset();
     settlementLibMock.createLineSettlement.mockClear();
+    settlementLibMock.createOrAppendLineSettlement.mockClear();
     settlementLibMock.findExistingLineSettlement.mockClear();
     record.load = jest.fn(() => buildIR());
 });
@@ -106,7 +108,7 @@ describe('SUST_UE_ItemReceipt_CreateSettlement - PO-level guard', () => {
 
         run();
 
-        expect(settlementLibMock.createLineSettlement).toHaveBeenCalledTimes(1);
+        expect(settlementLibMock.createOrAppendLineSettlement).toHaveBeenCalledTimes(1);
     });
 
     test('IR auto-create is skipped when the PO carries a pre-receipt (settle-before-receipt) settlement', () => {
@@ -114,7 +116,7 @@ describe('SUST_UE_ItemReceipt_CreateSettlement - PO-level guard', () => {
 
         run();
 
-        expect(settlementLibMock.createLineSettlement).not.toHaveBeenCalled();
+        expect(settlementLibMock.createOrAppendLineSettlement).not.toHaveBeenCalled();
     });
 
     test('first receipt on a clean PO creates a settlement', () => {
@@ -122,8 +124,8 @@ describe('SUST_UE_ItemReceipt_CreateSettlement - PO-level guard', () => {
 
         run();
 
-        expect(settlementLibMock.createLineSettlement).toHaveBeenCalledTimes(1);
-        const args = settlementLibMock.createLineSettlement.mock.calls[0][0];
+        expect(settlementLibMock.createOrAppendLineSettlement).toHaveBeenCalledTimes(1);
+        const args = settlementLibMock.createOrAppendLineSettlement.mock.calls[0][0];
         expect(args.itemReceiptId).toBe(IR_ID);
         expect(args.poId).toBe(PO_ID);
         expect(args.sourceLine).toBe(1);

@@ -274,9 +274,16 @@ Status filter + "Filter". Reviews sublist: Run Date, Lot, Item, Qty (lbs+tons), 
 **Purpose:** Recovered-fiber position by grade, in tons: expected inbound (open PO,
 un-received) + on-hand inventory.
 
-**Displayed:** blue banner; tiles Expected Inbound / On Hand / Total Position (tons) +
-counts. Two tables — *Expected Inbound* (PO #, Vendor, Order Date, Grade, Open Lbs, Open Tons
-+ subtotal) and *On-Hand Inventory* (Grade, On-Hand Lbs, On-Hand Tons + subtotal).
+**Displayed:** blue banner; "Data as of <UTC timestamp>" strip with a Refresh link
+(everything computes live on page load — no cache); tiles Expected Inbound / On Hand /
+Total Position (tons) + **Lot Exceptions** (red when > 0). **Yard operational view**:
+*Tons by Site & Status* matrix (rows = locations, columns = Received / Yard / Processing
+Queue / Staged) and *Yard Lots* detail (Lot #, Site, Grade + material category, status
+badge, Tons, Quality M%/C%, Exception badges, Action column saying what to do). Exception
+rules: Moisture > 12%, Contamination > 5%, Ungraded > 2 days in Received, Aging > 14 days
+in Yard/Processing Queue. Exception lots sort first and link to the lot record. Then the
+two position tables — *Expected Inbound* (PO #, Vendor, Order Date, Grade, Open Lbs, Open
+Tons + subtotal) and *On-Hand Inventory* (Grade, On-Hand Lbs, On-Hand Tons + subtotal).
 **Read-only.**
 
 **Inputs:** optional `?sub=<id>` (else script param → config usSubsidiary → unfiltered).
@@ -375,6 +382,12 @@ Scripts: `SUST_UE_ItemReceipt_Buttons`, `SUST_UE_ItemReceipt_LandedCost`,
 - **afterSubmit (CreateSettlement):** for each **scrap** line whose pricing timing is NOT
   "After Processing", create a line-scoped **Settlement (Draft)**. Recovery-priced lines are
   deferred to the button. Dedups per line; skips if PO already has settlements.
+  **Settlement cadence:** the vendor's Settlement Cadence field (Per Receipt / Weekly /
+  Monthly; list `customlist_sust_settle_cadence`) drives aggregation — Weekly/Monthly
+  vendors get ONE open Draft settlement per period (`custrecord_sust_settle_period_key`,
+  e.g. `2026-W30` / `2026-07`); receipt lines in the same period append weights/value to it
+  (source keys tracked in `custrecord_sust_settle_agg_sources` so a re-save never
+  double-counts). The seeder sets Fox Valley Recycling to Weekly.
 - **afterSubmit (BridgeVendorLot):** copy line vendor lot # to the lot record; set new lots'
   status = 'Received'.
 

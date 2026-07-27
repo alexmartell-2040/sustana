@@ -36,6 +36,19 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
         const BRAND = '#2976F3';      // company brand blue
         const BRAND_DARK = '#1F5FCC';
 
+        // Yard exception thresholds. Mirror the seeded settlement-penalty
+        // definitions (moisture/contamination breach points) and the yard
+        // aging expectations from the demo script.
+        const EXC = Object.freeze({
+            MOISTURE_PCT: 12,      // > this % = quality risk
+            CONTAMINATION_PCT: 5,  // > this % = quality risk
+            UNGRADED_DAYS: 2,      // still 'Received' (no quality) after N days
+            AGING_DAYS: 14         // sitting in Yard/Processing Queue > N days
+        });
+
+        // Yard statuses shown in the operational view (Shipped/Depleted excluded).
+        const YARD_STATUSES = ['Received', 'Yard', 'Processing Queue', 'Staged'];
+
         function onRequest(context) {
             try {
                 if (context.request.method === 'GET') {
@@ -66,6 +79,9 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
             const po = getOpenPoLines(sub.id, itemMap);   // { rows, mode }
             const onHand = buildOnHandLeg(itemMap);           // [ rows ]
 
+            // 2b. Yard operational view — lots on hand by site/status.
+            const yard = buildYardLots(itemMap);              // { rows, error }
+
             // 3. Totals (lbs — converted to tons at display time only).
             let openLbs = 0;
             po.rows.forEach(function(r) { openLbs += r.openLbs; });
@@ -77,13 +93,17 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
             const form = serverWidget.createForm({ title: 'Sustana Recovery — Fiber Position Report' });
 
             addInline(form, 'custpage_banner', banner());
+            addInline(form, 'custpage_asof', renderAsOf());
             addInline(form, 'custpage_tiles', renderTiles({
                 openLbs: openLbs,
                 onHandLbs: onHandLbs,
                 totalLbs: totalLbs,
                 poCount: po.rows.length,
-                onHandCount: onHand.length
+                onHandCount: onHand.length,
+                exceptionCount: yard.rows.filter(function(r) { return r.exceptions.length > 0; }).length
             }));
+            addInline(form, 'custpage_yard_matrix', renderYardMatrix(yard));
+            addInline(form, 'custpage_yard_detail', renderYardDetail(yard));
             addInline(form, 'custpage_po', renderPoTable(po, openLbs));
             addInline(form, 'custpage_onhand', renderOnHandTable(onHand, onHandLbs));
             addInline(form, 'custpage_notes', notes(sub, po.mode));
@@ -113,12 +133,14 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                     columns: [
                         'itemid',
                         'displayname',
-                        'quantityonhand'
+                        'quantityonhand',
+                        'custitem_sust_material_category'
                     ]
                 }).run().each(function(r) {
                     map[r.id] = {
                         name: r.getValue({ name: 'itemid' }) || r.getValue({ name: 'displayname' }) || ('Item ' + r.id),
-                        onHand: parseFloat(r.getValue({ name: 'quantityonhand' })) || 0
+                        onHand: parseFloat(r.getValue({ name: 'quantityonhand' })) || 0,
+                        category: r.getText({ name: 'custitem_sust_material_category' }) || ''
                     };
                     return true;
                 });
@@ -220,6 +242,114 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
         }
 
         // ───────────────────────────────────────────────────────────────────────
+        // Data — yard operational view (lots on hand, by site/status)
+        // ───────────────────────────────────────────────────────────────────────
+
+        /**
+         * All on-hand lots with their yard status, site, and quality reads.
+         * Source: inventorynumber (lot) records — the same records the kiosk
+         * and Lot Quality Entry write to.
+         * @returns {Object} { rows: [...], error: string|null }
+         */
+        function buildYardLots(itemMap) {
+            const rows = [];
+            try {
+                search.create({
+                    type: 'inventorynumber',
+                    filters: [['quantityonhand', 'greaterthan', 0]],
+                    columns: [
+                        'inventorynumber', 'item', 'location', 'quantityonhand',
+                        'custitemnumber_sust_lot_status',
+                        'custitemnumber_sust_moisture_pct',
+                        'custitemnumber_sust_contamination_pct',
+                        'custitemnumber_sust_received_date'
+                    ]
+                }).run().each(function(r) {
+                    const status = r.getText({ name: 'custitemnumber_sust_lot_status' }) || 'Received';
+                    if (YARD_STATUSES.indexOf(status) === -1) return true; // Shipped/Depleted out of scope
+
+                    const itemId = r.getValue({ name: 'item' });
+                    const info = itemMap[itemId] || {};
+                    const row = {
+                        lotId: r.id,
+                        lotNumber: r.getValue({ name: 'inventorynumber' }) || ('Lot ' + r.id),
+                        itemName: info.name || r.getText({ name: 'item' }) || '—',
+                        category: info.category || '',
+                        site: r.getText({ name: 'location' }) || 'Unassigned',
+                        status: status,
+                        onHandLbs: Math.abs(parseFloat(r.getValue({ name: 'quantityonhand' })) || 0),
+                        moisture: numOrNull(r.getValue({ name: 'custitemnumber_sust_moisture_pct' })),
+                        contamination: numOrNull(r.getValue({ name: 'custitemnumber_sust_contamination_pct' })),
+                        receivedDate: r.getValue({ name: 'custitemnumber_sust_received_date' }) || ''
+                    };
+                    row.ageDays = ageInDays(row.receivedDate);
+                    row.exceptions = lotExceptions(row);
+                    rows.push(row);
+                    return true;
+                });
+            } catch (e) {
+                log.error('buildYardLots failed', e.message);
+                return { rows: [], error: e.message };
+            }
+            // Exceptions first, then largest tonnage.
+            rows.sort(function(a, b) {
+                if ((b.exceptions.length > 0) !== (a.exceptions.length > 0)) {
+                    return b.exceptions.length > 0 ? 1 : -1;
+                }
+                return b.onHandLbs - a.onHandLbs;
+            });
+            return { rows: rows, error: null };
+        }
+
+        /**
+         * Risk rules a yard manager can act on. Each exception carries the
+         * action to take.
+         */
+        function lotExceptions(row) {
+            const exc = [];
+            if (row.moisture !== null && row.moisture > EXC.MOISTURE_PCT) {
+                exc.push({
+                    label: 'Moisture ' + row.moisture + '% > ' + EXC.MOISTURE_PCT + '%',
+                    action: 'Settlement penalty applies — verify grading and review the supplier settlement.'
+                });
+            }
+            if (row.contamination !== null && row.contamination > EXC.CONTAMINATION_PCT) {
+                exc.push({
+                    label: 'Contamination ' + row.contamination + '% > ' + EXC.CONTAMINATION_PCT + '%',
+                    action: 'Settlement penalty applies — consider re-grade or reject-to-vendor.'
+                });
+            }
+            const ungraded = row.moisture === null && row.contamination === null;
+            if (ungraded && row.status === 'Received' && row.ageDays !== null && row.ageDays > EXC.UNGRADED_DAYS) {
+                exc.push({
+                    label: 'Ungraded ' + row.ageDays + 'd',
+                    action: 'No quality on file — capture at the kiosk (correction) or via Lot Quality Entry on the Item Receipt.'
+                });
+            }
+            if (row.ageDays !== null && row.ageDays > EXC.AGING_DAYS &&
+                (row.status === 'Yard' || row.status === 'Processing Queue')) {
+                exc.push({
+                    label: 'Aging ' + row.ageDays + 'd',
+                    action: 'Sitting in the yard beyond ' + EXC.AGING_DAYS + ' days — schedule processing or staging.'
+                });
+            }
+            return exc;
+        }
+
+        function numOrNull(v) {
+            if (v === null || v === undefined || v === '') return null;
+            const n = parseFloat(v);
+            return isNaN(n) ? null : n;
+        }
+
+        function ageInDays(dateStr) {
+            if (!dateStr) return null;
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return null;
+            return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+        }
+
+        // ───────────────────────────────────────────────────────────────────────
         // Subsidiary resolution
         // ───────────────────────────────────────────────────────────────────────
 
@@ -262,12 +392,28 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + '</div>';
         }
 
+        function renderAsOf() {
+            const now = new Date();
+            const stamp = now.toISOString().replace('T', ' ').substring(0, 16) + ' UTC';
+            return ''
+                + '<div style="font-family:Arial,sans-serif; font-size:12px; color:#475569; background:#f8fafc;'
+                + ' border:1px solid #e2e8f0; border-radius:6px; padding:8px 12px; margin:4px 0 8px;'
+                + ' display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">'
+                + '  <span><b>Data as of ' + esc(stamp) + '</b> — computed live on page load from item, open-PO, and lot searches (no cache).</span>'
+                + '  <a href="javascript:location.reload()" style="color:' + BRAND + '; font-weight:bold; text-decoration:none;">&#8635; Refresh now</a>'
+                + '</div>';
+        }
+
         function renderTiles(t) {
+            const excColors = t.exceptionCount > 0
+                ? { bg: '#fef2f2', border: '#dc2626', text: '#7f1d1d' }
+                : { bg: '#f0fdf4', border: '#16a34a', text: '#14532d' };
             return ''
                 + '<div style="display:flex; gap:12px; flex-wrap:wrap; font-family:Arial,sans-serif; font-size:13px; margin:6px 0 4px;">'
                 + tile('Expected Inbound (tons)', esc(units.formatTons(t.openLbs)), '#eaf2ff', BRAND, '#0d2a52')
                 + tile('On Hand (tons)', esc(units.formatTons(t.onHandLbs)), '#eaf2ff', BRAND, '#0d2a52')
                 + tile('Total Position (tons)', esc(units.formatTons(t.totalLbs)), BRAND, BRAND_DARK, '#ffffff', true)
+                + tile('Lot Exceptions', String(t.exceptionCount), excColors.bg, excColors.border, excColors.text)
                 + '</div>'
                 + '<div style="font-family:Arial,sans-serif; font-size:11px; color:#64748b; margin-bottom:8px;">'
                 + '  ' + t.poCount + ' open PO line(s) &middot; ' + t.onHandCount + ' on-hand grade(s). '
@@ -282,6 +428,95 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + '  <div style="font-size:11px; opacity:0.9;">' + label + '</div>'
                 + '  <div style="font-size:' + (big ? '26' : '22') + 'px; font-weight:bold; margin-top:4px;">' + value + '</div>'
                 + '</div>';
+        }
+
+        // ── Yard operational view ──────────────────────────────────────────────
+
+        function renderYardMatrix(yard) {
+            const head = sectionHead('Yard Operations — Tons by Site &amp; Status',
+                'On-hand lots only (Shipped/Depleted excluded). Source: lot records written by the scale kiosk and Lot Quality Entry.');
+            if (yard.error) return head + emptyMsg('Lot search failed: ' + yard.error);
+            if (yard.rows.length === 0) return head + emptyMsg('No on-hand lots found. Run the demo seeder or receive a scale ticket.');
+
+            // site -> status -> lbs
+            const sites = {};
+            yard.rows.forEach(function(r) {
+                sites[r.site] = sites[r.site] || {};
+                sites[r.site][r.status] = (sites[r.site][r.status] || 0) + r.onHandLbs;
+            });
+
+            const colTotals = {};
+            let grand = 0;
+            const body = Object.keys(sites).sort().map(function(site) {
+                let rowTotal = 0;
+                const cells = YARD_STATUSES.map(function(st) {
+                    const lbs = sites[site][st] || 0;
+                    rowTotal += lbs;
+                    colTotals[st] = (colTotals[st] || 0) + lbs;
+                    return tdR(lbs > 0 ? esc(units.formatTons(lbs)) : '<span style="color:#cbd5e1;">—</span>');
+                }).join('');
+                grand += rowTotal;
+                return '<tr>' + td('<b>' + esc(site) + '</b>') + cells
+                    + tdR('<b>' + esc(units.formatTons(rowTotal)) + '</b>') + '</tr>';
+            }).join('');
+
+            const foot = '<tr style="background:#eaf2ff; font-weight:bold;">'
+                + td('All Sites')
+                + YARD_STATUSES.map(function(st) { return tdR(esc(units.formatTons(colTotals[st] || 0))); }).join('')
+                + tdR(esc(units.formatTons(grand)))
+                + '</tr>';
+
+            return head + tableWrap(['Site'].concat(YARD_STATUSES).concat(['Total']), body + foot, 1);
+        }
+
+        function renderYardDetail(yard) {
+            const head = sectionHead('Yard Lots — Grade, Status &amp; Exceptions',
+                'Exception lots sort first. Click a lot to open its record; the Action column says what to do about the risk.');
+            if (yard.error || yard.rows.length === 0) return ''; // matrix section already carries the message
+
+            const body = yard.rows.map(function(r) {
+                const hasExc = r.exceptions.length > 0;
+                const excHtml = hasExc
+                    ? r.exceptions.map(function(x) { return badge(esc(x.label), '#fef2f2', '#dc2626', '#7f1d1d'); }).join(' ')
+                    : badge('OK', '#f0fdf4', '#16a34a', '#14532d');
+                const actionHtml = hasExc
+                    ? r.exceptions.map(function(x) { return esc(x.action); }).join('<br/>')
+                    : '<span style="color:#94a3b8;">—</span>';
+                const quality = (r.moisture !== null ? 'M ' + r.moisture + '%' : '')
+                    + (r.moisture !== null && r.contamination !== null ? ' / ' : '')
+                    + (r.contamination !== null ? 'C ' + r.contamination + '%' : '');
+                return '<tr' + (hasExc ? ' style="background:#fff7f7;"' : '') + '>'
+                    + td('<a href="/app/common/item/inventorynumber.nl?id=' + r.lotId + '" style="color:' + BRAND + ';">' + esc(r.lotNumber) + '</a>')
+                    + td(esc(r.site))
+                    + td(esc(r.itemName) + (r.category ? '<br/><span style="color:#94a3b8; font-size:11px;">' + esc(r.category) + '</span>' : ''))
+                    + td(statusBadge(r.status))
+                    + tdR('<b>' + esc(units.formatTons(r.onHandLbs)) + '</b>')
+                    + td(quality || '<span style="color:#94a3b8;">not graded</span>')
+                    + td(excHtml)
+                    + td('<span style="font-size:11px;">' + actionHtml + '</span>')
+                    + '</tr>';
+            }).join('');
+
+            return head + tableWrap(
+                ['Lot #', 'Site', 'Grade', 'Status', 'Tons', 'Quality', 'Exception', 'Action'],
+                body, 4);
+        }
+
+        function statusBadge(status) {
+            const colors = {
+                'Received':         { bg: '#fefce8', border: '#ca8a04', text: '#713f12' },
+                'Yard':             { bg: '#eaf2ff', border: BRAND,     text: '#0d2a52' },
+                'Processing Queue': { bg: '#faf5ff', border: '#9333ea', text: '#581c87' },
+                'Staged':           { bg: '#f0fdf4', border: '#16a34a', text: '#14532d' }
+            };
+            const c = colors[status] || { bg: '#f8fafc', border: '#94a3b8', text: '#334155' };
+            return badge(esc(status), c.bg, c.border, c.text);
+        }
+
+        function badge(html, bg, border, text) {
+            return '<span style="display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px;'
+                + ' background:' + bg + '; border:1px solid ' + border + '; color:' + text + '; white-space:nowrap;">'
+                + html + '</span>';
         }
 
         function renderPoTable(po, totalLbs) {
@@ -384,7 +619,9 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/log', './SUST_Lib_Units
                 + '<li>Position = plain fiber tonnage by grade. Each grade line\'s measure is simply its weight; tons are a display conversion (1 ton = 2,000 lbs) — stored values and math stay in pounds.</li>'
                 + '<li>Both legs are <b>long</b> (price-up = gain). The <b>sales/short leg</b> and dollar mark-to-market are later phases.</li>'
                 + '<li>Expected inbound = open PO quantity net of receipts; on-hand = item quantity on hand across locations.</li>'
-                + '<li>Subsidiary filter: ' + subNote + '. Override with <code>?sub=&lt;id&gt;</code>.</li>'
+                + '<li><b>KPI data source &amp; refresh:</b> every figure is computed live on page load — grades/on-hand from an item search, expected inbound from an open-PO search, yard view from lot (inventory number) records. Nothing is cached or scheduled; reload the page to refresh.</li>'
+                + '<li><b>Exception rules:</b> Moisture &gt; ' + EXC.MOISTURE_PCT + '% or Contamination &gt; ' + EXC.CONTAMINATION_PCT + '% (settlement-penalty breach), Ungraded after ' + EXC.UNGRADED_DAYS + ' days in Received, Aging after ' + EXC.AGING_DAYS + ' days in Yard/Processing Queue.</li>'
+                + '<li>Subsidiary filter: ' + subNote + '. Override with <code>?sub=&lt;id&gt;</code>. The yard view is location-based and unaffected by the subsidiary filter.</li>'
                 + grossNote
                 + '</ul></div>';
         }
