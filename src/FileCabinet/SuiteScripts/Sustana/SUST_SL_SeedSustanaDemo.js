@@ -117,6 +117,15 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
         ];
 
         const PO_EXTID = EXT_PREFIX + 'PO_10001';
+
+        // Additional open POs — a realistic expected-inbound book across
+        // grades and sites for the Yard Operations Dashboard.
+        const EXTRA_POS = [
+            { num: 'PO-10002', itemKey: 'MP',  qty: 30000, rate: 0.05, site: 'BUFFALO',   daysOut: 1 },
+            { num: 'PO-10003', itemKey: 'MOP', qty: 24000, rate: 0.07, site: 'SAVAGE',    daysOut: 2 },
+            { num: 'PO-10004', itemKey: 'WL',  qty: 44000, rate: 0.15, site: 'MANSFIELD', daysOut: 3 },
+            { num: 'PO-10005', itemKey: 'SOP', qty: 18000, rate: 0.09, site: 'STJOSEPH',  daysOut: 4 }
+        ];
         const IA_EXTID = EXT_PREFIX + 'IA_ONHAND';
 
         // On-hand yard lots for the processing scenario (quantities in lbs).
@@ -1065,7 +1074,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
         // ─── Group 7: open PO-10001 ───────────────────────────────────────────
 
         function seedOpenPO(ctx, out) {
-            const section = newSection(out, 'Group 7 - Open purchase order PO-10001');
+            const section = newSection(out, 'Group 7 - Open purchase orders');
+            seedExtraPOs(ctx, section);
             try {
                 const existingId = findByExternalId('purchaseorder', PO_EXTID);
                 if (existingId) {
@@ -1420,6 +1430,53 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     log.error('seedPlanning', spec.extid + ': ' + e.message);
                 }
             });
+        }
+
+        /** The additional open POs (idempotent by externalid). */
+        function seedExtraPOs(ctx, section) {
+            EXTRA_POS.forEach(function(spec) {
+                const extid = EXT_PREFIX + 'PO_' + spec.num.replace('-', '');
+                try {
+                    const existing = findByExternalId('purchaseorder', extid);
+                    if (existing) {
+                        addRow(section, 'exists', spec.num + ' already seeded', 'purchaseorder', existing);
+                        return;
+                    }
+                    const vendorId = resolveVendorId(ctx);
+                    const itemId = resolveItemId(ctx, spec.itemKey);
+                    const locId = resolveLocationId(ctx, spec.site);
+                    if (!vendorId || !itemId) {
+                        addRow(section, 'error', spec.num + ' skipped - missing vendor or item');
+                        return;
+                    }
+                    const po = record.create({ type: 'purchaseorder', isDynamic: true });
+                    po.setValue({ fieldId: 'entity', value: vendorId });
+                    try { po.setValue({ fieldId: 'subsidiary', value: ctx.usSubId }); } catch (eS) { /* vendor-sourced */ }
+                    if (locId) { try { po.setValue({ fieldId: 'location', value: locId }); } catch (eL) { /* optional */ } }
+                    const d = new Date(); d.setDate(d.getDate() + spec.daysOut);
+                    po.setValue({ fieldId: 'trandate', value: new Date() });
+                    try { po.setValue({ fieldId: 'duedate', value: d }); } catch (eD) { /* optional */ }
+                    try { po.setValue({ fieldId: 'tranid', value: spec.num }); } catch (eT) { /* numbering */ }
+                    try { po.setText({ fieldId: 'custbody_sust_pricing_timing', text: 'Determined on Arrival' }); } catch (eP) { /* optional */ }
+                    po.setValue({ fieldId: 'memo', value: 'Sustana demo - expected inbound ' + spec.itemKey + ' load at ' + spec.site });
+                    po.setValue({ fieldId: 'externalid', value: extid });
+                    po.selectNewLine({ sublistId: 'item' });
+                    po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'item', value: itemId });
+                    po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'quantity', value: spec.qty });
+                    po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'rate', value: spec.rate });
+                    if (locId) { try { po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'location', value: locId }); } catch (eLL) { /* optional */ } }
+                    po.commitLine({ sublistId: 'item' });
+                    const id = po.save({ ignoreMandatoryFields: true, enableSourcing: true });
+                    addRow(section, 'created', spec.num + ' - ' + commasNum(spec.qty) + ' lbs ' + spec.itemKey + ' @ $' + spec.rate + '/lb, ' + spec.site + ' (OPEN)', 'purchaseorder', id);
+                } catch (e) {
+                    addRow(section, 'error', spec.num + ': ' + errText(e));
+                    log.error('seedExtraPOs', spec.num + ': ' + errText(e));
+                }
+            });
+        }
+
+        function commasNum(n) {
+            return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
         function addPlanningLine(tran, itemId, locationId) {
