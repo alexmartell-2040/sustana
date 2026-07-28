@@ -265,7 +265,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/re
             }
 
             // 5. Settlement impact
-            const settleNote = repriceSettlement(lot, newItemId, newItemName, auditLine, links);
+            const settleNote = repriceSettlement(lot, newItemId, newItemName, auditLine, links, irId);
 
             const summary = ''
                 + '<p><b>' + esc(lot.itemName) + ' &rarr; ' + esc(newItemName) + '</b> — '
@@ -385,16 +385,32 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/re
          * settlements get an audit note demanding a vendor credit instead.
          * @returns {string} HTML note for the result page
          */
-        function repriceSettlement(lot, newItemId, newItemName, auditLine, links) {
+        function repriceSettlement(lot, newItemId, newItemName, auditLine, links, irId) {
             try {
-                const res = search.create({
+                const cols = ['custrecord_sust_settlement_status', 'custrecord_sust_settlement_vendor',
+                    'custrecord_sust_settlement_net_lbs', 'custrecord_sust_settlement_recovery_pct',
+                    'custrecord_sust_settlement_net_value'];
+                // Primary: settlement carrying this exact lot. Fallback: settlement
+                // anchored to the same Item Receipt (multi-lot / aggregated cases).
+                let res = search.create({
                     type: 'customrecord_sust_settlement_record',
                     filters: [['custrecord_sust_settlement_lot', 'anyof', lot.id]],
-                    columns: ['custrecord_sust_settlement_status', 'custrecord_sust_settlement_vendor',
-                        'custrecord_sust_settlement_net_lbs', 'custrecord_sust_settlement_recovery_pct',
-                        'custrecord_sust_settlement_net_value']
+                    columns: cols
                 }).run().getRange({ start: 0, end: 1 });
-                if (!res.length) return 'No supplier settlement is linked to this lot — nothing to re-price.';
+                if (!res.length && irId) {
+                    res = search.create({
+                        type: 'customrecord_sust_settlement_record',
+                        filters: [['custrecord_sust_settlement_item_receipt', 'anyof', irId]],
+                        columns: cols
+                    }).run().getRange({ start: 0, end: 1 });
+                }
+                if (!res.length) {
+                    return 'No supplier settlement exists for this lot yet (seeded material, or pricing deferred to '
+                        + 'after processing). Inventory, genealogy and audit are complete. '
+                        + '<b>When the settlement IS created later, price it on the ' + esc(newItemName)
+                        + ' schedule — the receipt line still shows the original grade by design (history preserved); '
+                        + 'the lot notes carry the regrade record.</b>';
+                }
 
                 const s = res[0];
                 const settleId = parseInt(s.id, 10);
