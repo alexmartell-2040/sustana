@@ -870,6 +870,18 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 let lastId = null;
                 idx.values.forEach(function(pricePerTon, i) {
                     const effectiveDate = new Date(INDEX_START.year, INDEX_START.month + i, 1);
+                    // Correction month guard: the last WL month is deliberately
+                    // corrected (+$6). Once that correction is active, re-seeding
+                    // the base value would "correct" it back down and ping-pong a
+                    // new correction pair on every run — skip it instead.
+                    if (idx.sourceText === 'RISI White Ledger' && i === idx.values.length - 1) {
+                        const active = marketPriceLib.getPriceForDate(idx.sourceText, effectiveDate);
+                        const correctedPerLb = (pricePerTon + 6) / 2000;
+                        if (active && Math.abs(active.pricePerLb - correctedPerLb) < 0.0000001) {
+                            okCount++;
+                            return; // correction already in place — leave the chain alone
+                        }
+                    }
                     // The lib upserts by date + source and converts $/ton → $/lb.
                     const savedId = marketPriceLib.storeIndexPrice({
                         sourceText: idx.sourceText,
