@@ -710,6 +710,32 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
                 if (inputRows.length === 0) {
                     throw new Error('Add at least one Input row on the Materials grid.');
                 }
+                // Guard: an input row must not consume more than its lot has on
+                // hand — otherwise the Inventory Adjustment fails silently in
+                // afterSubmit and the run completes with no inventory impact.
+                inputRows.forEach(function(row) {
+                    if (!row.lotId) return;
+                    try {
+                        const lotRes = search.create({
+                            type: 'inventorynumber',
+                            filters: [['internalid', 'anyof', row.lotId]],
+                            columns: ['inventorynumber', 'quantityonhand']
+                        }).run().getRange({ start: 0, end: 1 });
+                        if (!lotRes.length) return;
+                        const avail = parseFloat(lotRes[0].getValue({ name: 'quantityonhand' })) || 0;
+                        if (row.weightLbs > avail + 0.01) {
+                            throw new Error('Input lot ' + lotRes[0].getValue({ name: 'inventorynumber' })
+                                + ' only has ' + Math.round(avail).toLocaleString() + ' lbs ('
+                                + units.toTons(avail).toFixed(2) + ' tons) on hand — you entered '
+                                + Math.round(row.weightLbs).toLocaleString() + ' lbs ('
+                                + units.toTons(row.weightLbs).toFixed(2)
+                                + ' tons). Reduce the weight or pick a lot with enough material.');
+                        }
+                    } catch (eChk) {
+                        if (eChk.message && eChk.message.indexOf('only has') !== -1) throw eChk;
+                        log.debug('lot qty check skipped', eChk.message);
+                    }
+                });
                 const inputWeightLbs = inputRows.reduce(function(acc, r) { return acc + r.weightLbs; }, 0);
                 // Primary input = first input row (downstream links: settlement, flow-back, IA)
                 procRec.setValue({ fieldId: 'custrecord_sust_processing_input_item', value: inputRows[0].itemId });
