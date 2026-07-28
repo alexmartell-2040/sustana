@@ -339,6 +339,10 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/lo
             const savedTicketId = ticket.save();
 
             const links = [{ label: 'Scale Ticket ' + escapeHtml(ticketNumber), href: recordUrl(TICKET_TYPE, savedTicketId) }];
+            links.push({
+                label: '\ud83d\udda8 Print Scale Ticket (PDF)',
+                href: '/app/site/hosting/scriptlet.nl?script=customscript_sust_sl_ticket_pdf&deploy=customdeploy_sust_sl_ticket_pdf&ticket=' + savedTicketId
+            });
 
             let irId = existingIrId;
             try {
@@ -400,6 +404,12 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/lo
                         label: 'Lot ' + escapeHtml(ticketNumber) + ' quality captured (' + escapeHtml((lotWrite.applied || []).join(', ') || 'status → Yard') + ')',
                         href: '/app/common/search/searchresults.nl?searchtype=InvtNumber&IT_Number=' + encodeURIComponent(ticketNumber)
                     });
+                    if (baleInfo.note && baleInfo.note.indexOf('BALE VARIANCE') !== -1) {
+                        links.push({
+                            label: '\u26a0\ufe0f ' + escapeHtml(baleInfo.note) + ' — flagged on the lot',
+                            href: '/app/common/search/searchresults.nl?searchtype=InvtNumber&IT_Number=' + encodeURIComponent(ticketNumber)
+                        });
+                    }
                 } else if (lotWrite && !lotWrite.ok) {
                     log.error('Kiosk lot-quality write failed', ticketNumber + ': ' + lotWrite.error);
                 }
