@@ -80,11 +80,24 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
             const onHand = buildOnHandLeg(itemMap);           // [ rows ]
 
             // 2b. Yard operational view — lots on hand by site/status.
-            const yard = buildYardLots(itemMap);              // { rows, error }
+            const yardAll = buildYardLots(itemMap);           // { rows, error }
 
             // 2c. Expected outbound (open SO lines, short) + work in process.
             const so = getOpenSoLines(sub.id, itemMap);       // { rows, mode }
-            const wip = buildActiveProcessing();              // { rows, error }
+            const wipAll = buildActiveProcessing();           // { rows, error }
+
+            // Site filter (?site=<location id>) narrows the yard + WIP sections.
+            const siteFilter = String(context.request.parameters.site || '');
+            const siteOptions = collectSites(yardAll.rows, wipAll.rows);
+            const yard = siteFilter
+                ? { rows: yardAll.rows.filter(function(r) { return r.siteId === siteFilter; }), error: yardAll.error }
+                : yardAll;
+            const wip = siteFilter
+                ? { rows: wipAll.rows.filter(function(r) { return r.siteId === siteFilter; }), error: wipAll.error }
+                : wipAll;
+            const siteName = siteFilter
+                ? (siteOptions.filter(function(o) { return o.id === siteFilter; })[0] || { name: 'Site ' + siteFilter }).name
+                : null;
 
             // 3. Totals (lbs — converted to tons at display time only).
             let openLbs = 0;
@@ -97,7 +110,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
             const netLbs = totalLbs - outLbs;
 
             // 4. Build the page.
-            const form = serverWidget.createForm({ title: 'Sustana Recovery — Fiber Position Report' });
+            const form = serverWidget.createForm({ title: 'Sustana Recovery — Yard Operations Dashboard' });
 
             addInline(form, 'custpage_banner', banner());
             addInline(form, 'custpage_asof', renderAsOf());
@@ -111,6 +124,8 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                 onHandCount: onHand.length,
                 exceptionCount: yard.rows.filter(function(r) { return r.exceptions.length > 0; }).length
             }));
+            addInline(form, 'custpage_site_selector', renderSiteSelector(siteOptions, siteFilter, siteName));
+            addInline(form, 'custpage_charts', renderCharts(yard, onHand));
             addInline(form, 'custpage_yard_matrix', renderYardMatrix(yard));
             addInline(form, 'custpage_yard_detail', renderYardDetail(yard));
             addInline(form, 'custpage_wip', renderWipTable(wip));
@@ -139,7 +154,9 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                     type: 'item',
                     filters: [
                         ['type', 'anyof', 'InvtPart', 'Assembly'], 'AND',
-                        ['isinactive', 'is', 'F']
+                        ['isinactive', 'is', 'F'], 'AND',
+                        // Demo scope: only Sustana grade items (material category set)
+                        ['custitem_sust_material_category', 'noneof', '@NONE@']
                     ],
                     columns: [
                         'itemid',
@@ -336,6 +353,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                         equipment: r.getText({ name: 'custrecord_sust_proc_equipment' }) || '—',
                         operator: r.getText({ name: 'custrecord_sust_processing_operator' }) || 'Unassigned',
                         site: r.getText({ name: 'custrecord_sust_processing_location' }) || '—',
+                        siteId: String(r.getValue({ name: 'custrecord_sust_processing_location' }) || ''),
                         inputLbs: Math.abs(parseFloat(r.getValue({ name: 'custrecord_sust_processing_input_lbs' })) || 0),
                         date: r.getValue({ name: 'custrecord_sust_processing_date' }) || ''
                     });
@@ -403,6 +421,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                         itemName: info.name || r.getText({ name: 'item' }) || '—',
                         category: info.category || '',
                         site: r.getText({ name: 'location' }) || 'Unassigned',
+                        siteId: String(r.getValue({ name: 'location' }) || ''),
                         status: status,
                         onHandLbs: Math.abs(parseFloat(r.getValue({ name: 'quantityonhand' })) || 0),
                         moisture: numOrNull(r.getValue({ name: 'custitemnumber_sust_moisture_pct' })),
@@ -510,7 +529,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                 + '<div style="border:2px solid ' + BRAND + '; background:#eaf2ff; color:#0d2a52;'
                 + ' padding:14px 16px; margin:8px 0; border-radius:6px; font-family:Arial,sans-serif;">'
                 + '  <div style="font-weight:bold; font-size:15px; margin-bottom:6px; color:' + BRAND_DARK + ';">'
-                + '    Recovered Fiber Position (tons)</div>'
+                + '    Yard Operations &amp; Fiber Position (tons)</div>'
                 + '  <div style="font-size:13px; line-height:1.5;">'
                 + '    Fiber tonnage by grade: expected inbound (open purchase commitments) <b>+</b> on-hand inventory <b>&minus;</b> expected outbound (open sales commitments), '
                 + '    with the yard operational view and live work-in-process below. '
@@ -555,6 +574,99 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                 + ' padding:12px; border-radius:6px; text-align:center;">'
                 + '  <div style="font-size:11px; opacity:0.9;">' + label + '</div>'
                 + '  <div style="font-size:' + (big ? '26' : '22') + 'px; font-weight:bold; margin-top:4px;">' + value + '</div>'
+                + '</div>';
+        }
+
+        /** Distinct sites present in yard + WIP data, for the site selector. */
+        function collectSites(yardRows, wipRows) {
+            const seen = {};
+            const sites = [];
+            (yardRows || []).concat(wipRows || []).forEach(function(r) {
+                if (r.siteId && !seen[r.siteId]) {
+                    seen[r.siteId] = true;
+                    sites.push({ id: r.siteId, name: r.site });
+                }
+            });
+            sites.sort(function(a, b) { return a.name < b.name ? -1 : 1; });
+            return sites;
+        }
+
+        /** Site dropdown — reloads the page with ?site=<id> (keeps other params). */
+        function renderSiteSelector(siteOptions, siteFilter, siteName) {
+            const opts = ['<option value="">All Sites</option>'].concat(siteOptions.map(function(o) {
+                return '<option value="' + esc(o.id) + '"' + (o.id === siteFilter ? ' selected' : '') + '>' + esc(o.name) + '</option>';
+            })).join('');
+            const scopeNote = siteFilter
+                ? '<span style="margin-left:12px; padding:2px 10px; background:#eaf2ff; border:1px solid ' + BRAND + '; border-radius:10px; color:#0d2a52; font-weight:bold;">Showing: ' + esc(siteName) + '</span>'
+                + '<span style="margin-left:8px; color:#94a3b8; font-size:11px;">(yard, charts &amp; WIP sections; the position legs stay company-wide)</span>'
+                : '';
+            return '<div style="font-family:Arial,sans-serif; font-size:13px; margin:4px 0 8px; display:flex; align-items:center;">'
+                + '<b style="margin-right:10px;">Site:</b>'
+                + '<select style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:4px; font-size:13px;" '
+                + 'onchange="var u=new URL(window.location.href); if(this.value){u.searchParams.set(\'site\',this.value);}else{u.searchParams.delete(\'site\');} window.location=u.toString();">'
+                + opts + '</select>'
+                + scopeNote
+                + '</div>';
+        }
+
+        /**
+         * CSS-only chart cards: tons by site (bars), yard status mix (stacked
+         * bar), on-hand grade mix (bars). No libraries — pure divs.
+         */
+        function renderCharts(yard, onHand) {
+            const STATUS_COLORS = {
+                'Received': '#ca8a04', 'Yard': BRAND,
+                'Processing Queue': '#9333ea', 'Staged': '#16a34a'
+            };
+
+            // Tons by site
+            const bySite = {};
+            yard.rows.forEach(function(r) { bySite[r.site] = (bySite[r.site] || 0) + r.onHandLbs; });
+            const siteMax = Math.max.apply(null, Object.keys(bySite).map(function(k) { return bySite[k]; }).concat([1]));
+            const siteBars = Object.keys(bySite).sort().map(function(site) {
+                const pct = (bySite[site] / siteMax) * 100;
+                return '<div style="margin:6px 0;">'
+                    + '<div style="display:flex; justify-content:space-between; font-size:11px; color:#475569;"><span>' + esc(site) + '</span><b>' + esc(units.formatTons(bySite[site])) + ' t</b></div>'
+                    + '<div style="height:14px; background:#eef2f7; border-radius:4px; overflow:hidden;"><div style="height:14px; width:' + pct.toFixed(0) + '%; background:' + BRAND + '; border-radius:4px;"></div></div>'
+                    + '</div>';
+            }).join('') || '<div style="color:#94a3b8; font-size:12px;">No yard lots.</div>';
+
+            // Status mix (stacked bar + legend)
+            const byStatus = {};
+            let statusTotal = 0;
+            yard.rows.forEach(function(r) { byStatus[r.status] = (byStatus[r.status] || 0) + r.onHandLbs; statusTotal += r.onHandLbs; });
+            const segs = YARD_STATUSES.filter(function(st) { return byStatus[st] > 0; });
+            const stackedBar = statusTotal > 0
+                ? '<div style="display:flex; height:22px; border-radius:5px; overflow:hidden; margin:8px 0;">'
+                    + segs.map(function(st) {
+                        return '<div title="' + esc(st) + '" style="width:' + ((byStatus[st] / statusTotal) * 100).toFixed(1) + '%; background:' + STATUS_COLORS[st] + ';"></div>';
+                    }).join('') + '</div>'
+                    + segs.map(function(st) {
+                        return '<div style="display:flex; justify-content:space-between; font-size:11px; margin:3px 0; color:#475569;">'
+                            + '<span><span style="display:inline-block; width:10px; height:10px; background:' + STATUS_COLORS[st] + '; border-radius:2px; margin-right:6px;"></span>' + esc(st) + '</span>'
+                            + '<b>' + esc(units.formatTons(byStatus[st])) + ' t (' + ((byStatus[st] / statusTotal) * 100).toFixed(0) + '%)</b></div>';
+                    }).join('')
+                : '<div style="color:#94a3b8; font-size:12px;">No yard lots.</div>';
+
+            // On-hand grade mix
+            const gradeMax = Math.max.apply(null, onHand.map(function(r) { return r.onHandLbs; }).concat([1]));
+            const gradeBars = onHand.map(function(r) {
+                const pct = (r.onHandLbs / gradeMax) * 100;
+                return '<div style="margin:6px 0;">'
+                    + '<div style="display:flex; justify-content:space-between; font-size:11px; color:#475569;"><span>' + esc(r.itemName) + '</span><b>' + esc(units.formatTons(r.onHandLbs)) + ' t</b></div>'
+                    + '<div style="height:14px; background:#eef2f7; border-radius:4px; overflow:hidden;"><div style="height:14px; width:' + pct.toFixed(0) + '%; background:#16a34a; border-radius:4px;"></div></div>'
+                    + '</div>';
+            }).join('') || '<div style="color:#94a3b8; font-size:12px;">No on-hand inventory.</div>';
+
+            const card = function(title, body) {
+                return '<div style="flex:1; min-width:260px; border:1px solid #cbd5e1; border-radius:8px; padding:12px 14px; background:#ffffff;">'
+                    + '<div style="font-size:12px; font-weight:bold; color:' + BRAND_DARK + '; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">' + title + '</div>'
+                    + body + '</div>';
+            };
+            return '<div style="display:flex; gap:12px; flex-wrap:wrap; font-family:Arial,sans-serif; margin:4px 0 10px;">'
+                + card('Yard Tons by Site', siteBars)
+                + card('Yard Status Mix', stackedBar)
+                + card('On-Hand Grade Mix (company-wide)', gradeBars)
                 + '</div>';
         }
 

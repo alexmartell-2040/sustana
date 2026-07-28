@@ -96,6 +96,18 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             { sourceText: 'RISI White Ledger', values: [310, 315, 320, 318, 325, 330] }
         ];
 
+        // Yard variety: lots across Buffalo/St Joseph with mixed statuses,
+        // quality (incl. exception triggers), and ages — feeds the Yard
+        // Operations Dashboard site matrix, charts, and exception list.
+        const YARD_VARIETY_LOTS = [
+            { site: 'BUFFALO',  itemKey: 'MOP', qty: 24000, lot: 'MOP-SEED-B01', unitCost: 0.07, status: 'Received',         daysAgo: 4,  quality: null },                                             // ungraded exception
+            { site: 'BUFFALO',  itemKey: 'WL',  qty: 36000, lot: 'WL-SEED-B02',  unitCost: 0.15, status: 'Processing Queue', daysAgo: 6,  quality: { moisture: 13, contamination: 3, fiber: 90, bales: 30 } }, // moisture exception
+            { site: 'BUFFALO',  itemKey: 'SOP', qty: 18000, lot: 'SOP-SEED-B03', unitCost: 0.09, status: 'Staged',           daysAgo: 2,  quality: { moisture: 6,  contamination: 1, fiber: 95, bales: 16 } },
+            { site: 'STJOSEPH', itemKey: 'MP',  qty: 28000, lot: 'MP-SEED-S01',  unitCost: 0.05, status: 'Yard',             daysAgo: 5,  quality: { moisture: 9,  contamination: 6, fiber: 84, bales: 22 } }, // contamination exception
+            { site: 'STJOSEPH', itemKey: 'WL',  qty: 40000, lot: 'WL-SEED-S02',  unitCost: 0.15, status: 'Yard',             daysAgo: 20, quality: { moisture: 8,  contamination: 2, fiber: 92, bales: 33 } }, // aging exception
+            { site: 'STJOSEPH', itemKey: 'MOP', qty: 22000, lot: 'MOP-SEED-S03', unitCost: 0.07, status: 'Received',         daysAgo: 1,  quality: { moisture: 7,  contamination: 2, fiber: 91, bales: 18 } }
+        ];
+
         const PO_EXTID = EXT_PREFIX + 'PO_10001';
         const IA_EXTID = EXT_PREFIX + 'IA_ONHAND';
 
@@ -1140,6 +1152,93 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             } catch (e) {
                 addRow(section, 'error', 'On-hand adjustment: ' + e.message);
                 log.error('seedOnHandLots', e.message + '\n' + e.stack);
+            }
+
+            seedYardVarietyLots(ctx, section);
+        }
+
+        /**
+         * Multi-site yard lots (one IA per site) with mixed statuses, quality,
+         * and received-date ages — populates the Yard Operations Dashboard's
+         * site matrix, charts, and every exception rule.
+         */
+        function seedYardVarietyLots(ctx, section) {
+            const bySite = {};
+            YARD_VARIETY_LOTS.forEach(function(spec) {
+                if (!bySite[spec.site]) bySite[spec.site] = [];
+                bySite[spec.site].push(spec);
+            });
+            Object.keys(bySite).forEach(function(siteKey) {
+                const extid = EXT_PREFIX + 'IA_YARD_' + siteKey;
+                try {
+                    const existing = findByExternalId('inventoryadjustment', extid);
+                    if (existing) {
+                        addRow(section, 'exists', 'Yard variety lots at ' + siteKey + ' already seeded - re-applying lot fields only', 'inventoryadjustment', existing);
+                        bySite[siteKey].forEach(function(spec) { updateYardVarietyLot(spec, section); });
+                        return;
+                    }
+                    const locId = resolveLocationId(ctx, siteKey);
+                    const acctId = resolveInvAdjAccountId(ctx);
+                    if (!locId || !acctId) {
+                        addRow(section, 'error', 'Yard lots at ' + siteKey + ' skipped - missing location or IA account');
+                        return;
+                    }
+                    const lines = [];
+                    bySite[siteKey].forEach(function(spec) {
+                        const itemId = resolveItemId(ctx, spec.itemKey);
+                        if (itemId) lines.push({ spec: spec, itemId: itemId });
+                    });
+                    if (!lines.length) return;
+
+                    const ia = record.create({ type: 'inventoryadjustment', isDynamic: false });
+                    ia.setValue({ fieldId: 'trandate', value: new Date() });
+                    ia.setValue({ fieldId: 'subsidiary', value: ctx.usSubId });
+                    ia.setValue({ fieldId: 'adjlocation', value: locId });
+                    ia.setValue({ fieldId: 'account', value: acctId });
+                    ia.setValue({ fieldId: 'memo', value: 'Sustana demo - yard variety lots at ' + siteKey });
+                    ia.setValue({ fieldId: 'externalid', value: extid });
+                    lines.forEach(function(entry, i) {
+                        ia.setSublistValue({ sublistId: 'inventory', fieldId: 'item', line: i, value: entry.itemId });
+                        ia.setSublistValue({ sublistId: 'inventory', fieldId: 'adjustqtyby', line: i, value: entry.spec.qty });
+                        ia.setSublistValue({ sublistId: 'inventory', fieldId: 'location', line: i, value: locId });
+                        ia.setSublistValue({ sublistId: 'inventory', fieldId: 'unitcost', line: i, value: entry.spec.unitCost });
+                        const detail = ia.getSublistSubrecord({ sublistId: 'inventory', fieldId: 'inventorydetail', line: i });
+                        detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'receiptinventorynumber', line: 0, value: entry.spec.lot });
+                        detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'quantity', line: 0, value: entry.spec.qty });
+                    });
+                    const iaId = ia.save({ ignoreMandatoryFields: true });
+                    addRow(section, 'created', 'Yard variety adjustment - ' + lines.length + ' lots at ' + siteKey, 'inventoryadjustment', iaId);
+                    lines.forEach(function(entry) { updateYardVarietyLot(entry.spec, section); });
+                } catch (e) {
+                    addRow(section, 'error', 'Yard lots at ' + siteKey + ': ' + e.message);
+                    log.error('seedYardVarietyLots', siteKey + ': ' + e.message);
+                }
+            });
+        }
+
+        function updateYardVarietyLot(spec, section) {
+            try {
+                const lotId = findLotInternalId(spec.lot);
+                if (!lotId) {
+                    addRow(section, 'error', 'Lot ' + spec.lot + ': not found after adjustment - fields not set');
+                    return;
+                }
+                const lot = record.load({ type: 'inventorynumber', id: lotId });
+                lot.setText({ fieldId: 'custitemnumber_sust_lot_status', text: spec.status });
+                lot.setText({ fieldId: 'custitemnumber_sust_lot_source_type', text: 'Purchased' });
+                lot.setValue({ fieldId: 'custitemnumber_sust_received_date', value: daysAgo(spec.daysAgo) });
+                if (spec.quality) {
+                    lot.setValue({ fieldId: 'custitemnumber_sust_moisture_pct', value: spec.quality.moisture });
+                    lot.setValue({ fieldId: 'custitemnumber_sust_contamination_pct', value: spec.quality.contamination });
+                    lot.setValue({ fieldId: 'custitemnumber_sust_fiber_content_pct', value: spec.quality.fiber });
+                    lot.setValue({ fieldId: 'custitemnumber_sust_bale_count', value: spec.quality.bales });
+                }
+                lot.save();
+                addRow(section, 'updated', 'Lot ' + spec.lot + ' - ' + spec.status + ', received ' + spec.daysAgo + 'd ago'
+                    + (spec.quality ? '' : ' (ungraded - exception demo)'), 'inventorynumber', lotId);
+            } catch (e) {
+                addRow(section, 'error', 'Lot ' + spec.lot + ': ' + e.message);
+                log.error('updateYardVarietyLot', spec.lot + ': ' + e.message);
             }
         }
 
