@@ -473,7 +473,12 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             try {
                 search.create({
                     type: 'item',
-                    filters: [['type', 'anyof', 'InvtPart', 'Assembly'], 'AND', ['isinactive', 'is', 'F']],
+                    filters: [
+                        ['type', 'anyof', 'InvtPart', 'Assembly'], 'AND',
+                        ['isinactive', 'is', 'F'], 'AND',
+                        // Demo scope: Sustana grade items only (material category set)
+                        ['custitem_sust_material_category', 'noneof', '@NONE@']
+                    ],
                     columns: ['itemid']
                 }).run().each(function(r) {
                     items.push({ id: String(r.id), name: r.getValue('itemid') || ('Item ' + r.id) });
@@ -597,7 +602,7 @@ h+='</table><a style="'+S.add+'border-color:#ea580c;color:#ea580c;" onclick="SUS
 var over=tout>tin&&tin>0;
 h+='<div style="display:flex;gap:18px;align-items:center;border:1px solid #cbd5e1;border-radius:8px;padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;'+(over?'background:#fef2f2;border-color:#dc2626;':'background:#f8fafc;')+'">';
 h+='<b>Balance:</b><span>'+fmt(tin)+' in</span><span>&rarr;</span><span>'+fmt(tout)+' out</span>';
-h+='<span style="color:#64748b;">Loss '+fmt(Math.max(loss,0))+' t (residual + moisture)</span>';
+h+='<span style="color:#64748b;">Moisture / shrink loss '+fmt(Math.max(loss,0))+' t (unaccounted weight — residuals are an output line)</span>';
 h+='<span style="font-weight:bold;'+(over?'color:#dc2626;':'color:#0d2a52;')+'">Yield '+(tin>0?yld.toFixed(1):'0')+'%'+(over?' &mdash; OUTPUT EXCEEDS INPUT':'')+'</span>';
 h+='<div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;"><div style="height:8px;width:'+Math.min(yld,100)+'%;background:'+(over?'#dc2626':'#2976F3')+';"></div></div></div>';
 document.getElementById('sustmat').innerHTML=h;sync();}

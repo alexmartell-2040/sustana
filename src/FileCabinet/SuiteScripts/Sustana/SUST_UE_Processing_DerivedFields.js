@@ -56,7 +56,7 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', 'N/ui/serverWidget', './SU
                     body = 'Set Gross Input + Tare Actual to compute True Net, then add output lines for weight totals. Yield / loss auto-calculates on save.';
                     bgColor = '#f3f4f6'; borderColor = '#9ca3af'; textColor = '#1f2937';
                 } else {
-                    const lossLine = 'Loss: ' + units.formatTons(trueNet - totalOutput) + ' (residual + moisture).';
+                    const lossLine = 'Moisture / shrink loss: ' + units.formatTons(trueNet - totalOutput) + ' (weight not in any output line).';
                     const deltaFromPerfect = Math.abs(yieldPct - 100);
                     if (deltaFromPerfect <= YIELD_LOSS_WARN_PCT) {
                         title = '✓ Yield: ' + yieldPct + '% (within ±' + YIELD_LOSS_WARN_PCT + '%)';
