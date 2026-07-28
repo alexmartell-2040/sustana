@@ -326,7 +326,12 @@ define(['N/record', 'N/search', 'N/runtime', 'N/url', 'N/log', 'N/ui/serverWidge
                         + label + '</a>';
                 };
 
+                const periodKey = rec.getValue({ fieldId: 'custrecord_sust_settle_period_key' });
                 let buttons = '';
+                if (periodKey && (statusText === 'Draft' || statusText === 'Completed')) {
+                    buttons += btn('rebuild', '&#10227; Rebuild Totals from Slices', '#475569',
+                        'Recompute weights and values from the receipt slices and penalty rows?');
+                }
                 if (statusText === 'Draft') {
                     buttons += btn('approve', '&#10004; Approve &amp; Complete', '#059669',
                         'Approve this settlement and mark it Completed?');
