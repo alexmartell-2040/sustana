@@ -1118,6 +1118,10 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     ONHAND_LOTS.forEach(function(lotSpec) {
                         updateSeededLot(lotSpec, section);
                     });
+                    // BUG FIX: this early return previously skipped the multi-site
+                    // yard variety lots on any account where the Cincinnati IA
+                    // already existed — dashboards stayed Cincinnati-only.
+                    seedYardVarietyLots(ctx, section);
                     return;
                 }
                 const cinciId = resolveLocationId(ctx, 'CINCINNATI');
