@@ -1,0 +1,38 @@
+<itemnumbercustomfield scriptid="custitemnumber_sust_lot_form">
+  <accesslevel>2</accesslevel>
+  <appliestoallitems>T</appliestoallitems>
+  <appliestogiftcerts>F</appliestogiftcerts>
+  <appliestolots>T</appliestolots>
+  <appliestoserialized>F</appliestoserialized>
+  <applyformatting>F</applyformatting>
+  <checkspelling>F</checkspelling>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>Physical form of the lot: Loose (as received) or Baled (finished bale product). Drives the loose-vs-bale inventory visibility on the Yard Operations Dashboard.</description>
+  <displayheight></displayheight>
+  <displaytype>NORMAL</displaytype>
+  <displaywidth></displaywidth>
+  <dynamicdefault></dynamicdefault>
+  <encryptatrest>F</encryptatrest>
+  <fieldtype>SELECT</fieldtype>
+  <help>Loose = raw material as received / in process. Baled = standardized bale product ready for sale. Receipts default to Loose; processing outputs default to Baled.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Form</label>
+  <linktext></linktext>
+  <maxlength></maxlength>
+  <maxvalue></maxvalue>
+  <minvalue></minvalue>
+  <onparentdelete></onparentdelete>
+  <searchcomparefield></searchcomparefield>
+  <searchdefault></searchdefault>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype>[scriptid=customlist_sust_lot_form]</selectrecordtype>
+  <showhierarchy>F</showhierarchy>
+  <showinlist>T</showinlist>
+  <sourcefilterby></sourcefilterby>
+  <sourcefrom></sourcefrom>
+  <sourcelist></sourcelist>
+  <storevalue>T</storevalue>
+</itemnumbercustomfield>

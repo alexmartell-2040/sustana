@@ -71,7 +71,10 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             { key: 'MARKHAM',    name: 'Markham',    extid: EXT_PREFIX + 'LOC_MARKHAM',    sub: 'CA' },
             { key: 'CINCINNATI', name: 'Cincinnati', extid: EXT_PREFIX + 'LOC_CINCINNATI', sub: 'US' },
             { key: 'BUFFALO',    name: 'Buffalo',    extid: EXT_PREFIX + 'LOC_BUFFALO',    sub: 'US' },
-            { key: 'STJOSEPH',   name: 'St Joseph',  extid: EXT_PREFIX + 'LOC_STJOSEPH',   sub: 'US' }
+            { key: 'STJOSEPH',   name: 'St Joseph',  extid: EXT_PREFIX + 'LOC_STJOSEPH',   sub: 'US' },
+            { key: 'SAVAGE',     name: 'Savage',     extid: EXT_PREFIX + 'LOC_SAVAGE',     sub: 'US' },
+            { key: 'MANSFIELD',  name: 'Mansfield',  extid: EXT_PREFIX + 'LOC_MANSFIELD',  sub: 'US' },
+            { key: 'LACHINE',    name: 'Lachine',    extid: EXT_PREFIX + 'LOC_LACHINE',    sub: 'CA' }
         ];
 
         // Grade items. marketSource/category/allocClass are DISPLAY TEXTS of the
@@ -106,7 +109,11 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             { site: 'BUFFALO',  itemKey: 'SOP', qty: 18000, lot: 'SOP-SEED-B03', unitCost: 0.09, status: 'Staged',           daysAgo: 2,  quality: { moisture: 6,  contamination: 1, fiber: 95, bales: 16 } },
             { site: 'STJOSEPH', itemKey: 'MP',  qty: 28000, lot: 'MP-SEED-S01',  unitCost: 0.05, status: 'Yard',             daysAgo: 5,  quality: { moisture: 9,  contamination: 6, fiber: 84, bales: 22 } }, // contamination exception
             { site: 'STJOSEPH', itemKey: 'WL',  qty: 40000, lot: 'WL-SEED-S02',  unitCost: 0.15, status: 'Yard',             daysAgo: 20, quality: { moisture: 8,  contamination: 2, fiber: 92, bales: 33 } }, // aging exception
-            { site: 'STJOSEPH', itemKey: 'MOP', qty: 22000, lot: 'MOP-SEED-S03', unitCost: 0.07, status: 'Received',         daysAgo: 1,  quality: { moisture: 7,  contamination: 2, fiber: 91, bales: 18 } }
+            { site: 'STJOSEPH', itemKey: 'MOP', qty: 22000, lot: 'MOP-SEED-S03', unitCost: 0.07, status: 'Received',         daysAgo: 1,  quality: { moisture: 7,  contamination: 2, fiber: 91, bales: 18 } },
+            { site: 'SAVAGE',    itemKey: 'WL',  qty: 32000, lot: 'WL-SEED-V01',  unitCost: 0.15, status: 'Yard',             daysAgo: 3,  form: 'Loose', quality: { moisture: 8,  contamination: 2, fiber: 93, bales: 27 } },
+            { site: 'SAVAGE',    itemKey: 'SOP', qty: 16000, lot: 'SOP-SEED-V02', unitCost: 0.09, status: 'Staged',           daysAgo: 1,  form: 'Baled', quality: { moisture: 6,  contamination: 1, fiber: 96, bales: 15 } },
+            { site: 'MANSFIELD', itemKey: 'MP',  qty: 26000, lot: 'MP-SEED-M01',  unitCost: 0.05, status: 'Yard',             daysAgo: 7,  form: 'Loose', quality: { moisture: 10, contamination: 4, fiber: 86, bales: 20 } },
+            { site: 'MANSFIELD', itemKey: 'SOP', qty: 20000, lot: 'SOP-SEED-M02', unitCost: 0.09, status: 'Processing Queue', daysAgo: 4,  form: 'Baled', quality: { moisture: 6,  contamination: 1, fiber: 95, bales: 18 } }
         ];
 
         const PO_EXTID = EXT_PREFIX + 'PO_10001';
@@ -1199,8 +1206,10 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     }
                     const locId = resolveLocationId(ctx, siteKey);
                     const acctId = resolveInvAdjAccountId(ctx);
-                    if (!locId || !acctId) {
-                        addRow(section, 'error', 'Yard lots at ' + siteKey + ' skipped - missing location or IA account');
+                    const locSpec = LOCATIONS.filter(function(l) { return l.key === siteKey; })[0];
+                    const subId = (locSpec && locSpec.sub === 'CA') ? ctx.caSubId : ctx.usSubId;
+                    if (!locId || !acctId || !subId) {
+                        addRow(section, 'error', 'Yard lots at ' + siteKey + ' skipped - missing location, IA account, or subsidiary');
                         return;
                     }
                     const lines = [];
@@ -1212,7 +1221,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
 
                     const ia = record.create({ type: 'inventoryadjustment', isDynamic: false });
                     ia.setValue({ fieldId: 'trandate', value: new Date() });
-                    ia.setValue({ fieldId: 'subsidiary', value: ctx.usSubId });
+                    ia.setValue({ fieldId: 'subsidiary', value: subId });
                     ia.setValue({ fieldId: 'adjlocation', value: locId });
                     ia.setValue({ fieldId: 'account', value: acctId });
                     ia.setValue({ fieldId: 'memo', value: 'Sustana demo - yard variety lots at ' + siteKey });
@@ -1246,6 +1255,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 const lot = record.load({ type: 'inventorynumber', id: lotId });
                 lot.setText({ fieldId: 'custitemnumber_sust_lot_status', text: spec.status });
                 lot.setText({ fieldId: 'custitemnumber_sust_lot_source_type', text: 'Purchased' });
+                try { lot.setText({ fieldId: 'custitemnumber_sust_lot_form', text: spec.form || 'Loose' }); }
+                catch (eForm) { log.debug('lot form skipped', eForm.message); }
                 lot.setValue({ fieldId: 'custitemnumber_sust_received_date', value: daysAgo(spec.daysAgo) });
                 if (spec.quality) {
                     lot.setValue({ fieldId: 'custitemnumber_sust_moisture_pct', value: spec.quality.moisture });
@@ -1570,7 +1581,9 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 const grossValue = net * pricePerLb;                      // 39,900 × $0.06 = $2,394
                 const moistureExcessPts = 2;                              // 12% actual vs 10% threshold
                 const penaltyRatePerPt = 0.0025;                          // $/lb per point
-                const penaltyAmt = net * penaltyRatePerPt * moistureExcessPts; // ≈ $199.50
+                const moisturePenalty = net * penaltyRatePerPt * moistureExcessPts; // ≈ $199.50
+                const compactorFee = 75;                                  // per-load compactor rental back-out
+                const penaltyAmt = moisturePenalty + compactorFee;
                 const treatment = 150;
                 const netValue = grossValue - penaltyAmt - treatment;
 
@@ -1594,7 +1607,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                             + '\n+ receipt slice 2: 22000 lbs gross'
                             + '\nWeekly-cadence aggregation: both receipt lines rolled into this single ' + periodKey + ' settlement.'
                             + '\nDeductions: Moisture 12% vs 10% threshold (' + moistureExcessPts + ' pts x $' + penaltyRatePerPt
-                            + '/lb/pt = $' + penaltyAmt.toFixed(2) + ') + treatment charge $' + treatment.toFixed(2) + '.'
+                            + '/lb/pt = $' + moisturePenalty.toFixed(2) + ') + compactor fee back-out $' + compactorFee.toFixed(2)
+                            + ' + treatment charge $' + treatment.toFixed(2) + '.'
                     });
                 }
                 rec.save();
@@ -1625,8 +1639,20 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_threshold', value: 10 });
                     pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_excess', value: moistureExcessPts });
                     pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_rate', value: penaltyRatePerPt });
-                    pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_amount', value: penaltyAmt });
+                    pen.setValue({ fieldId: 'custrecord_sust_penalty_detail_amount', value: moisturePenalty });
                     pen.save();
+
+                    // Compactor fee back-out — flat per-load deduction ('fee for
+                    // compactors might get backed out' per discovery)
+                    const pen2 = record.create({ type: 'customrecord_sust_penalty_detail' });
+                    pen2.setValue({ fieldId: 'custrecord_sust_penalty_settlement', value: settleId });
+                    pen2.setText({ fieldId: 'custrecord_sust_penalty_detail_element', text: 'Other' });
+                    pen2.setValue({ fieldId: 'custrecord_sust_penalty_detail_actual', value: 0 });
+                    pen2.setValue({ fieldId: 'custrecord_sust_penalty_detail_threshold', value: 0 });
+                    pen2.setValue({ fieldId: 'custrecord_sust_penalty_detail_excess', value: 0 });
+                    pen2.setValue({ fieldId: 'custrecord_sust_penalty_detail_rate', value: compactorFee });
+                    pen2.setValue({ fieldId: 'custrecord_sust_penalty_detail_amount', value: compactorFee });
+                    pen2.save();
                 } catch (ePen) {
                     log.error('seedAggregatedSettlement penalty detail', ePen.message);
                 }

@@ -653,6 +653,10 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_CostAllocation
                 // New output lots land in the Yard (custom list — set by display text)
                 invNumber.setText({ fieldId: 'custitemnumber_sust_lot_status', text: 'Yard' });
 
+                // Processing produces standardized bale product
+                try { invNumber.setText({ fieldId: 'custitemnumber_sust_lot_form', text: 'Baled' }); }
+                catch (eForm) { log.debug('lot form skipped', eForm.message); }
+
                 invNumber.setValue({ fieldId: 'custitemnumber_sust_lot_notes', value: 'Output lot created by processing' });
 
                 invNumber.save();

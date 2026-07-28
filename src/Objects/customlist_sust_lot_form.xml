@@ -1,0 +1,17 @@
+<customlist scriptid="customlist_sust_lot_form">
+  <description>Physical form of a lot: Loose (as received / in process) or Baled (standardized bale product ready for sale).</description>
+  <isinactive>F</isinactive>
+  <ismatrixoption>F</ismatrixoption>
+  <isordered>T</isordered>
+  <name>Lot Form</name>
+  <customvalues>
+    <customvalue scriptid="val_form_loose">
+      <isinactive>F</isinactive>
+      <value>Loose</value>
+    </customvalue>
+    <customvalue scriptid="val_form_baled">
+      <isinactive>F</isinactive>
+      <value>Baled</value>
+    </customvalue>
+  </customvalues>
+</customlist>

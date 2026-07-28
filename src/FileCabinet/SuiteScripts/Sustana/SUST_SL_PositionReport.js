@@ -410,6 +410,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                     columns: [
                         'inventorynumber', 'item', 'location', 'quantityonhand',
                         'custitemnumber_sust_lot_status',
+                        'custitemnumber_sust_lot_form',
                         'custitemnumber_sust_moisture_pct',
                         'custitemnumber_sust_contamination_pct',
                         'custitemnumber_sust_received_date'
@@ -428,6 +429,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                         site: r.getText({ name: 'location' }) || 'Unassigned',
                         siteId: String(r.getValue({ name: 'location' }) || ''),
                         status: status,
+                        form: r.getText({ name: 'custitemnumber_sust_lot_form' }) || 'Loose',
                         onHandLbs: Math.abs(parseFloat(r.getValue({ name: 'quantityonhand' })) || 0),
                         moisture: numOrNull(r.getValue({ name: 'custitemnumber_sust_moisture_pct' })),
                         contamination: numOrNull(r.getValue({ name: 'custitemnumber_sust_contamination_pct' })),
@@ -670,6 +672,23 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                     + '</div>';
             }).join('') || '<div style="color:#94a3b8; font-size:12px;">No on-hand inventory.</div>';
 
+            // Loose vs Baled mix
+            const byForm = { Loose: 0, Baled: 0 };
+            yard.rows.forEach(function(r) { byForm[r.form === 'Baled' ? 'Baled' : 'Loose'] += r.onHandLbs; });
+            const formTotal = byForm.Loose + byForm.Baled;
+            const formMix = formTotal > 0
+                ? '<div style="display:flex; height:22px; border-radius:5px; overflow:hidden; margin:8px 0;">'
+                    + (byForm.Loose > 0 ? '<div title="Loose" style="width:' + ((byForm.Loose / formTotal) * 100).toFixed(1) + '%; background:#94a3b8;"></div>' : '')
+                    + (byForm.Baled > 0 ? '<div title="Baled" style="width:' + ((byForm.Baled / formTotal) * 100).toFixed(1) + '%; background:#16a34a;"></div>' : '')
+                    + '</div>'
+                    + ['Loose', 'Baled'].map(function(f) {
+                        const c = f === 'Baled' ? '#16a34a' : '#94a3b8';
+                        return '<div style="display:flex; justify-content:space-between; font-size:11px; margin:3px 0; color:#475569;">'
+                            + '<span><span style="display:inline-block; width:10px; height:10px; background:' + c + '; border-radius:2px; margin-right:6px;"></span>' + f + '</span>'
+                            + '<b>' + esc(units.formatTons(byForm[f])) + ' t (' + (formTotal > 0 ? ((byForm[f] / formTotal) * 100).toFixed(0) : 0) + '%)</b></div>';
+                    }).join('')
+                : '<div style="color:#94a3b8; font-size:12px;">No yard lots.</div>';
+
             const card = function(title, body) {
                 return '<div style="flex:1; min-width:260px; border:1px solid #cbd5e1; border-radius:8px; padding:12px 14px; background:#ffffff;">'
                     + '<div style="font-size:12px; font-weight:bold; color:' + BRAND_DARK + '; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">' + title + '</div>'
@@ -678,6 +697,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
             return '<div style="display:flex; gap:12px; flex-wrap:wrap; font-family:Arial,sans-serif; margin:4px 0 10px;">'
                 + card('Yard Tons by Site', siteBars)
                 + card('Yard Status Mix', stackedBar)
+                + card('Form — Loose vs Baled', formMix)
                 + card('On-Hand Grade Mix (company-wide)', gradeBars)
                 + '</div>';
         }
@@ -742,6 +762,9 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
                     + td(esc(r.site))
                     + td(esc(r.itemName) + (r.category ? '<br/><span style="color:#94a3b8; font-size:11px;">' + esc(r.category) + '</span>' : ''))
                     + td(statusBadge(r.status))
+                    + td(r.form === 'Baled'
+                        ? badge('Baled', '#f0fdf4', '#16a34a', '#14532d')
+                        : badge('Loose', '#f8fafc', '#94a3b8', '#334155'))
                     + tdR('<b>' + esc(units.formatTons(r.onHandLbs)) + '</b>')
                     + td(quality || '<span style="color:#94a3b8;">not graded</span>')
                     + td(excHtml)
@@ -750,8 +773,8 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
             }).join('');
 
             return head + tableWrap(
-                ['Lot #', 'Site', 'Grade', 'Status', 'Tons', 'Quality', 'Exception', 'Action'],
-                body, 4);
+                ['Lot #', 'Site', 'Grade', 'Status', 'Form', 'Tons', 'Quality', 'Exception', 'Action'],
+                body, 5);
         }
 
         function statusBadge(status) {

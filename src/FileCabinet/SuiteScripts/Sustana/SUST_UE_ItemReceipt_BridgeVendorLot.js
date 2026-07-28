@@ -203,6 +203,12 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config', './SU
                                     text: 'Received'
                                 });
                             }
+                            // Form: received material is Loose until baled by processing
+                            try {
+                                if (!lotRec.getValue({ fieldId: 'custitemnumber_sust_lot_form' })) {
+                                    lotRec.setText({ fieldId: 'custitemnumber_sust_lot_form', text: 'Loose' });
+                                }
+                            } catch (eForm) { log.debug('lot form default skipped', eForm.message); }
                             lotRec.save({ enableSourcing: false, ignoreMandatoryFields: true });
                             bridgedCount++;
                             log.debug('Vendor Lot Bridged',
