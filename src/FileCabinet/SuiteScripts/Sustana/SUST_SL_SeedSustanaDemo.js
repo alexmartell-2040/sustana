@@ -1284,6 +1284,7 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 if (!bySite[spec.site]) bySite[spec.site] = [];
                 bySite[spec.site].push(spec);
             });
+            let __topupPending = true;
             Object.keys(bySite).forEach(function(siteKey) {
                 const extid = EXT_PREFIX + 'IA_YARD_' + siteKey;
                 try {
@@ -1336,6 +1337,66 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     log.error('seedYardVarietyLots', siteKey + ': ' + msg + ' | raw: ' + e);
                 }
             });
+
+            seedDemoTopUp(ctx, section);
+        }
+
+        // Big top-up for the processing-demo lots: pours additional pounds into
+        // the SAME lot numbers (positive IA lines re-using the lot number string
+        // add to the existing lot). One-time, idempotent by externalid.
+        const DEMO_TOPUP = {
+            extid: EXT_PREFIX + 'IA_TOPUP_1',
+            lines: [
+                { itemKey: 'WL',  lot: 'WL-DEMO-001',  addQty: 160000, unitCost: 0.15 }, // -> ~120 t total
+                { itemKey: 'MP',  lot: 'MP-DEMO-001',  addQty: 96000,  unitCost: 0.05 }, // -> ~70 t total
+                { itemKey: 'SOP', lot: 'SOP-DEMO-001', addQty: 70000,  unitCost: 0.09 }  // -> ~50 t total
+            ]
+        };
+
+        function seedDemoTopUp(ctx, section) {
+            try {
+                const existing = findByExternalId('inventoryadjustment', DEMO_TOPUP.extid);
+                if (existing) {
+                    addRow(section, 'exists', 'Demo-lot top-up already applied (WL/MP/SOP-DEMO lots loaded)', 'inventoryadjustment', existing);
+                    return;
+                }
+                const cinciId = resolveLocationId(ctx, 'CINCINNATI');
+                const acctId = resolveInvAdjAccountId(ctx);
+                if (!cinciId || !acctId) {
+                    addRow(section, 'error', 'Demo-lot top-up skipped - missing Cincinnati location or IA account');
+                    return;
+                }
+                const lines = [];
+                DEMO_TOPUP.lines.forEach(function(l) {
+                    const itemId = resolveItemId(ctx, l.itemKey);
+                    if (itemId && findLotInternalId(l.lot)) lines.push({ spec: l, itemId: itemId });
+                    else addRow(section, 'error', 'Top-up line skipped - item or lot ' + l.lot + ' not found (seed the base lots first)');
+                });
+                if (!lines.length) return;
+
+                const ia = record.create({ type: 'inventoryadjustment', isDynamic: false });
+                ia.setValue({ fieldId: 'trandate', value: new Date() });
+                ia.setValue({ fieldId: 'subsidiary', value: ctx.usSubId });
+                ia.setValue({ fieldId: 'adjlocation', value: cinciId });
+                ia.setValue({ fieldId: 'account', value: acctId });
+                ia.setValue({ fieldId: 'memo', value: 'Sustana demo - top-up of processing demo lots' });
+                ia.setValue({ fieldId: 'externalid', value: DEMO_TOPUP.extid });
+                lines.forEach(function(entry, i) {
+                    ia.setSublistValue({ sublistId: 'inventory', fieldId: 'item', line: i, value: entry.itemId });
+                    ia.setSublistValue({ sublistId: 'inventory', fieldId: 'adjustqtyby', line: i, value: entry.spec.addQty });
+                    ia.setSublistValue({ sublistId: 'inventory', fieldId: 'location', line: i, value: cinciId });
+                    ia.setSublistValue({ sublistId: 'inventory', fieldId: 'unitcost', line: i, value: entry.spec.unitCost });
+                    const detail = ia.getSublistSubrecord({ sublistId: 'inventory', fieldId: 'inventorydetail', line: i });
+                    // Re-using the existing lot number ADDS quantity to that lot
+                    detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'receiptinventorynumber', line: 0, value: entry.spec.lot });
+                    detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'quantity', line: 0, value: entry.spec.addQty });
+                });
+                const iaId = ia.save({ ignoreMandatoryFields: true });
+                addRow(section, 'created', 'Demo-lot TOP-UP - WL-DEMO-001 +80t (~120t total), MP-DEMO-001 +48t (~70t), SOP-DEMO-001 +35t (~50t)', 'inventoryadjustment', iaId);
+            } catch (e) {
+                addRow(section, 'error', 'Demo-lot top-up: ' + errText(e));
+                log.error('seedDemoTopUp', errText(e));
+            }
         }
 
         function updateYardVarietyLot(spec, section) {
