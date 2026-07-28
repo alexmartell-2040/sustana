@@ -265,7 +265,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/re
             }
 
             // 5. Settlement impact
-            const settleNote = repriceSettlement(lot, newItemId, newItemName, auditLine, links, irId);
+            const settleNote = repriceSettlement(lot, newItemId, newItemName, auditLine, links, irId, newLotId);
 
             const summary = ''
                 + '<p><b>' + esc(lot.itemName) + ' &rarr; ' + esc(newItemName) + '</b> — '
@@ -385,7 +385,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/re
          * settlements get an audit note demanding a vendor credit instead.
          * @returns {string} HTML note for the result page
          */
-        function repriceSettlement(lot, newItemId, newItemName, auditLine, links, irId) {
+        function repriceSettlement(lot, newItemId, newItemName, auditLine, links, irId, newLotId) {
             try {
                 const cols = ['custrecord_sust_settlement_status', 'custrecord_sust_settlement_vendor',
                     'custrecord_sust_settlement_net_lbs', 'custrecord_sust_settlement_recovery_pct',
@@ -441,6 +441,10 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/re
                     custrecord_sust_settlement_net_value: calc.netValue,
                     custrecord_sust_settlement_balance_due: calc.netValue
                 };
+                // Re-point the settlement at the LIVE regraded lot so drill-down and
+                // Calculate Settlement read the current material (paid settlements
+                // above keep their historical lot link untouched).
+                if (newLotId) values.custrecord_sust_settlement_lot = newLotId;
                 if (schedule.scheduleId) values.custrecord_sust_settlement_schedule = parseInt(schedule.scheduleId, 10);
                 if (calc.marketPrice !== null) values.custrecord_sust_settlement_market_price = calc.marketPrice;
                 if (calc.marketRefId !== null) values.custrecord_sust_settlement_market_source = calc.marketRefId;
