@@ -113,7 +113,12 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             { site: 'SAVAGE',    itemKey: 'WL',  qty: 32000, lot: 'WL-SEED-V01',  unitCost: 0.15, status: 'Yard',             daysAgo: 3,  form: 'Loose', quality: { moisture: 8,  contamination: 2, fiber: 93, bales: 27 } },
             { site: 'SAVAGE',    itemKey: 'SOP', qty: 16000, lot: 'SOP-SEED-V02', unitCost: 0.09, status: 'Staged',           daysAgo: 1,  form: 'Baled', quality: { moisture: 6,  contamination: 1, fiber: 96, bales: 15 } },
             { site: 'MANSFIELD', itemKey: 'MP',  qty: 26000, lot: 'MP-SEED-M01',  unitCost: 0.05, status: 'Yard',             daysAgo: 7,  form: 'Loose', quality: { moisture: 10, contamination: 4, fiber: 86, bales: 20 } },
-            { site: 'MANSFIELD', itemKey: 'SOP', qty: 20000, lot: 'SOP-SEED-M02', unitCost: 0.09, status: 'Processing Queue', daysAgo: 4,  form: 'Baled', quality: { moisture: 6,  contamination: 1, fiber: 95, bales: 18 } }
+            { site: 'MANSFIELD', itemKey: 'SOP', qty: 20000, lot: 'SOP-SEED-M02', unitCost: 0.09, status: 'Processing Queue', daysAgo: 4,  form: 'Baled', quality: { moisture: 6,  contamination: 1, fiber: 95, bales: 18 } },
+            // Demo stock at Cincinnati — sized for the 5.5 script (consume
+            // 30t WL + 15t MP + 10t SOP) with headroom for dry runs.
+            { site: 'CINCINNATI', itemKey: 'WL',  qty: 80000, lot: 'WL-DEMO-001',  unitCost: 0.15, status: 'Yard', daysAgo: 2, form: 'Loose', quality: { moisture: 8,  contamination: 2, fiber: 92, bales: 66 } },
+            { site: 'CINCINNATI', itemKey: 'MP',  qty: 44000, lot: 'MP-DEMO-001',  unitCost: 0.05, status: 'Yard', daysAgo: 2, form: 'Loose', quality: { moisture: 9,  contamination: 4, fiber: 86, bales: 34 } },
+            { site: 'CINCINNATI', itemKey: 'SOP', qty: 30000, lot: 'SOP-DEMO-001', unitCost: 0.09, status: 'Yard', daysAgo: 1, form: 'Loose', quality: { moisture: 6,  contamination: 1, fiber: 95, bales: 27 } }
         ];
 
         const PO_EXTID = EXT_PREFIX + 'PO_10001';
