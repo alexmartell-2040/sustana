@@ -1548,9 +1548,12 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             const marker = '[SUSTDEMO AGG]';
             let step = 'start';
             try {
-                const existingId = findSettlementByMarker(marker);
+                // Only an OPEN (Draft) sample blocks re-seeding — a closed/finalized
+                // sample stays as history and a fresh Draft one is created so the
+                // aggregation + close demo is always runnable.
+                const existingId = findDraftSettlementByMarker(marker);
                 if (existingId && countSlices(existingId) > 0) {
-                    addRow(section, 'exists', 'Aggregated (Weekly) sample settlement already seeded (with slices)',
+                    addRow(section, 'exists', 'Aggregated (Weekly) sample settlement already seeded (Draft, with slices)',
                         'customrecord_sust_settlement_record', existingId);
                     return;
                 }
@@ -1679,6 +1682,25 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 log.error('countSlices', e.message);
                 return 0;
             }
+        }
+
+        /** Marker settlement that is still in Draft (closed ones don't count). */
+        function findDraftSettlementByMarker(marker) {
+            try {
+                const res = search.create({
+                    type: 'customrecord_sust_settlement_record',
+                    filters: [['custrecord_sust_settlement_notes', 'contains', marker]],
+                    columns: ['internalid', 'custrecord_sust_settlement_status']
+                }).run().getRange({ start: 0, end: 10 });
+                for (let i = 0; i < res.length; i++) {
+                    if ((res[i].getText({ name: 'custrecord_sust_settlement_status' }) || '') === 'Draft') {
+                        return parseInt(res[i].id, 10);
+                    }
+                }
+            } catch (e) {
+                log.error('findDraftSettlementByMarker', e.message);
+            }
+            return null;
         }
 
         function findSettlementByMarker(marker) {
