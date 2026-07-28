@@ -1895,6 +1895,17 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
 
                     let irId = findByExternalId('itemreceipt', spec.irExtid);
                     if (!irId) {
+                        // Fallback dedup: any receipt already created from this PO
+                        try {
+                            const irRes = search.create({
+                                type: 'itemreceipt',
+                                filters: [['createdfrom', 'anyof', poId], 'AND', ['mainline', 'is', 'T']],
+                                columns: ['internalid']
+                            }).run().getRange({ start: 0, end: 1 });
+                            if (irRes.length) irId = parseInt(irRes[0].id, 10);
+                        } catch (eIrFind) { log.debug('IR createdfrom lookup skipped', eIrFind.message); }
+                    }
+                    if (!irId) {
                         const ir = record.transform({ fromType: 'purchaseorder', fromId: poId, toType: 'itemreceipt', isDynamic: false });
                         ir.setValue({ fieldId: 'externalid', value: spec.irExtid });
                         const lineCount = ir.getLineCount({ sublistId: 'item' });
@@ -1924,6 +1935,13 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     const lotId = findLotInternalId(spec.lot);
                     if (lotId) {
                         const lot = record.load({ type: 'inventorynumber', id: lotId });
+                        // Source Type is MANDATORY on the lot record — new lots from a
+                        // scripted receipt may not have it yet
+                        try {
+                            if (!lot.getValue({ fieldId: 'custitemnumber_sust_lot_source_type' })) {
+                                lot.setText({ fieldId: 'custitemnumber_sust_lot_source_type', text: 'Purchased' });
+                            }
+                        } catch (eSrc) { log.debug('lot source type skipped', eSrc.message); }
                         lot.setValue({ fieldId: 'custitemnumber_sust_moisture_pct', value: spec.moisture });
                         lot.setValue({ fieldId: 'custitemnumber_sust_contamination_pct', value: spec.contamination });
                         lot.setValue({ fieldId: 'custitemnumber_sust_fiber_content_pct', value: spec.fiber });
