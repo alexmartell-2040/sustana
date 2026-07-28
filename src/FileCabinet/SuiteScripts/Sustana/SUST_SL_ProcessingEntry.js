@@ -153,8 +153,11 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
             statusField.addSelectOption({ value: PROCESSING_STATUS.DRAFT, text: 'Draft' });
             statusField.addSelectOption({ value: PROCESSING_STATUS.IN_PROCESS, text: 'In Process' });
             statusField.addSelectOption({ value: PROCESSING_STATUS.COMPLETED, text: 'Completed' });
-            statusField.defaultValue = PROCESSING_STATUS.DRAFT;
+            // New records default to Completed: save = immediate inventory impact.
+            // Pick Draft/In Process explicitly to stage a run without posting.
+            statusField.defaultValue = isEdit ? PROCESSING_STATUS.DRAFT : PROCESSING_STATUS.COMPLETED;
             statusField.isMandatory = true;
+            statusField.setHelpText({ help: 'Completed posts the Inventory Adjustment on save (consume inputs, create output lots, allocate cost). Draft/In Process stage the run without inventory impact.' });
 
             // Processing Type
             const processTypeField = form.addField({
@@ -165,6 +168,10 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 container: 'custpage_header_group'
             });
             processTypeField.isMandatory = true;
+            try {
+                const defaultTypeId = findListValueId('customlist_sust_process_type', 'Sorting');
+                if (defaultTypeId && !isEdit) processTypeField.defaultValue = defaultTypeId;
+            } catch (eType) { /* leave unset */ }
 
             // Operator
             const operatorField = form.addField({
@@ -282,7 +289,7 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/redirect', 'N/log', 'N/r
                 container: 'custpage_input_group'
             });
             totalInputCostField.setHelpText({
-                help: 'Total $ being allocated across outputs by the cost allocation engine. Leave $0 for Post-Processing deferred-pricing mode — cost flows back from Settlement Completed.'
+                help: 'Total $ allocated across outputs. LEAVE BLANK to auto-derive from inventory cost (item average cost x input lbs) — the zero-touch demo path. Enter an explicit 0 for Post-Processing deferred pricing (Awaiting Cost; cost flows back when the settlement closes). Enter a value to override.'
             });
 
             // v2.1: Allocation Mode — drives cost allocation engine behavior
@@ -727,8 +734,28 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
                 if (params.custpage_tare_actual) {
                     procRec.setValue({ fieldId: 'custrecord_sust_proc_tare_actual_lbs', value: units.toLbs(params.custpage_tare_actual) });
                 }
-                if (params.custpage_total_input_cost) {
-                    procRec.setValue({ fieldId: 'custrecord_sust_proc_total_input_cost', value: parseFloat(params.custpage_total_input_cost) || 0 });
+                // Total Input Cost:
+                //   keyed value  -> used as-is
+                //   BLANK        -> auto-derived from item average cost x input lbs
+                //                   (zero-touch demo path: save = immediate IA)
+                //   explicit 0   -> deferred-pricing path (Awaiting Cost)
+                const rawCost = params.custpage_total_input_cost;
+                if (rawCost !== null && rawCost !== undefined && String(rawCost).trim() !== '') {
+                    procRec.setValue({ fieldId: 'custrecord_sust_proc_total_input_cost', value: parseFloat(rawCost) || 0 });
+                } else {
+                    let derived = 0;
+                    inputRows.forEach(function(row) {
+                        try {
+                            const lk = search.lookupFields({ type: search.Type.ITEM, id: row.itemId, columns: ['averagecost', 'lastpurchaseprice'] });
+                            const unit = parseFloat(lk.averagecost) || parseFloat(lk.lastpurchaseprice) || 0;
+                            derived += row.weightLbs * unit;
+                        } catch (eCost) { log.debug('cost derive skipped', eCost.message); }
+                    });
+                    if (derived > 0) {
+                        procRec.setValue({ fieldId: 'custrecord_sust_proc_total_input_cost', value: Math.round(derived * 100) / 100 });
+                        log.audit('Total Input Cost auto-derived',
+                            '$' + derived.toFixed(2) + ' from item average cost x input lbs (field left blank)');
+                    }
                 }
 
                 // v2.1: Allocation Mode (drives cost allocation engine)
