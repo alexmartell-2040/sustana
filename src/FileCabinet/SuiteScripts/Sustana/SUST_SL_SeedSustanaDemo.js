@@ -155,9 +155,12 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     runSeed(context);
                 }
             } catch (e) {
-                log.error('SUST_SL_SeedSustanaDemo failed', e.message + '\n' + e.stack);
+                log.error('SUST_SL_SeedSustanaDemo failed', errText(e) + '\n' + (e.stack || '(no stack)'));
                 context.response.write({
-                    output: '<h2 style="color:' + COLOR.red + ';">Error</h2><pre>' + esc(e.message) + '</pre>'
+                    output: '<h2 style="color:' + COLOR.red + ';">Seeder Error (top level)</h2>'
+                        + '<pre>name: ' + esc(String((e && e.name) || '(none)'))
+                        + '\nmessage: ' + esc(errText(e))
+                        + '\n\nstack:\n' + esc(String((e && e.stack) || '(no stack)')) + '</pre>'
                 });
             }
         }
