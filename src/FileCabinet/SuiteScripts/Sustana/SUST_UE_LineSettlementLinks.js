@@ -78,6 +78,11 @@ define(['N/search', 'N/url', 'N/runtime', 'N/log', './SUST_Lib_Config'],
                     isIR ? [['custrecord_sust_settlement_item_receipt', 'anyof', txnId]]
                          : [['custrecord_sust_settle_po', 'anyof', txnId]]
                 );
+                // Blanket (weekly/monthly) settlements carry no IR anchor on the
+                // header — this receipt's link to them lives on the slice child.
+                // Resolve slice -> parent so the panel still answers "where's my
+                // settlement?" on aggregated receipts.
+                if (isIR) mergeSliceParents(settlementMap, txnId);
 
                 // Build line-key -> processing id map. Processing records store their source
                 // transaction in custrecord_sust_processing_po (this is the IR when created via the
@@ -180,6 +185,49 @@ define(['N/search', 'N/url', 'N/runtime', 'N/log', './SUST_Lib_Config'],
         }
 
         /**
+         * Merge blanket-settlement links reached via this receipt's slices into
+         * the settlement multi-map. Marked blanket:true for panel labeling.
+         */
+        function mergeSliceParents(map, irId) {
+            try {
+                search.create({
+                    type: 'customrecord_sust_settle_slice',
+                    filters: [['custrecord_sust_slice_ir', 'anyof', irId]],
+                    columns: ['custrecord_sust_slice_settlement', 'custrecord_sust_slice_source_line',
+                        'custrecord_sust_slice_gross_lbs']
+                }).run().each(function(result) {
+                    const parentId = result.getValue('custrecord_sust_slice_settlement');
+                    if (!parentId) return true;
+                    const lineKey = parseInt(result.getValue('custrecord_sust_slice_source_line'), 10) || 1;
+                    if (!map[lineKey]) map[lineKey] = [];
+                    // Skip if the parent is already listed for this line
+                    if (map[lineKey].some(function(e) { return String(e.id) === String(parentId); })) return true;
+                    let status = '', periodKey = '';
+                    try {
+                        const lk = search.lookupFields({
+                            type: 'customrecord_sust_settlement_record', id: parentId,
+                            columns: ['custrecord_sust_settlement_status', 'custrecord_sust_settle_period_key']
+                        });
+                        status = Array.isArray(lk.custrecord_sust_settlement_status) && lk.custrecord_sust_settlement_status.length
+                            ? lk.custrecord_sust_settlement_status[0].text : '';
+                        periodKey = lk.custrecord_sust_settle_period_key || '';
+                    } catch (eLk) { /* labels optional */ }
+                    map[lineKey].push({
+                        id: parentId,
+                        irId: null,
+                        status: status,
+                        periodKey: periodKey,
+                        blanket: true,
+                        sliceGross: parseFloat(result.getValue('custrecord_sust_slice_gross_lbs')) || 0
+                    });
+                    return true;
+                });
+            } catch (e) {
+                log.error('mergeSliceParents', e.toString());
+            }
+        }
+
+        /**
          * Build a { sourceLineKey: recordId } map from a custom-record search.
          */
         function buildMap(recordType, filters, lineFieldId) {
@@ -235,11 +283,13 @@ define(['N/search', 'N/url', 'N/runtime', 'N/log', './SUST_Lib_Config'],
             const body = linkRows.map(function(r) {
                 const settles = r.settles && r.settles.length
                     ? r.settles.map(function(st) {
-                        let label = recLink('customrecord_sust_settlement_record', st.id, 'Settlement');
+                        let label = recLink('customrecord_sust_settlement_record', st.id,
+                            st.blanket ? '&#128257; Blanket Settlement' : 'Settlement');
                         const extras = [];
                         if (st.irId) extras.push(recLink('itemreceipt', st.irId, 'IR'));
                         if (st.status) extras.push(escapeHtml(st.status));
                         if (st.periodKey) extras.push('period ' + escapeHtml(st.periodKey));
+                        if (st.blanket && st.sliceGross) extras.push('this receipt: ' + Math.round(st.sliceGross).toLocaleString() + ' lbs slice');
                         if (extras.length) label += ' <span style="color:#64748b;">(' + extras.join(' · ') + ')</span>';
                         return label;
                     }).join('<br/>')
