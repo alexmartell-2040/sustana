@@ -1886,7 +1886,33 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 }
                 if (existingPoId && existingIrId) {
                     doneCount++;
-                    addRow(section, 'exists', spec.poNum + ' received (lot ' + spec.lot + ')', 'itemreceipt', existingIrId);
+                    // SELF-HEAL: if the blanket settlement was deleted (or this
+                    // receipt's slice is missing), re-append it. Dedup by source
+                    // key makes this a no-op when the slice already exists.
+                    try {
+                        let irDate = new Date();
+                        try {
+                            const irLk = search.lookupFields({ type: 'itemreceipt', id: existingIrId, columns: ['trandate'] });
+                            if (irLk.trandate) irDate = new Date(irLk.trandate);
+                        } catch (eD) { /* today */ }
+                        const rebuild = settlementLib.createOrAppendLineSettlement({
+                            vendorId: vendorId,
+                            tranDate: irDate,
+                            itemReceiptId: existingIrId,
+                            sourceLine: 1,
+                            itemId: wlId,
+                            grossWeight: spec.qty,
+                            recoveryPct: 95,
+                            lotInternalId: findLotInternalId(spec.lot),
+                            lotDetails: [{ lotNumber: spec.lot }],
+                            sourceTag: 'Item Receipt for ' + spec.poNum + ' (rebuild)'
+                        });
+                        addRow(section, rebuild.action === 'skipped' ? 'exists' : 'updated',
+                            spec.poNum + ' received (lot ' + spec.lot + ') - slice ' + rebuild.action
+                            + ' on settlement ' + rebuild.id, 'itemreceipt', existingIrId);
+                    } catch (eHeal) {
+                        addRow(section, 'exists', spec.poNum + ' received (lot ' + spec.lot + ') - slice check failed: ' + errText(eHeal), 'itemreceipt', existingIrId);
+                    }
                     return;
                 }
                 if (processed >= MONTHLY_LOADS_PER_RUN) {
