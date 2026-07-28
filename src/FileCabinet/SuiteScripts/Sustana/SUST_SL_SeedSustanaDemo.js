@@ -638,6 +638,16 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 try { item.setValue({ fieldId: 'custitem_sust_std_bale_lbs', value: spec.stdBaleLbs }); }
                 catch (eBale) { log.debug('std bale weight skipped', eBale.message); }
             }
+            // Units of measure: type 5 = Lbs (all Sustana math is pounds)
+            try {
+                const curUnits = item.getValue({ fieldId: 'unitstype' });
+                if (String(curUnits) !== '5') {
+                    item.setValue({ fieldId: 'unitstype', value: 5 });
+                }
+            } catch (eUnits) {
+                log.audit('Units type not set', (spec.name || '') + ': ' + eUnits.message
+                    + ' (NetSuite blocks units-type changes on items that already have transactions)');
+            }
         }
 
         function ensureGradeItem(ctx, spec, existingId, section) {
