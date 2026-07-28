@@ -309,3 +309,28 @@ describe('settlement cadence - receipt slice child records', () => {
         expect(sliceCreates() - before).toBe(0);
     });
 });
+
+describe('settlement cadence - blanket header (no per-receipt anchors)', () => {
+    test('aggregated settlements carry NO PO/IR/source-line on the header', () => {
+        search._setLookupResult('vendor', 50, {
+            custentity_sust_settlement_cadence: [{ value: '3', text: 'Monthly' }]
+        });
+        const result = lib.createOrAppendLineSettlement(baseParams());
+        const vals = savedValues(result.id);
+        expect(vals.custrecord_sust_settle_po).toBeUndefined();
+        expect(vals.custrecord_sust_settlement_item_receipt).toBeUndefined();
+        expect(vals.custrecord_sust_settle_source_line).toBeUndefined();
+        // period identity + slice tracking are the blanket anchors
+        expect(vals.custrecord_sust_settle_period_key).toBe('2026-07');
+        expect(JSON.parse(vals.custrecord_sust_settle_agg_sources)).toEqual(['ir:300:1']);
+        expect(vals.custrecord_sust_settlement_notes).toContain('aggregated settlement — period 2026-07');
+    });
+
+    test('per-receipt settlements still carry their anchors', () => {
+        const result = lib.createOrAppendLineSettlement(baseParams());
+        const vals = savedValues(result.id);
+        expect(vals.custrecord_sust_settle_po).toBe(200);
+        expect(vals.custrecord_sust_settlement_item_receipt).toBe(300);
+        expect(vals.custrecord_sust_settle_source_line).toBe(1);
+    });
+});

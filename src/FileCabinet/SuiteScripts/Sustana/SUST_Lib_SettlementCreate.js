@@ -449,8 +449,18 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
                 return { id: open.id, action: 'appended', cadence: cadence, periodKey: periodKey };
             }
 
-            // First line of the period — create, then stamp the period identity.
-            const id = createLineSettlement(params);
+            // First line of the period — create as a BLANKET record: no PO/IR/line
+            // anchors on the header (they'd misleadingly reference whichever truck
+            // arrived first). Receipt-level detail lives on the slice children;
+            // the header identity is vendor + period.
+            const blanketParams = Object.assign({}, params, {
+                poId: null,
+                itemReceiptId: null,
+                sourceLine: null,
+                sourceTag: cadence + ' aggregated settlement — period ' + periodKey
+                    + ' (per-receipt detail on the Settlement Receipt Slices)'
+            });
+            const id = createLineSettlement(blanketParams);
             record.submitFields({
                 type: 'customrecord_sust_settlement_record', id: id,
                 values: {

@@ -404,6 +404,25 @@ define(['N/ui/serverWidget', 'N/record', 'N/search', 'N/runtime', 'N/url', 'N/re
                         columns: cols
                     }).run().getRange({ start: 0, end: 1 });
                 }
+                if (!res.length && irId) {
+                    // Aggregated (blanket) settlements carry no IR anchor on the
+                    // header — find the parent through the receipt's slice child.
+                    const slice = search.create({
+                        type: 'customrecord_sust_settle_slice',
+                        filters: [['custrecord_sust_slice_ir', 'anyof', irId]],
+                        columns: ['custrecord_sust_slice_settlement']
+                    }).run().getRange({ start: 0, end: 1 });
+                    if (slice.length) {
+                        const parentId = slice[0].getValue({ name: 'custrecord_sust_slice_settlement' });
+                        if (parentId) {
+                            res = search.create({
+                                type: 'customrecord_sust_settlement_record',
+                                filters: [['internalid', 'anyof', parentId]],
+                                columns: cols
+                            }).run().getRange({ start: 0, end: 1 });
+                        }
+                    }
+                }
                 if (!res.length) {
                     return 'No supplier settlement exists for this lot yet (seeded material, or pricing deferred to '
                         + 'after processing). Inventory, genealogy and audit are complete. '
