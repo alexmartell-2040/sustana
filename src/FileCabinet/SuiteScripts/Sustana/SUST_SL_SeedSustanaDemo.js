@@ -1830,13 +1830,24 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
         // grades the lots (one with a moisture breach), then stages the
         // deductions (moisture penalty + compactor fee + treatment) on the
         // blanket settlement. Everything idempotent by externalid / period.
-        const MONTHLY_SCENARIO = [
-            { poNum: 'PO-10101', extid: EXT_PREFIX + 'PO_MB1', irExtid: EXT_PREFIX + 'IR_MB1', lot: 'WL-MB-001', qty: 24000, moisture: 8,  contamination: 2, fiber: 92, bales: 20 },
-            { poNum: 'PO-10102', extid: EXT_PREFIX + 'PO_MB2', irExtid: EXT_PREFIX + 'IR_MB2', lot: 'WL-MB-002', qty: 20000, moisture: 13, contamination: 3, fiber: 89, bales: 17 }
+        // ─── Group 12: monthly blanket settlement scenario (v2) ──────────────
+        // A realistic month of Fox Valley truckloads: 6 receipts spread across
+        // the month (~250k lbs), built through the REAL pipeline (PO -> receipt
+        // -> settlement UE chain -> blanket monthly settlement + slices).
+        // Governance-safe: processes MAX 2 loads per run — re-run the group
+        // until every load reports done, then deductions stage automatically.
+        const MONTHLY_LOADS = [
+            { poNum: 'PO-10201', extid: EXT_PREFIX + 'PO_M2_1', lot: 'WL-ML-001', qty: 42000, dayOfMonth: 2,  moisture: 8,  contamination: 2, fiber: 92, bales: 35 },
+            { poNum: 'PO-10202', extid: EXT_PREFIX + 'PO_M2_2', lot: 'WL-ML-002', qty: 38500, dayOfMonth: 6,  moisture: 7,  contamination: 2, fiber: 93, bales: 32 },
+            { poNum: 'PO-10203', extid: EXT_PREFIX + 'PO_M2_3', lot: 'WL-ML-003', qty: 44200, dayOfMonth: 10, moisture: 13, contamination: 3, fiber: 88, bales: 37 }, // moisture breach
+            { poNum: 'PO-10204', extid: EXT_PREFIX + 'PO_M2_4', lot: 'WL-ML-004', qty: 40800, dayOfMonth: 15, moisture: 9,  contamination: 6, fiber: 86, bales: 34 }, // contamination breach
+            { poNum: 'PO-10205', extid: EXT_PREFIX + 'PO_M2_5', lot: 'WL-ML-005', qty: 39600, dayOfMonth: 19, moisture: 8,  contamination: 3, fiber: 91, bales: 33 },
+            { poNum: 'PO-10206', extid: EXT_PREFIX + 'PO_M2_6', lot: 'WL-ML-006', qty: 45400, dayOfMonth: 23, moisture: 7,  contamination: 1, fiber: 94, bales: 38 }
         ];
+        const MONTHLY_LOADS_PER_RUN = 2;
 
         function seedMonthlyScenario(ctx, out) {
-            const section = newSection(out, 'Group 12 - Monthly blanket settlement scenario');
+            const section = newSection(out, 'Group 12 - Monthly blanket settlement scenario (v2)');
             const vendorId = resolveVendorId(ctx);
             const wlId = resolveItemId(ctx, 'WL');
             const cinciId = resolveLocationId(ctx, 'CINCINNATI');
@@ -1845,36 +1856,61 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 return;
             }
 
-            // 1. Vendor cadence -> Monthly (the scenario's premise)
+            // Vendor cadence -> Monthly (the scenario premise)
             try {
                 const v = record.load({ type: 'vendor', id: vendorId });
                 if ((v.getText({ fieldId: 'custentity_sust_settlement_cadence' }) || '') !== 'Monthly') {
                     v.setText({ fieldId: 'custentity_sust_settlement_cadence', text: 'Monthly' });
                     v.save({ ignoreMandatoryFields: true });
                     addRow(section, 'updated', 'Vendor ' + VENDOR.name + ' settlement cadence -> Monthly', 'vendor', vendorId);
-                } else {
-                    addRow(section, 'exists', 'Vendor cadence already Monthly', 'vendor', vendorId);
                 }
-            } catch (eCad) {
-                addRow(section, 'error', 'Cadence: ' + errText(eCad));
-            }
+            } catch (eCad) { addRow(section, 'error', 'Cadence: ' + errText(eCad)); }
 
-            // 2. POs + receipts (the receipt saves fire the settlement UE chain)
-            MONTHLY_SCENARIO.forEach(function(spec) {
+            const now = new Date();
+            let processed = 0;
+            let doneCount = 0;
+
+            MONTHLY_LOADS.forEach(function(spec) {
+                // Already fully seeded? (receipt exists for this PO)
+                const existingPoId = findByExternalId('purchaseorder', spec.extid);
+                let existingIrId = null;
+                if (existingPoId) {
+                    try {
+                        const irRes = search.create({
+                            type: 'itemreceipt',
+                            filters: [['createdfrom', 'anyof', existingPoId], 'AND', ['mainline', 'is', 'T']],
+                            columns: ['internalid']
+                        }).run().getRange({ start: 0, end: 1 });
+                        if (irRes.length) existingIrId = parseInt(irRes[0].id, 10);
+                    } catch (eF) { /* treat as not received */ }
+                }
+                if (existingPoId && existingIrId) {
+                    doneCount++;
+                    addRow(section, 'exists', spec.poNum + ' received (lot ' + spec.lot + ')', 'itemreceipt', existingIrId);
+                    return;
+                }
+                if (processed >= MONTHLY_LOADS_PER_RUN) {
+                    addRow(section, 'info', spec.poNum + ' pending - RE-RUN this group to continue (max '
+                        + MONTHLY_LOADS_PER_RUN + ' loads per run for governance)');
+                    return;
+                }
+                processed++;
+
                 try {
-                    let poId = findByExternalId('purchaseorder', spec.extid);
+                    const tranDate = new Date(now.getFullYear(), now.getMonth(), Math.min(spec.dayOfMonth, now.getDate()));
+
+                    let poId = existingPoId;
                     if (!poId) {
                         const po = record.create({ type: 'purchaseorder', isDynamic: true });
                         po.setValue({ fieldId: 'entity', value: vendorId });
                         try { po.setValue({ fieldId: 'subsidiary', value: ctx.usSubId }); } catch (eS) { /* vendor-sourced */ }
                         try { po.setValue({ fieldId: 'location', value: cinciId }); } catch (eL) { /* optional */ }
-                        po.setValue({ fieldId: 'trandate', value: new Date() });
+                        po.setValue({ fieldId: 'trandate', value: tranDate });
                         try { po.setValue({ fieldId: 'tranid', value: spec.poNum }); } catch (eT) { /* numbering */ }
+                        try { po.setValue({ fieldId: 'approvalstatus', value: 2 }); } catch (eA) { /* no approval feature */ }
                         try { po.setText({ fieldId: 'custbody_sust_pricing_timing', text: 'Determined on Arrival' }); } catch (eP) { /* optional */ }
-                        po.setValue({ fieldId: 'memo', value: 'Sustana demo - monthly settlement scenario load ' + spec.lot });
+                        po.setValue({ fieldId: 'memo', value: 'Sustana demo - monthly load ' + spec.lot });
                         po.setValue({ fieldId: 'externalid', value: spec.extid });
-                        // Must be Approved or the receipt transform throws INVALID_INITIALIZE_REF
-                        try { po.setValue({ fieldId: 'approvalstatus', value: 2 }); } catch (eApp) { log.debug('approvalstatus skipped', eApp.message); }
                         po.selectNewLine({ sublistId: 'item' });
                         po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'item', value: wlId });
                         po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'quantity', value: spec.qty });
@@ -1882,66 +1918,40 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                         try { po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'location', value: cinciId }); } catch (eLL) { /* optional */ }
                         po.commitLine({ sublistId: 'item' });
                         poId = po.save({ ignoreMandatoryFields: true, enableSourcing: true });
-                        addRow(section, 'created', spec.poNum + ' - ' + commasNum(spec.qty) + ' lbs White Ledger', 'purchaseorder', poId);
-                    } else {
-                        addRow(section, 'exists', spec.poNum + ' already seeded', 'purchaseorder', poId);
+                        addRow(section, 'created', spec.poNum + ' - ' + commasNum(spec.qty) + ' lbs White Ledger, '
+                            + (tranDate.getMonth() + 1) + '/' + tranDate.getDate() + ' (auto-approved)', 'purchaseorder', poId);
                     }
+                    // Belt-and-braces approval (approval workflows can override the create-time value)
+                    try { record.submitFields({ type: 'purchaseorder', id: poId, values: { approvalstatus: 2 } }); } catch (eAp) { /* ok */ }
 
-                    // Ensure the PO is Approved before transforming (covers POs
-                    // created by the earlier run that saved as Pending Approval)
-                    try {
-                        record.submitFields({ type: 'purchaseorder', id: poId, values: { approvalstatus: 2 } });
-                    } catch (eAppr) { log.debug('PO approve skipped', eAppr.message); }
-
-                    let irId = findByExternalId('itemreceipt', spec.irExtid);
-                    if (!irId) {
-                        // Fallback dedup: any receipt already created from this PO
+                    const ir = record.transform({ fromType: 'purchaseorder', fromId: poId, toType: 'itemreceipt', isDynamic: false });
+                    ir.setValue({ fieldId: 'trandate', value: tranDate });
+                    const lineCount = ir.getLineCount({ sublistId: 'item' });
+                    for (let i = 0; i < lineCount; i++) {
+                        ir.setSublistValue({ sublistId: 'item', fieldId: 'itemreceive', line: i, value: true });
+                        ir.setSublistValue({ sublistId: 'item', fieldId: 'quantity', line: i, value: spec.qty });
                         try {
-                            const irRes = search.create({
-                                type: 'itemreceipt',
-                                filters: [['createdfrom', 'anyof', poId], 'AND', ['mainline', 'is', 'T']],
-                                columns: ['internalid']
-                            }).run().getRange({ start: 0, end: 1 });
-                            if (irRes.length) irId = parseInt(irRes[0].id, 10);
-                        } catch (eIrFind) { log.debug('IR createdfrom lookup skipped', eIrFind.message); }
+                            ir.setSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_gross_weight', line: i, value: spec.qty + 38500 });
+                            ir.setSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_tare_weight', line: i, value: 38500 });
+                            ir.setSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_net_weight', line: i, value: spec.qty });
+                        } catch (eCols) { /* optional cols */ }
+                        const detail = ir.getSublistSubrecord({ sublistId: 'item', fieldId: 'inventorydetail', line: i });
+                        detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'receiptinventorynumber', line: 0, value: spec.lot });
+                        detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'quantity', line: 0, value: spec.qty });
                     }
-                    if (!irId) {
-                        const ir = record.transform({ fromType: 'purchaseorder', fromId: poId, toType: 'itemreceipt', isDynamic: false });
-                        ir.setValue({ fieldId: 'externalid', value: spec.irExtid });
-                        const lineCount = ir.getLineCount({ sublistId: 'item' });
-                        for (let i = 0; i < lineCount; i++) {
-                            ir.setSublistValue({ sublistId: 'item', fieldId: 'itemreceive', line: i, value: true });
-                            ir.setSublistValue({ sublistId: 'item', fieldId: 'quantity', line: i, value: spec.qty });
-                            try {
-                                ir.setSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_gross_weight', line: i, value: spec.qty + 38500 });
-                                ir.setSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_tare_weight', line: i, value: 38500 });
-                                ir.setSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_net_weight', line: i, value: spec.qty });
-                            } catch (eCols) { log.debug('weight cols skipped', eCols.message); }
-                            const detail = ir.getSublistSubrecord({ sublistId: 'item', fieldId: 'inventorydetail', line: i });
-                            detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'receiptinventorynumber', line: 0, value: spec.lot });
-                            detail.setSublistValue({ sublistId: 'inventoryassignment', fieldId: 'quantity', line: 0, value: spec.qty });
-                        }
-                        // This save fires the whole chain: settlement auto-create with
-                        // Monthly cadence -> blanket settlement + slice, vendor-lot
-                        // bridge, landed cost.
-                        irId = ir.save({ ignoreMandatoryFields: true });
-                        addRow(section, 'created', 'Item Receipt for ' + spec.poNum + ' - lot ' + spec.lot
-                            + ' (settlement UE chain fired)', 'itemreceipt', irId);
-                    } else {
-                        addRow(section, 'exists', 'Receipt for ' + spec.poNum + ' already seeded', 'itemreceipt', irId);
-                    }
+                    const irId = ir.save({ ignoreMandatoryFields: true });
+                    addRow(section, 'created', 'Receipt for ' + spec.poNum + ' - lot ' + spec.lot
+                        + ' (blanket settlement chain fired)', 'itemreceipt', irId);
 
-                    // Grade the lot (WL-MB-002 breaches the 12% moisture threshold)
+                    // Grade the lot (Source Type is mandatory on lot saves)
                     const lotId = findLotInternalId(spec.lot);
                     if (lotId) {
                         const lot = record.load({ type: 'inventorynumber', id: lotId });
-                        // Source Type is MANDATORY on the lot record — new lots from a
-                        // scripted receipt may not have it yet
                         try {
                             if (!lot.getValue({ fieldId: 'custitemnumber_sust_lot_source_type' })) {
                                 lot.setText({ fieldId: 'custitemnumber_sust_lot_source_type', text: 'Purchased' });
                             }
-                        } catch (eSrc) { log.debug('lot source type skipped', eSrc.message); }
+                        } catch (eSrc) { /* optional */ }
                         lot.setValue({ fieldId: 'custitemnumber_sust_moisture_pct', value: spec.moisture });
                         lot.setValue({ fieldId: 'custitemnumber_sust_contamination_pct', value: spec.contamination });
                         lot.setValue({ fieldId: 'custitemnumber_sust_fiber_content_pct', value: spec.fiber });
@@ -1952,68 +1962,67 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                             if (st === '' || st === 'Received') lot.setText({ fieldId: 'custitemnumber_sust_lot_status', text: 'Yard' });
                         } catch (eSt) { /* optional */ }
                         lot.save();
-                        addRow(section, 'updated', 'Lot ' + spec.lot + ' graded - M ' + spec.moisture + '% / C ' + spec.contamination + '%'
-                            + (spec.moisture > 12 ? ' (MOISTURE BREACH - drives the deduction)' : ''), 'inventorynumber', lotId);
+                        const breach = spec.moisture > 12 ? ' (MOISTURE BREACH)' : (spec.contamination > 5 ? ' (CONTAMINATION BREACH)' : '');
+                        addRow(section, 'updated', 'Lot ' + spec.lot + ' graded - M ' + spec.moisture + '% / C ' + spec.contamination + '%' + breach, 'inventorynumber', lotId);
                     }
+                    doneCount++;
                 } catch (e) {
                     addRow(section, 'error', spec.poNum + ': ' + errText(e));
                     log.error('seedMonthlyScenario', spec.poNum + ': ' + errText(e) + '\n' + (e && e.stack));
                 }
             });
 
-            // 3. Deductions on the blanket settlement the receipts just built
+            if (doneCount < MONTHLY_LOADS.length) {
+                addRow(section, 'info', doneCount + ' of ' + MONTHLY_LOADS.length
+                    + ' loads seeded - RE-RUN this group (alone) to continue. Deductions stage on the final run.');
+                return;
+            }
+
+            // All loads in — stage the month's deductions on the blanket settlement
             try {
-                const bothReceipts = MONTHLY_SCENARIO.every(function(spec) {
-                    return !!findByExternalId('itemreceipt', spec.irExtid);
-                });
-                if (!bothReceipts) {
-                    addRow(section, 'error', 'Deductions NOT staged - one or both scenario receipts are missing (see rows above). Fix the receipts first, then re-run this group.');
-                    return;
-                }
                 const periodKey = settlementLib.periodKeyFor('Monthly', new Date());
                 const open = settlementLib.findOpenPeriodSettlement(vendorId, periodKey);
                 if (!open) {
-                    addRow(section, 'error', 'No open blanket settlement found for period ' + periodKey
-                        + ' - check the receipt rows above for UE errors');
+                    addRow(section, 'error', 'All loads received but no open blanket settlement found for ' + periodKey
+                        + ' - check receipt rows for UE errors');
                     return;
                 }
                 const rec = record.load({ type: 'customrecord_sust_settlement_record', id: open.id });
-                const alreadyStaged = (rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '').indexOf('[SUSTDEMO MB DEDUCTIONS]') !== -1;
-                if (alreadyStaged) {
-                    addRow(section, 'exists', 'Blanket settlement ' + periodKey + ' already carries the scenario deductions',
+                if ((rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '').indexOf('[SUSTDEMO M2 DEDUCTIONS]') !== -1) {
+                    addRow(section, 'exists', 'Blanket settlement ' + periodKey + ' already carries the month-end deductions',
                         'customrecord_sust_settlement_record', open.id);
                     return;
                 }
-                const netLbs = parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_lbs' })) || 0;
                 const grossValue = parseFloat(rec.getValue({ fieldId: 'custrecord_sust_settlement_net_value' })) || 0;
-                // Moisture: WL-MB-002 at 13% vs 12% threshold = 1 excess pt on its net lbs
-                const breachNet = 20000 * 0.95;
-                const moisturePenalty = Math.round(breachNet * 0.0025 * 1 * 100) / 100; // $47.50
-                const compactorFee = 75;
+                const moistureNet = 44200 * 0.95;   // WL-ML-003, 13% vs 12% = 1 pt
+                const contamNet = 40800 * 0.95;     // WL-ML-004, 6% vs 5% = 1 pt
+                const moisturePenalty = Math.round(moistureNet * 0.0025 * 100) / 100;  // ≈ $104.98
+                const contamPenalty = Math.round(contamNet * 0.0030 * 100) / 100;      // ≈ $116.28
+                const compactorFee = 150;  // 2 compactor pickups @ $75
                 const treatment = 150;
-                const deductions = moisturePenalty + compactorFee + treatment - 150; // treatment tracked separately
-                const netValue = grossValue - moisturePenalty - compactorFee - treatment;
+                const netValue = grossValue - moisturePenalty - contamPenalty - compactorFee - treatment;
 
                 rec.setValue({ fieldId: 'custrecord_sust_settlement_gross_value', value: grossValue });
-                rec.setValue({ fieldId: 'custrecord_sust_settlement_penalties', value: moisturePenalty + compactorFee });
+                rec.setValue({ fieldId: 'custrecord_sust_settlement_penalties', value: moisturePenalty + contamPenalty + compactorFee });
                 rec.setValue({ fieldId: 'custrecord_sust_settlement_treatment', value: treatment });
                 rec.setValue({ fieldId: 'custrecord_sust_settlement_net_value', value: netValue });
                 rec.setValue({ fieldId: 'custrecord_sust_settlement_balance_due', value: netValue });
                 rec.setValue({
                     fieldId: 'custrecord_sust_settlement_notes',
                     value: ((rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '')
-                        + '\n[SUSTDEMO MB DEDUCTIONS] Moisture 13% vs 12% on WL-MB-002 (1 pt x $0.0025/lb x ' + commasNum(breachNet)
-                        + ' lbs = $' + moisturePenalty.toFixed(2) + ') + compactor fee $' + compactorFee.toFixed(2)
-                        + ' + treatment $' + treatment.toFixed(2) + '. Gross $' + grossValue.toFixed(2)
-                        + ' -> net $' + netValue.toFixed(2) + '.').substring(0, 3900)
+                        + '\n[SUSTDEMO M2 DEDUCTIONS] Month-end: moisture (WL-ML-003, 1 pt x $0.0025/lb) $' + moisturePenalty.toFixed(2)
+                        + ' + contamination (WL-ML-004, 1 pt x $0.0030/lb) $' + contamPenalty.toFixed(2)
+                        + ' + compactor fees (2 pickups) $' + compactorFee.toFixed(2)
+                        + ' + treatment $' + treatment.toFixed(2)
+                        + '. Gross $' + grossValue.toFixed(2) + ' -> net $' + netValue.toFixed(2) + '.').substring(0, 3900)
                 });
                 rec.save();
 
-                const penSpecs = [
-                    { element: 'Moisture %', actual: 13, threshold: 12, excess: 1, rate: 0.0025, amount: moisturePenalty },
-                    { element: 'Other',      actual: 0,  threshold: 0,  excess: 0, rate: compactorFee, amount: compactorFee }
-                ];
-                penSpecs.forEach(function(ps) {
+                [
+                    { element: 'Moisture %',      actual: 13, threshold: 12, excess: 1, rate: 0.0025, amount: moisturePenalty },
+                    { element: 'Contamination %', actual: 6,  threshold: 5,  excess: 1, rate: 0.0030, amount: contamPenalty },
+                    { element: 'Other',           actual: 0,  threshold: 0,  excess: 0, rate: 75,     amount: compactorFee }
+                ].forEach(function(ps) {
                     const pen = record.create({ type: 'customrecord_sust_penalty_detail' });
                     pen.setValue({ fieldId: 'custrecord_sust_penalty_settlement', value: open.id });
                     pen.setText({ fieldId: 'custrecord_sust_penalty_detail_element', text: ps.element });
@@ -2025,10 +2034,9 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     pen.save();
                 });
 
-                addRow(section, 'created', 'Blanket settlement ' + periodKey + ' - gross $' + grossValue.toFixed(2)
-                    + ' - moisture $' + moisturePenalty.toFixed(2) + ' - compactor $' + compactorFee.toFixed(2)
-                    + ' - treatment $' + treatment.toFixed(2) + ' = net $' + netValue.toFixed(2)
-                    + ' (2 receipt slices, blanket header, Draft - ready for the close demo)',
+                addRow(section, 'created', 'Blanket settlement ' + periodKey + ' complete - 6 truckloads, gross $' + grossValue.toFixed(2)
+                    + ' - deductions $' + (moisturePenalty + contamPenalty + compactorFee + treatment).toFixed(2)
+                    + ' = net $' + netValue.toFixed(2) + ' (Draft - ready for the close demo)',
                     'customrecord_sust_settlement_record', open.id);
             } catch (e) {
                 addRow(section, 'error', 'Deductions: ' + errText(e));
