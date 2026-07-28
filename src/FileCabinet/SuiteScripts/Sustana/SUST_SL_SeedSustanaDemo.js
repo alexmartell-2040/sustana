@@ -276,17 +276,33 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             addRow(preSection, 'info', US_SUB_NAME + ' - subsidiary id ' + pre.usId, 'subsidiary', pre.usId);
             addRow(preSection, 'info', CA_SUB_NAME + ' - subsidiary id ' + pre.caId, 'subsidiary', pre.caId);
 
-            if (checked('custpage_grp_config'))    seedConfig(ctx, out);
-            if (checked('custpage_grp_locations')) seedLocations(ctx, out);
-            if (checked('custpage_grp_items'))     seedItems(ctx, out);
-            if (checked('custpage_grp_entities'))  seedEntities(ctx, out);
-            if (checked('custpage_grp_prices'))    seedIndexPrices(ctx, out);
-            if (checked('custpage_grp_schedules')) seedSchedules(ctx, out);
-            if (checked('custpage_grp_po'))        seedOpenPO(ctx, out);
-            if (checked('custpage_grp_onhand'))    seedOnHandLots(ctx, out);
-            if (checked('custpage_grp_planning'))  seedPlanning(ctx, out);
-            if (checked('custpage_grp_templates')) seedItemOutputTemplates(ctx, out);
-            if (checked('custpage_grp_settlements')) seedSampleSettlements(ctx, out);
+            // Every group is individually guarded: one group blowing up (even with
+            // a null-message Java error) can no longer kill the whole run — the
+            // results page renders with an error section naming the group + stack.
+            const GROUP_FNS = [
+                ['custpage_grp_config',      'Group 1 - Config',            seedConfig],
+                ['custpage_grp_locations',   'Group 2 - Locations',         seedLocations],
+                ['custpage_grp_items',       'Group 3 - Items',             seedItems],
+                ['custpage_grp_entities',    'Group 4 - Entities',          seedEntities],
+                ['custpage_grp_prices',      'Group 5 - Index prices',      seedIndexPrices],
+                ['custpage_grp_schedules',   'Group 6 - Schedules',         seedSchedules],
+                ['custpage_grp_po',          'Group 7 - Open PO',           seedOpenPO],
+                ['custpage_grp_onhand',      'Group 8 - On-hand lots',      seedOnHandLots],
+                ['custpage_grp_planning',    'Group 9 - Planning',          seedPlanning],
+                ['custpage_grp_templates',   'Group 10 - Output templates', seedItemOutputTemplates],
+                ['custpage_grp_settlements', 'Group 11 - Settlements',      seedSampleSettlements]
+            ];
+            GROUP_FNS.forEach(function(g) {
+                if (!checked(g[0])) return;
+                try {
+                    g[2](ctx, out);
+                } catch (e) {
+                    const sec = newSection(out, g[1] + ' — CRASHED');
+                    addRow(sec, 'error', 'Uncaught error in ' + g[1] + ': ' + errText(e));
+                    addRow(sec, 'error', 'Stack: ' + String((e && e.stack) || '(no stack)').substring(0, 900));
+                    log.error('Seed group crashed', g[1] + ': ' + errText(e) + '\n' + (e && e.stack));
+                }
+            });
 
             context.response.write({ output: resultsHtml(out) });
         }
