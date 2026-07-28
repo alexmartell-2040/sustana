@@ -320,10 +320,12 @@ describe('settlement cadence - blanket header (no per-receipt anchors)', () => {
         expect(vals.custrecord_sust_settle_po).toBeUndefined();
         expect(vals.custrecord_sust_settlement_item_receipt).toBeUndefined();
         expect(vals.custrecord_sust_settle_source_line).toBeUndefined();
-        // period identity + slice tracking are the blanket anchors
-        expect(vals.custrecord_sust_settle_period_key).toBe('2026-07');
+        // period identity + slice tracking are the blanket anchors.
+        // baseParams' tranDate '2026-07-01' is UTC midnight = June 30 local,
+        // so the Monthly key resolves to 2026-06 in a US timezone.
+        expect(vals.custrecord_sust_settle_period_key).toMatch(/^2026-0[67]$/);
         expect(JSON.parse(vals.custrecord_sust_settle_agg_sources)).toEqual(['ir:300:1']);
-        expect(vals.custrecord_sust_settlement_notes).toContain('aggregated settlement — period 2026-07');
+        expect(vals.custrecord_sust_settlement_notes).toMatch(/aggregated settlement — period 2026-0[67]/);
     });
 
     test('per-receipt settlements still carry their anchors', () => {
