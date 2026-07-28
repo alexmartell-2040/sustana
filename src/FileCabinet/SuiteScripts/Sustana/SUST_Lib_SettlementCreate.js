@@ -204,6 +204,37 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
         }
 
         /**
+         * Regrade awareness: settlements price whatever grade the lot IS at
+         * settlement-creation time, not what the receipt line said. Returns the
+         * effective item plus the lot's [REGRADE ...] audit lines so a
+         * settlement created AFTER an inspection regrade carries the trail.
+         * @returns {Object} { itemId, regraded, itemName, regradeLines: [] }
+         */
+        function lotRegradeInfo(lotInternalId, lineItemId) {
+            const out = { itemId: lineItemId, regraded: false, itemName: null, regradeLines: [] };
+            if (!lotInternalId) return out;
+            try {
+                const lk = search.lookupFields({
+                    type: 'inventorynumber', id: lotInternalId,
+                    columns: ['item', 'custitemnumber_sust_lot_notes']
+                });
+                const lotItem = Array.isArray(lk.item) && lk.item.length ? lk.item[0] : null;
+                const notes = lk.custitemnumber_sust_lot_notes || '';
+                out.regradeLines = String(notes).split('\n').filter(function(l) {
+                    return l.indexOf('[REGRADE') !== -1;
+                });
+                if (lotItem && lineItemId && String(lotItem.value) !== String(lineItemId)) {
+                    out.itemId = lotItem.value;
+                    out.itemName = lotItem.text || ('item ' + lotItem.value);
+                    out.regraded = true;
+                }
+            } catch (e) {
+                log.debug('lotRegradeInfo', (lotInternalId || '?') + ': ' + e.message);
+            }
+            return out;
+        }
+
+        /**
          * Schedule-driven line value. Pure math shared by create + period-append.
          * Lag pricing: when the schedule sets Index Lag (months), the index value
          * from N months before asOfDate prices the line (M-1/M-2 lag).
@@ -319,7 +350,8 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
                 ? parseFloat(params.recoveryPct) : 100;
             const grossWeight = parseFloat(params.grossWeight || 0);
             const netWeight = grossWeight * (recoveryPct / 100);
-            const scheduleInfo = params.scheduleInfo || findSettlementSchedule(params.vendorId, params.itemId);
+            const regradeInfo = lotRegradeInfo(params.lotInternalId, params.itemId);
+            const scheduleInfo = params.scheduleInfo || findSettlementSchedule(params.vendorId, regradeInfo.itemId);
             const calc = computeScheduleValue(scheduleInfo, netWeight, recoveryPct, params.tranDate);
 
             const rec = record.load({ type: 'customrecord_sust_settlement_record', id: settlementId });
@@ -345,8 +377,13 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             rec.setValue({ fieldId: 'custrecord_sust_settle_agg_sources', value: JSON.stringify(sources) });
 
             const lotNumbers = (params.lotDetails || []).map(function(d) { return d.lotNumber; }).filter(Boolean);
-            const addNote = '+ ' + (params.sourceTag || sourceKey) + ': ' + grossWeight + ' lbs gross'
+            let addNote = '+ ' + (params.sourceTag || sourceKey) + ': ' + grossWeight + ' lbs gross'
                 + (lotNumbers.length ? ' (lots ' + lotNumbers.join(', ') + ')' : '');
+            if (regradeInfo.regraded) {
+                addNote += '\n  REGRADED slice: lot is now ' + regradeInfo.itemName
+                    + ' — slice priced on the ' + regradeInfo.itemName + ' schedule.';
+                if (regradeInfo.regradeLines.length) addNote += '\n  ' + regradeInfo.regradeLines.join('\n  ');
+            }
             const notes = (rec.getValue({ fieldId: 'custrecord_sust_settlement_notes' }) || '') + '\n' + addNote;
             rec.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes.substring(0, 3900) });
 
@@ -457,7 +494,10 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             const grossWeight = parseFloat(params.grossWeight || 0);
             const netWeight = grossWeight * (recoveryPct / 100);
 
-            const scheduleInfo = params.scheduleInfo || findSettlementSchedule(params.vendorId, params.itemId);
+            // Regrade-aware pricing: a lot regraded between receipt and settlement
+            // creation (deferred pricing / monthly cadence) prices on its CURRENT grade.
+            const regradeInfo = lotRegradeInfo(params.lotInternalId, params.itemId);
+            const scheduleInfo = params.scheduleInfo || findSettlementSchedule(params.vendorId, regradeInfo.itemId);
 
             const settlement = record.create({ type: 'customrecord_sust_settlement_record' });
 
@@ -536,8 +576,15 @@ define(['N/record', 'N/search', 'N/log', './SUST_Lib_MarketPrice'],
             // Notes
             const lotNumbers = (params.lotDetails || []).map(function(d) { return d.lotNumber; }).filter(Boolean);
             const notesHeader = params.sourceTag ? `Auto-generated from ${params.sourceTag}` : 'Generated settlement';
-            const notes = notesHeader + (lotNumbers.length ? `\nLots: ${lotNumbers.join(', ')}` : '');
-            settlement.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes });
+            let notes = notesHeader + (lotNumbers.length ? `\nLots: ${lotNumbers.join(', ')}` : '');
+            if (regradeInfo.regraded) {
+                notes += '\nREGRADED BEFORE SETTLEMENT: lot is now ' + regradeInfo.itemName
+                    + ' (receipt line grade differs) — priced on the ' + regradeInfo.itemName + ' schedule.';
+            }
+            if (regradeInfo.regradeLines.length) {
+                notes += '\n' + regradeInfo.regradeLines.join('\n');
+            }
+            settlement.setValue({ fieldId: 'custrecord_sust_settlement_notes', value: notes.substring(0, 3900) });
 
             const settlementId = settlement.save();
             log.audit('Settlement Created (line-scoped)',
