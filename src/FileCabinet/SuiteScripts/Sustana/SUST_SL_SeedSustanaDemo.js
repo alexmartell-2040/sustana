@@ -92,8 +92,9 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
         // Six first-of-month observations, Feb 2026 – Jul 2026.
         const INDEX_START = { year: 2026, month: 1 }; // month is 0-based → Feb
         const INDEX_PRICES = [
-            { sourceText: 'RISI SOP',          values: [185, 190, 195, 200, 205, 200] },
-            { sourceText: 'RISI White Ledger', values: [310, 315, 320, 318, 325, 330] }
+            { sourceText: 'RISI SOP',                values: [185, 190, 195, 200, 205, 200] },
+            { sourceText: 'RISI White Ledger',       values: [310, 315, 320, 318, 325, 330] },
+            { sourceText: 'RISI Mixed Office Paper', values: [140, 142, 145, 143, 148, 150] }
         ];
 
         // Yard variety: lots across Buffalo/St Joseph with mixed statuses,
@@ -881,6 +882,25 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             } else {
                 addRow(section, 'error', 'Supplier schedule skipped - missing '
                     + missingList([[vendorId, 'vendor (run the Entities group)'], [wlId, 'White Ledger item (run the Items group)']]));
+            }
+
+            // MOP purchase schedule: the target when a WL lot is regraded to
+            // Mixed Office Paper — the regrade/settlement re-price lands here.
+            const mopId = resolveItemId(ctx, 'MOP');
+            if (vendorId && mopId) {
+                ensureSchedule({
+                    label: 'Supplier schedule: ' + VENDOR.name + ' / Mixed Office Paper - Purchase, % of Index (100% of RISI Mixed Office Paper - $0.0075/lb)',
+                    entityField: 'custrecord_sust_schedule_vendor',
+                    entityId: vendorId,
+                    itemId: mopId,
+                    direction: 'Purchase',
+                    marketRef: 'RISI Mixed Office Paper',
+                    marketPct: 100,
+                    marketAdj: -0.0075
+                }, section);
+            } else {
+                addRow(section, 'error', 'MOP supplier schedule skipped - missing '
+                    + missingList([[vendorId, 'vendor (run the Entities group)'], [mopId, 'Mixed Office Paper item (run the Items group)']]));
             }
 
             if (customerId && sopId) {
