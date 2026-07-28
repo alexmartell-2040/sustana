@@ -1873,6 +1873,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                         try { po.setText({ fieldId: 'custbody_sust_pricing_timing', text: 'Determined on Arrival' }); } catch (eP) { /* optional */ }
                         po.setValue({ fieldId: 'memo', value: 'Sustana demo - monthly settlement scenario load ' + spec.lot });
                         po.setValue({ fieldId: 'externalid', value: spec.extid });
+                        // Must be Approved or the receipt transform throws INVALID_INITIALIZE_REF
+                        try { po.setValue({ fieldId: 'approvalstatus', value: 2 }); } catch (eApp) { log.debug('approvalstatus skipped', eApp.message); }
                         po.selectNewLine({ sublistId: 'item' });
                         po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'item', value: wlId });
                         po.setCurrentSublistValue({ sublistId: 'item', fieldId: 'quantity', value: spec.qty });
@@ -1884,6 +1886,12 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     } else {
                         addRow(section, 'exists', spec.poNum + ' already seeded', 'purchaseorder', poId);
                     }
+
+                    // Ensure the PO is Approved before transforming (covers POs
+                    // created by the earlier run that saved as Pending Approval)
+                    try {
+                        record.submitFields({ type: 'purchaseorder', id: poId, values: { approvalstatus: 2 } });
+                    } catch (eAppr) { log.debug('PO approve skipped', eAppr.message); }
 
                     let irId = findByExternalId('itemreceipt', spec.irExtid);
                     if (!irId) {
@@ -1937,6 +1945,13 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
 
             // 3. Deductions on the blanket settlement the receipts just built
             try {
+                const bothReceipts = MONTHLY_SCENARIO.every(function(spec) {
+                    return !!findByExternalId('itemreceipt', spec.irExtid);
+                });
+                if (!bothReceipts) {
+                    addRow(section, 'error', 'Deductions NOT staged - one or both scenario receipts are missing (see rows above). Fix the receipts first, then re-run this group.');
+                    return;
+                }
                 const periodKey = settlementLib.periodKeyFor('Monthly', new Date());
                 const open = settlementLib.findOpenPeriodSettlement(vendorId, periodKey);
                 if (!open) {
