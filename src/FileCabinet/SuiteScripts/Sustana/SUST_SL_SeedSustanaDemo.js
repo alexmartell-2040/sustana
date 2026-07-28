@@ -1188,6 +1188,22 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             seedYardVarietyLots(ctx, section);
         }
 
+        /** Human-readable error text even when e.message is a null Java object. */
+        function errText(e) {
+            try {
+                const parts = [];
+                if (e && e.name && String(e.name).indexOf('ScriptNullObjectAdapter') === -1) parts.push(String(e.name));
+                if (e && e.message && String(e.message).indexOf('ScriptNullObjectAdapter') === -1) parts.push(String(e.message));
+                if (!parts.length && e && e.toString && String(e.toString()).indexOf('ScriptNullObjectAdapter') === -1) parts.push(String(e.toString()));
+                if (!parts.length) {
+                    try { parts.push(JSON.stringify(e)); } catch (eJson) { parts.push('unidentifiable NetSuite error (null message)'); }
+                }
+                return parts.join(': ');
+            } catch (eFmt) {
+                return 'unidentifiable NetSuite error';
+            }
+        }
+
         /**
          * Multi-site yard lots (one IA per site) with mixed statuses, quality,
          * and received-date ages — populates the Yard Operations Dashboard's
@@ -1243,8 +1259,12 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                     addRow(section, 'created', 'Yard variety adjustment - ' + lines.length + ' lots at ' + siteKey, 'inventoryadjustment', iaId);
                     lines.forEach(function(entry) { updateYardVarietyLot(entry.spec, section); });
                 } catch (e) {
-                    addRow(section, 'error', 'Yard lots at ' + siteKey + ': ' + e.message);
-                    log.error('seedYardVarietyLots', siteKey + ': ' + e.message);
+                    const msg = errText(e);
+                    addRow(section, 'error', 'Yard lots at ' + siteKey + ': ' + msg
+                        + (siteKey === 'LACHINE'
+                            ? ' — Lachine posts on the CA subsidiary; if the IA account or items are US-only this site is expected to skip. US sites are unaffected.'
+                            : ''));
+                    log.error('seedYardVarietyLots', siteKey + ': ' + msg + ' | raw: ' + e);
                 }
             });
         }
@@ -1272,8 +1292,8 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
                 addRow(section, 'updated', 'Lot ' + spec.lot + ' - ' + spec.status + ', received ' + spec.daysAgo + 'd ago'
                     + (spec.quality ? '' : ' (ungraded - exception demo)'), 'inventorynumber', lotId);
             } catch (e) {
-                addRow(section, 'error', 'Lot ' + spec.lot + ': ' + e.message);
-                log.error('updateYardVarietyLot', spec.lot + ': ' + e.message);
+                addRow(section, 'error', 'Lot ' + spec.lot + ': ' + errText(e));
+                log.error('updateYardVarietyLot', spec.lot + ': ' + errText(e));
             }
         }
 
