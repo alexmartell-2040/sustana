@@ -112,27 +112,32 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
             // 4. Build the page.
             const form = serverWidget.createForm({ title: 'Sustana Recovery — Yard Operations Dashboard' });
 
-            addInline(form, 'custpage_banner', banner());
-            addInline(form, 'custpage_asof', renderAsOf());
-            addInline(form, 'custpage_tiles', renderTiles({
-                openLbs: openLbs,
-                onHandLbs: onHandLbs,
-                outLbs: outLbs,
-                netLbs: netLbs,
-                poCount: po.rows.length,
-                soCount: so.rows.length,
-                onHandCount: onHand.length,
-                exceptionCount: yard.rows.filter(function(r) { return r.exceptions.length > 0; }).length
-            }));
-            addInline(form, 'custpage_site_selector', renderSiteSelector(siteOptions, siteFilter, siteName));
-            addInline(form, 'custpage_charts', renderCharts(yard, onHand));
-            addInline(form, 'custpage_yard_matrix', renderYardMatrix(yard));
-            addInline(form, 'custpage_yard_detail', renderYardDetail(yard));
-            addInline(form, 'custpage_wip', renderWipTable(wip));
-            addInline(form, 'custpage_po', renderPoTable(po, openLbs));
-            addInline(form, 'custpage_so', renderSoTable(so, outLbs));
-            addInline(form, 'custpage_onhand', renderOnHandTable(onHand, onHandLbs));
-            addInline(form, 'custpage_notes', notes(sub, po.mode));
+            // Single INLINEHTML field: multiple fields get flowed into NetSuite's
+            // 2-3 column form layout — one field keeps the dashboard full-width.
+            const page = [
+                banner(),
+                renderAsOf(),
+                renderTiles({
+                    openLbs: openLbs,
+                    onHandLbs: onHandLbs,
+                    outLbs: outLbs,
+                    netLbs: netLbs,
+                    poCount: po.rows.length,
+                    soCount: so.rows.length,
+                    onHandCount: onHand.length,
+                    exceptionCount: yard.rows.filter(function(r) { return r.exceptions.length > 0; }).length
+                }),
+                renderSiteSelector(siteOptions, siteFilter, siteName),
+                renderCharts(yard, onHand),
+                renderYardMatrix(yard),
+                renderYardDetail(yard),
+                renderWipTable(wip),
+                renderPoTable(po, openLbs),
+                renderSoTable(so, outLbs),
+                renderOnHandTable(onHand, onHandLbs),
+                notes(sub, po.mode)
+            ].join('');
+            addInline(form, 'custpage_dashboard', '<div style="max-width:1400px;">' + page + '</div>');
 
             context.response.writePage(form);
         }
@@ -579,14 +584,21 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
 
         /** Distinct sites present in yard + WIP data, for the site selector. */
         function collectSites(yardRows, wipRows) {
-            const seen = {};
-            const sites = [];
-            (yardRows || []).concat(wipRows || []).forEach(function(r) {
-                if (r.siteId && !seen[r.siteId]) {
-                    seen[r.siteId] = true;
-                    sites.push({ id: r.siteId, name: r.site });
-                }
+            const tons = {};
+            const names = {};
+            (yardRows || []).forEach(function(r) {
+                if (!r.siteId) return;
+                tons[r.siteId] = (tons[r.siteId] || 0) + (r.onHandLbs || 0);
+                names[r.siteId] = r.site;
             });
+            (wipRows || []).forEach(function(r) {
+                if (!r.siteId) return;
+                tons[r.siteId] = (tons[r.siteId] || 0) + (r.inputLbs || 0);
+                names[r.siteId] = r.site;
+            });
+            const sites = Object.keys(tons)
+                .filter(function(id) { return tons[id] >= 100; }) // ignore stray near-zero sites
+                .map(function(id) { return { id: id, name: names[id] }; });
             sites.sort(function(a, b) { return a.name < b.name ? -1 : 1; });
             return sites;
         }
@@ -673,7 +685,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
         // ── Yard operational view ──────────────────────────────────────────────
 
         function renderYardMatrix(yard) {
-            const head = sectionHead('Yard Operations — Tons by Site &amp; Status',
+            const head = sectionHead('Yard Operations — Tons by Site & Status',
                 'On-hand lots only (Shipped/Depleted excluded). Source: lot records written by the scale kiosk and Lot Quality Entry.');
             if (yard.error) return head + emptyMsg('Lot search failed: ' + yard.error);
             if (yard.rows.length === 0) return head + emptyMsg('No on-hand lots found. Run the demo seeder or receive a scale ticket.');
@@ -710,7 +722,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
         }
 
         function renderYardDetail(yard) {
-            const head = sectionHead('Yard Lots — Grade, Status &amp; Exceptions',
+            const head = sectionHead('Yard Lots — Grade, Status & Exceptions',
                 'Exception lots sort first. Click a lot to open its record; the Action column says what to do about the risk.');
             if (yard.error || yard.rows.length === 0) return ''; // matrix section already carries the message
 
@@ -760,7 +772,7 @@ define(['N/search', 'N/ui/serverWidget', 'N/runtime', 'N/url', 'N/log', './SUST_
         }
 
         function renderWipTable(wip) {
-            const head = sectionHead('Work in Process — Equipment &amp; Labor',
+            const head = sectionHead('Work in Process — Equipment & Labor',
                 'Open processing runs (Draft / In Process / Awaiting Cost): which operator is on which equipment, and the tonnage tied up. Click a run to open it.');
             if (wip.error) return head + emptyMsg('Processing search failed: ' + wip.error);
             if (wip.rows.length === 0) {
