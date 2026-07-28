@@ -25,11 +25,31 @@ define(['N/currentRecord', 'N/url', 'N/log'],
         }
 
         /**
+         * Unsaved receipt: the target pages need the saved receipt's lots.
+         * Offer to save now; the buttons reappear on the saved record.
+         * @returns {boolean} true when the record is saved and has an id
+         */
+        function ensureSaved(record, label) {
+            if (record.id) return true;
+            if (confirm(label + ' needs the receipt saved first (the lots are created at save).\n\nSave the receipt now? Then click ' + label + ' again on the saved receipt.')) {
+                try {
+                    const btn = document.getElementById('btn_multibutton_submitter')
+                        || document.querySelector('input[id^="btn_multibutton"]');
+                    if (btn) { btn.click(); return false; }
+                    if (document.forms.main_form) { document.forms.main_form.submit(); return false; }
+                } catch (e) { /* fall through */ }
+                alert('Could not trigger the save automatically — click Save, then use the button on the saved receipt.');
+            }
+            return false;
+        }
+
+        /**
          * Open Lot Quality & Grade Entry Suitelet
          */
         function openLotQuality() {
             try {
                 const record = currentRecord.get();
+                if (!ensureSaved(record, 'Enter Lot Quality')) return;
                 const itemReceiptId = record.id;
 
                 const suiteletUrl = url.resolveScript({
@@ -53,6 +73,7 @@ define(['N/currentRecord', 'N/url', 'N/log'],
         function openProcessScrap() {
             try {
                 const record = currentRecord.get();
+                if (!ensureSaved(record, 'Process Material')) return;
                 const itemReceiptId = record.id;
 
                 const suiteletUrl = url.resolveScript({
@@ -76,6 +97,7 @@ define(['N/currentRecord', 'N/url', 'N/log'],
         function openRegrade() {
             try {
                 const record = currentRecord.get();
+                if (!ensureSaved(record, 'Regrade Lot')) return;
                 const suiteletUrl = url.resolveScript({
                     scriptId: 'customscript_sust_sl_regrade',
                     deploymentId: 'customdeploy_sust_sl_regrade',

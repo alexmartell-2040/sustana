@@ -43,7 +43,13 @@ define(['N/record', 'N/runtime', 'N/log', './SUST_Lib_Config'],
          */
         function beforeLoad(context) {
             try {
-                if (context.type !== context.UserEventType.VIEW) {
+                // Buttons show in VIEW *and* during CREATE/EDIT so all three
+                // capture options are visible while keying a receipt. Pre-save
+                // clicks are handled by the client script (offers to save first —
+                // the Lot Quality page needs the saved receipt's lots).
+                if (context.type !== context.UserEventType.VIEW &&
+                    context.type !== context.UserEventType.CREATE &&
+                    context.type !== context.UserEventType.EDIT) {
                     return;
                 }
 
