@@ -28,8 +28,8 @@
  * Date: June 2026 (v2)
  */
 
-define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config'],
-    function(record, search, runtime, log, configLib) {
+define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config', './SUST_Lib_LotAttributes'],
+    function(record, search, runtime, log, configLib, lotAttr) {
         /**
          * Demo-friendly subsidiary gate: the transaction subsidiary must match the
          * script parameter (if set) or either configured demo subsidiary (US/CA).
@@ -89,7 +89,21 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config'],
                         line: i
                     });
 
-                    if (!vendorLotNumber || vendorLotNumber.toString().trim() === '') {
+                    // Quality graded at receipt entry (line columns) — bridged to
+                    // the lot alongside the vendor lot number.
+                    const colVal = function(fieldId) {
+                        const v = ir.getSublistValue({ sublistId: 'item', fieldId: fieldId, line: i });
+                        return (v === null || v === undefined || v === '') ? null : v;
+                    };
+                    const lineQuality = {
+                        moisture: colVal('custcol_sust_lot_moisture'),
+                        contamination: colVal('custcol_sust_lot_contamination'),
+                        fiber: colVal('custcol_sust_lot_fiber'),
+                        baleCount: colVal('custcol_sust_lot_bales')
+                    };
+                    const hasQuality = Object.keys(lineQuality).some(function(k) { return lineQuality[k] !== null; });
+
+                    if ((!vendorLotNumber || vendorLotNumber.toString().trim() === '') && !hasQuality) {
                         skippedCount++;
                         continue;
                     }
@@ -176,10 +190,12 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config'],
                                 type: 'inventorynumber',
                                 id: lotInternalId
                             });
-                            lotRec.setValue({
-                                fieldId: 'custitemnumber_sust_vendor_lot_number',
-                                value: vendorLotNumber
-                            });
+                            if (vendorLotNumber && vendorLotNumber.toString().trim() !== '') {
+                                lotRec.setValue({
+                                    fieldId: 'custitemnumber_sust_vendor_lot_number',
+                                    value: vendorLotNumber
+                                });
+                            }
                             const existingStatus = lotRec.getValue({ fieldId: 'custitemnumber_sust_lot_status' });
                             if (!existingStatus) {
                                 lotRec.setText({
@@ -190,7 +206,25 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', './SUST_Lib_Config'],
                             lotRec.save({ enableSourcing: false, ignoreMandatoryFields: true });
                             bridgedCount++;
                             log.debug('Vendor Lot Bridged',
-                                `IR Line ${i + 1} → Lot ID ${lotInternalId} → "${vendorLotNumber}"${existingStatus ? '' : ' (status initialized to Received)'}`);
+                                `IR Line ${i + 1} → Lot ID ${lotInternalId} → "${vendorLotNumber || '(no vendor lot)'}"${existingStatus ? '' : ' (status initialized to Received)'}`);
+
+                            // Quality-at-receipt: shared writer handles the fields,
+                            // Received→Yard advance, and the audit trail — same
+                            // semantics as the kiosk capture.
+                            if (hasQuality) {
+                                const qWrite = lotAttr.writeLotQuality(parseInt(lotInternalId, 10), {
+                                    moisture: lineQuality.moisture,
+                                    contamination: lineQuality.contamination,
+                                    fiber: lineQuality.fiber,
+                                    baleCount: lineQuality.baleCount,
+                                    notesAppend: '[Graded at receipt entry ' + new Date().toISOString().substring(0, 10)
+                                        + ', IR ' + irId + ' line ' + (i + 1) + ']'
+                                });
+                                if (qWrite && !qWrite.ok) {
+                                    log.error('Receipt-entry quality write failed',
+                                        `Lot ${lotInternalId}: ${qWrite.error}`);
+                                }
+                            }
                         } catch (subErr) {
                             log.error('Bridge Failed',
                                 `Could not update vendor lot on Lot ID ${lotInternalId}: ${subErr.message}`);

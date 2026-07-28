@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_lot_bales">
+  <accesslevel>2</accesslevel>
+  <applyformatting>F</applyformatting>
+  <colexpense>F</colexpense>
+  <colexpreport>F</colexpreport>
+  <colgrouponinvoices>F</colgrouponinvoices>
+  <coljournal>F</coljournal>
+  <colkititem>F</colkititem>
+  <colopportunity>F</colopportunity>
+  <colpurchase>T</colpurchase>
+  <colreturnform>F</colreturnform>
+  <colsale>F</colsale>
+  <colstore>F</colstore>
+  <colstorehidden>F</colstorehidden>
+  <colstorewithgroups>F</colstorewithgroups>
+  <coltime>F</coltime>
+  <coltransferorder>F</coltransferorder>
+  <defaultchecked>F</defaultchecked>
+  <defaultselection></defaultselection>
+  <defaultvalue></defaultvalue>
+  <description>Bale count for this line. Leave blank to auto-derive later (net lbs / grade standard bale weight). Bridges to the lot record on IR save.</description>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault></dynamicdefault>
+  <fieldtype>INTEGER</fieldtype>
+  <help>Bale count for this line. Leave blank to auto-derive later (net lbs / grade standard bale weight). Bridges to the lot record on IR save.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>
+  <label>Bale Count</label>
+  <linktext></linktext>
+  <maxlength>100</maxlength>
+  <maxvalue></maxvalue>
+  <minvalue></minvalue>
+  <searchcomparefield></searchcomparefield>
+  <searchdefault></searchdefault>
+  <searchlevel>2</searchlevel>
+  <selectrecordtype></selectrecordtype>
+  <sourcefilterby></sourcefilterby>
+  <sourcefrom></sourcefrom>
+  <sourcelist></sourcelist>
+  <storevalue>T</storevalue>
+</transactioncolumncustomfield>
