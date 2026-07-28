@@ -621,6 +621,27 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             GRADE_ITEMS.forEach(function(spec) {
                 ensureGradeItem(ctx, spec, existing[spec.extid] || null, section);
             });
+
+            // Units of measure: type 5 = Lbs. Applied as its own pass so a
+            // NetSuite refusal (units type is locked once an item has
+            // transactions) can never break the regular item-field updates.
+            GRADE_ITEMS.forEach(function(spec) {
+                const itemId = ctx.itemIds[spec.key];
+                if (!itemId) return;
+                try {
+                    const lk = search.lookupFields({ type: 'item', id: itemId, columns: ['unitstype'] });
+                    const cur = Array.isArray(lk.unitstype) && lk.unitstype.length ? String(lk.unitstype[0].value) : '';
+                    if (cur === '5') {
+                        addRow(section, 'exists', 'Item ' + spec.name + ' - units type already Lbs (5)', 'item', itemId);
+                        return;
+                    }
+                    record.submitFields({ type: LOT_ITEM_TYPE, id: itemId, values: { unitstype: 5 } });
+                    addRow(section, 'updated', 'Item ' + spec.name + ' - units type set to Lbs (5)', 'item', itemId);
+                } catch (eUnits) {
+                    addRow(section, 'error', 'Item ' + spec.name + ' - units type NOT changed: ' + errText(eUnits)
+                        + ' (NetSuite locks units type once an item has transactions - change requires zero-transaction items or manual UI edit)');
+                }
+            });
         }
 
         function applyGradeItemFields(item, spec, ctx) {
@@ -637,16 +658,6 @@ define(['N/record', 'N/search', 'N/log', 'N/ui/serverWidget', 'N/format', 'N/url
             if (spec.stdBaleLbs) {
                 try { item.setValue({ fieldId: 'custitem_sust_std_bale_lbs', value: spec.stdBaleLbs }); }
                 catch (eBale) { log.debug('std bale weight skipped', eBale.message); }
-            }
-            // Units of measure: type 5 = Lbs (all Sustana math is pounds)
-            try {
-                const curUnits = item.getValue({ fieldId: 'unitstype' });
-                if (String(curUnits) !== '5') {
-                    item.setValue({ fieldId: 'unitstype', value: 5 });
-                }
-            } catch (eUnits) {
-                log.audit('Units type not set', (spec.name || '') + ': ' + eUnits.message
-                    + ' (NetSuite blocks units-type changes on items that already have transactions)');
             }
         }
 
