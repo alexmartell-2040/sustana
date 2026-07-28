@@ -59,6 +59,24 @@ define(['N/record', 'N/search', 'N/runtime', 'N/log', 'N/ui/serverWidget', './SU
          */
         function beforeSubmit(context) {
             try {
+                // No-scale receiving: Net = Gross − Tare when Net wasn't keyed.
+                try {
+                    const recNW = context.newRecord;
+                    const nLines = recNW.getLineCount({ sublistId: 'item' });
+                    for (let li = 0; li < nLines; li++) {
+                        const g = parseFloat(recNW.getSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_gross_weight', line: li })) || 0;
+                        const t = parseFloat(recNW.getSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_tare_weight', line: li })) || 0;
+                        const n = parseFloat(recNW.getSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_net_weight', line: li })) || 0;
+                        if (g > 0 && t > 0 && !n) {
+                            const net = Math.max(g - t, 0);
+                            recNW.setSublistValue({ sublistId: 'item', fieldId: 'custcol_sust_scrap_net_weight', line: li, value: net });
+                            log.audit('Net from Gross−Tare', 'Line ' + (li + 1) + ': ' + g + ' − ' + t + ' = ' + net + ' lbs');
+                        }
+                    }
+                } catch (eNet) {
+                    log.debug('net-from-tare skipped', eNet.message);
+                }
+
                 if (context.type !== context.UserEventType.CREATE &&
                     context.type !== context.UserEventType.EDIT) {
                     return;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<transactioncolumncustomfield scriptid="custcol_sust_scrap_tare_weight">
+  <accesslevel>2</accesslevel>
+  <applyformatting>T</applyformatting>  <defaultchecked>F</defaultchecked>
+  <displaytype>NORMAL</displaytype>
+  <dynamicdefault/>
+  <fieldtype>FLOAT</fieldtype>
+  <help>Tare = empty truck weight. Enter Gross and Tare from the scale ticket; Net auto-computes on save when left blank (Net = Gross − Tare). Net weight is the settlement basis.</help>
+  <isformula>F</isformula>
+  <ismandatory>F</ismandatory>  <label>Tare Weight (lbs)</label>
+  <searchlevel>2</searchlevel>  <sourcefrom/>
+  <sourcelist/>
+  <storevalue>T</storevalue></transactioncolumncustomfield>
